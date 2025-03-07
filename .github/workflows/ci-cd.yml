@@ -23,3 +23,8 @@ jobs:
         - id: build
           name:  Build
           run: dotnet build --no-restore
+
+        - id: test
+          if: steps.build.outcome == 'success'
+          name: Test
+          run: dotnet test "TestTheFactory.csproj" --collect "XPlat Code Coverate"
