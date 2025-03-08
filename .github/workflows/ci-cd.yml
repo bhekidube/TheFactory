@@ -29,6 +29,10 @@ jobs:
           #name: Test
           #run: dotnet test "TestTheFactory.csproj" --collect "XPlat Code Coverate"
 
+        - id: publish
+          name: Publish
+          run: dotnet publish -c Release -r linux-x64 --self-contained false -o ./publish
+
     deploy:
         needs: build
         runs-on: ubuntu-latest
