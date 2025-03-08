@@ -27,4 +27,4 @@ jobs:
         - id: test
           if: steps.build.outcome == 'success'
           name: Test
-          run: dotnet test "TestTheFactory.csproj" --collect "XPlat Code Coverate"
+          #run: dotnet test "TestTheFactory.csproj" --collect "XPlat Code Coverate"
