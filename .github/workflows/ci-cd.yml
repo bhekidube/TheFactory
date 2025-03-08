@@ -38,4 +38,9 @@ jobs:
           uses: actions/download-artifact@v4
           with:
             name: dotnet-webapp
+
+        - name: Azure Login
+          uses: azure/login@v2
+          with:
+            creds: ${{}}
     
