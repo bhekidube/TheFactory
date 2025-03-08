@@ -28,3 +28,11 @@ jobs:
           #if: steps.build.outcome == 'success'
           #name: Test
           #run: dotnet test "TestTheFactory.csproj" --collect "XPlat Code Coverate"
+
+    deploy:
+        needs: build
+        runs-on: ubuntu-latest
+
+        steps:
+        - name: Download Artifact
+    
