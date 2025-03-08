@@ -35,6 +35,13 @@ jobs:
 
         - name: Zip Artifact
           run: zip TheFactory.zip ./publish
+          
+        - id: upload
+          name: Upload Artifact
+          uses: actions/upload-artifact@v4
+          with:
+                name: dotnet-webapp 
+                path: TheFactory.zip  
 
     deploy:
         needs: build
