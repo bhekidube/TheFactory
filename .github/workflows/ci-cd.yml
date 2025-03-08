@@ -43,4 +43,9 @@ jobs:
           uses: azure/login@v2
           with:
             creds: ${{ secrets.AZURE_CREDENTIALS }}
-    
+
+        - name: Deploy To Azure
+          uses: azure/webapps-deploy@v2
+          with:
+            app-name:           
+            package:      
