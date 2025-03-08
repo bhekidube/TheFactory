@@ -33,6 +33,9 @@ jobs:
           name: Publish
           run: dotnet publish -c Release -r linux-x64 --self-contained false -o ./publish
 
+        - name: Zip Artifact
+          run: zip TheFactory.zip ./publish
+
     deploy:
         needs: build
         runs-on: ubuntu-latest
