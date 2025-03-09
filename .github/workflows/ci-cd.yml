@@ -34,7 +34,8 @@ jobs:
           run: dotnet publish ./TheFactory/TheFactory.csproj -c Release -r linux-x64 --self-contained false -o ./publish
 
         - name: Zip Artifact
-          run: zip TheFactory.zip ./publish
+          run: cd publish && zip -r ../TheFactory.zip .
+
           
         - id: upload
           name: Upload Artifact
