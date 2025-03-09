@@ -56,7 +56,7 @@ jobs:
         - name: Azure Login
           uses: azure/login@v2
           with:
-            creds: ${{ secrets.AZURE_CREDENTIALS }}
+            creds: ${{ secrets.FACTORY_AUTH_SECRET }}
 
         - name: Deploy To Azure
           uses: azure/webapps-deploy@v2
