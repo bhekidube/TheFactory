@@ -15,16 +15,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove=".github\workflows\ci-cd.yaml" />
+  </ItemGroup>
+  <ItemGroup>
     <!-- Don't publish the SPA source files, but do show them in the project files list -->
     <Content Remove="$(SpaRoot)**" />
     <None Include="$(SpaRoot)**" Exclude="$(SpaRoot)node_modules\**" />
-    <None Include=".github\workflows\ci-cd.yaml" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include=".github\" />
-    <Folder Include=".github\workflows\" />
-  </ItemGroup>
     <Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">
     <!-- Ensure Node.js is installed -->
     <Exec Command="node --version" ContinueOnError="true">
