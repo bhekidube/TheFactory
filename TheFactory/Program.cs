@@ -24,10 +24,10 @@ app.MapControllerRoute(
 
 app.MapFallbackToFile("index.html");;
 
-<<<<<<< HEAD
+
 app.Run();
-=======
+
 app.Run("http://0.0.0.0:8181");
 
->>>>>>> Now listening on: http://0.0.0.0:8181
+
 
