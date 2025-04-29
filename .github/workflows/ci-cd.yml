@@ -3,7 +3,7 @@ name: Factory workflow
 on: 
   workflow_dispatch:
   push:
-     branches: ['main']
+     branches: ['main', 'dev']
  
 jobs:
     build: 
