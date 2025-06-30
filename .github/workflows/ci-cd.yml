@@ -1,15 +1,15 @@
 name: Factory workflow
 
-on: 
+on:
   workflow_dispatch:
   push:
     branches: ['main', 'dev']
 
 jobs:
-  build: 
+  build:
     runs-on: ubuntu-latest
 
-    steps: 
+    steps:
     - uses: actions/checkout@v4
 
     - name: Setup .NET
@@ -20,20 +20,32 @@ jobs:
     - name: Restore Dependencies
       run: dotnet restore
 
-    - name: Build
-      run: dotnet build ./TheFactory/TheFactory.csproj --configuration Release --no-restore
+    - id: build
+      name: Build
+      run: dotnet build ./TheFactory/TheFactory.csproj --no-restore
 
-    - name: Publish
-      run: dotnet publish ./TheFactory/TheFactory.csproj -c Release -o publish
+    - id: publish
+      name: Publish
+      run: dotnet publish ./TheFactory/TheFactory.csproj -c Release -o ./publish
+
+    - name: Verify DLL exists
+      run: |
+        test -f ./publish/TheFactory.dll && echo "✅ TheFactory.dll found" || (echo "❌ Missing TheFactory.dll!" && exit 1)
 
     - name: Zip Published App
-      run: cd publish && zip -r ../TheFactory.zip .
+      run: |
+        cd publish
+        zip -r ../TheFactory.zip .
 
-    - name: Upload Artifact
+    - name: List contents of ZIP
+      run: unzip -l TheFactory.zip
+
+    - id: upload
+      name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: dotnet-webapp
-        path: TheFactory.zip  
+        path: TheFactory.zip
 
   deploy:
     needs: build
@@ -44,14 +56,21 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: dotnet-webapp
+        path: ./app_package
+
+    - name: Verify Artifact Contents
+      run: |
+        echo "Listing contents of downloaded artifact:"
+        ls -lah ./app_package
+        unzip -l ./app_package/TheFactory.zip
 
     - name: Azure Login
       uses: azure/login@v2
       with:
         creds: ${{ secrets.FACTORY_AUTH_SECRET }}
 
-    - name: Deploy to Azure
+    - name: Deploy To Azure
       uses: azure/webapps-deploy@v2
       with:
         app-name: AzureLinuxAppService
-        package: TheFactory.zip
+        package: ./app_package/TheFactory.zip
