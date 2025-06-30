@@ -31,7 +31,11 @@ jobs:
 
         - id: publish
           name: Publish
-          run: dotnet publish ./TheFactory/TheFactory.csproj -c Release -r linux-x64 --self-contained false -o ./publish
+          run: dotnet publish ./TheFactory/TheFactory.csproj -c Release -o ./publish
+
+        - name: Verify DLL exists before zipping
+          run: test -f ./publish/TheFactory.dll && echo "DLL found ✅" || (echo "❌ TheFactory.dll missing!" && exit 1)
+
 
         - name: Zip Published App
           run: |
