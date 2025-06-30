@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
@@ -15,9 +15,9 @@
     <PackageReference Include="coverlet.collector" Version="3.1.2" />
   </ItemGroup>
 
-<ItemGroup>
-  <ProjectReference Include="..\TheFactory\TheFactory.csproj" />
-</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TheFactory\TheFactory.csproj" />
+  </ItemGroup>
 
   <Target Name="RunTests" AfterTargets="Build">
     <Exec Command="dotnet test --no-build --verbosity normal" />
