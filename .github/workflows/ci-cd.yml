@@ -38,6 +38,8 @@ jobs:
             cd publish
             zip -r ../TheFactory.zip ./*
 
+        - name: List contents of ZIP
+          run: unzip -l TheFactory.zip
           
         - id: upload
           name: Upload Artifact
