@@ -4,7 +4,8 @@
 builder.Services.AddControllersWithViews();
 
 // Configure Kestrel to listen on http://0.0.0.0:8181
-builder.WebHost.UseUrls("http://0.0.0.0:8181");
+// filepath: /Users/bhekinkosidube/Projects/TheFactory/TheFactory/Program.cs
+builder.WebHost.UseUrls("http://0.0.0.0:8080");
 
 var app = builder.Build();
 
