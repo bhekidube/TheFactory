@@ -3,64 +3,55 @@ name: Factory workflow
 on: 
   workflow_dispatch:
   push:
-     branches: ['main', 'dev']
- 
+    branches: ['main', 'dev']
+
 jobs:
-    build: 
-        runs-on: ubuntu-latest
+  build: 
+    runs-on: ubuntu-latest
 
-        steps: 
-        - uses: actions/checkout@v4
+    steps: 
+    - uses: actions/checkout@v4
 
-        - name: Setup .NET
-          uses: actions/setup-dotnet@v4
-          with:
-                dotnet-version: 8.0.x
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
 
-        - name: Restore Dependencies
-          run: dotnet restore
+    - name: Restore Dependencies
+      run: dotnet restore
 
-        - id: build
-          name:  Build
-          run: dotnet build ./TheFactory/TheFactory.csproj --no-restore
+    - name: Build
+      run: dotnet build ./TheFactory/TheFactory.csproj --configuration Release --no-restore
 
-        #- id: test
-          #if: steps.build.outcome == 'success'
-          #name: Test
-          #run: dotnet test "TestTheFactory.csproj" --collect "XPlat Code Coverate"
+    - name: Publish
+      run: dotnet publish ./TheFactory/TheFactory.csproj -c Release -o publish
 
-        - id: publish
-          name: Publish
-          run: dotnet publish ./TheFactory/TheFactory.csproj -c Release -r linux-x64 --self-contained false -o ./publish
+    - name: Zip Published App
+      run: cd publish && zip -r ../TheFactory.zip .
 
-        - name: Zip Artifact
-          run: cd publish && zip -r ../TheFactory.zip .
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: dotnet-webapp
+        path: TheFactory.zip  
 
-          
-        - id: upload
-          name: Upload Artifact
-          uses: actions/upload-artifact@v4
-          with:
-                name: dotnet-webapp 
-                path: TheFactory.zip  
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
 
-    deploy:
-        needs: build
-        runs-on: ubuntu-latest
+    steps:
+    - name: Download Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: dotnet-webapp
 
-        steps:
-        - name: Download Artifact
-          uses: actions/download-artifact@v4
-          with:
-            name: dotnet-webapp
+    - name: Azure Login
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.FACTORY_AUTH_SECRET }}
 
-        - name: Azure Login
-          uses: azure/login@v2
-          with:
-            creds: ${{ secrets.FACTORY_AUTH_SECRET }}
-
-        - name: Deploy To Azure
-          uses: azure/webapps-deploy@v2
-          with:
-            app-name: AzureLinuxAppService          
-            package: TheFactory.zip     
+    - name: Deploy to Azure
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: AzureLinuxAppService
+        package: TheFactory.zip
