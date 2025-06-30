@@ -24,13 +24,14 @@ jobs:
     - name: Build Project
       run: dotnet build ./TheFactory/TheFactory.csproj --no-restore
 
-    - name: Publish App
+    - name: Publish App for Linux (Self-Contained)
       run: dotnet publish ./TheFactory/TheFactory.csproj -c Release -r linux-x64 --self-contained true -o ./publish
 
-    - name: Verify TheFactory.dll exists
+    - name: Verify Output
       run: |
+        echo "Contents of publish:"
         ls -lah ./publish
-        test -f ./publish/TheFactory.dll || (echo "❌ TheFactory.dll not found in publish output!" && exit 1)
+        test -f ./publish/TheFactory || (echo "❌ TheFactory binary not found!" && exit 1)
 
     - name: Zip Published App
       run: |
@@ -54,7 +55,7 @@ jobs:
         name: dotnet-webapp
         path: ./app_package
 
-    - name: Check ZIP Contents
+    - name: List ZIP Contents
       run: unzip -l ./app_package/TheFactory.zip
 
     - name: Azure Login
@@ -62,7 +63,7 @@ jobs:
       with:
         creds: ${{ secrets.FACTORY_AUTH_SECRET }}
 
-    - name: Deploy to Azure Web App
+    - name: Deploy to Azure Linux Web App
       uses: azure/webapps-deploy@v2
       with:
         app-name: AzureLinuxAppService
