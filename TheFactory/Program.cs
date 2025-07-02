@@ -3,16 +3,15 @@
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Configure Kestrel to listen on http://0.0.0.0:8181
-// filepath: /Users/bhekinkosidube/Projects/TheFactory/TheFactory/Program.cs 
-builder.WebHost.UseUrls("http://0.0.0.0:8080");
+// Use the PORT environment variable if set (Azure best practice)
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
