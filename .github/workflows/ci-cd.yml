@@ -55,7 +55,9 @@ jobs:
             path: ./publish
 
         - name: Zip for Azure
-          run: cd publish && zip -r ../TheFactory.zip .
+          run: |
+            cd publish
+            zip -r ../TheFactory.zip ./*
 
         - name: Verify ZIP Contents
           run: unzip -l TheFactory.zip
