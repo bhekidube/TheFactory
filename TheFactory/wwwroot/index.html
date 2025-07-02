@@ -1,9 +1,128 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>TheFactory</title>
-  </head>
-  <body>
-    <h1>Welcome to TheFactory!</h1>
-  </body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HambaOnline | Book Your Bus Tickets Online</title>
+  <meta name="description" content="HambaOnline makes bus travel easy. Search routes, compare fares, and book tickets online in South Africa – fast, safe, and secure.">
+  <meta name="keywords" content="HambaOnline, bus tickets South Africa, online ticket booking, transport platform, cheap fares, SA buses">
+  <meta name="author" content="HambaOnline Team" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: #f9f9f9;
+      color: #333;
+    }
+
+    header {
+      background: #008060;
+      color: #fff;
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2rem;
+    }
+
+    section.hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 3rem 1rem;
+      background: #fff;
+      text-align: center;
+    }
+
+    .hero h2 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .hero p {
+      max-width: 600px;
+      font-size: 1.1rem;
+      color: #666;
+    }
+
+    .cta-button {
+      margin-top: 2rem;
+      padding: 1rem 2rem;
+      background-color: #008060;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .cta-button:hover {
+      background-color: #006d51;
+    }
+
+    section.features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      padding: 2rem;
+      background: #f2f2f2;
+    }
+
+    .feature {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      text-align: center;
+    }
+
+    .feature h3 {
+      margin-top: 0;
+      color: #008060;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      background: #fff;
+      font-size: 0.9rem;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>HambaOnline</h1>
+    <p>Find your next trip. Book your seat online. Travel smart.</p>
+  </header>
+
+  <section class="hero">
+    <h2>Book Bus Tickets Easily Across South Africa</h2>
+    <p>HambaOnline lets you search routes, compare prices, and buy tickets online – safely and affordably. No queues. No hassle.</p>
+    <button class="cta-button" onclick="window.location.href='/search'">Search Routes</button>
+  </section>
+
+  <section class="features">
+    <div class="feature">
+      <h3>Nationwide Coverage</h3>
+      <p>Access routes and schedules for buses traveling across all major cities and towns in South Africa.</p>
+    </div>
+    <div class="feature">
+      <h3>Real-Time Booking</h3>
+      <p>Get up-to-date seat availability and instant ticket confirmation directly to your email or WhatsApp.</p>
+    </div>
+    <div class="feature">
+      <h3>Secure Payments</h3>
+      <p>Pay securely with card, bank transfer, or mobile money. Your data and privacy are protected.</p>
+    </div>
+  </section>
+
+  <footer>
+    &copy; 2025 HambaOnline. All rights reserved. | <a href="/terms">Terms</a> | <a href="/privacy">Privacy</a>
+  </footer>
+</body>
 </html>
