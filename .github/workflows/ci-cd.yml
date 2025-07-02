@@ -45,7 +45,10 @@ jobs:
           with:
                 name: dotnet-webapp 
                 path: TheFactory.zip  
-
+                
+        - name: List files before deploy
+          run: ls -l
+  
     deploy:
         needs: build
         runs-on: ubuntu-latest
