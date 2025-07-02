@@ -1,4 +1,4 @@
-name: Factory workflow
+name: Azure .NET Deploy Workflow
 
 on: 
   workflow_dispatch:
@@ -10,48 +10,51 @@ jobs:
     runs-on: ubuntu-latest
 
     steps: 
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
 
-    - name: Restore Dependencies
-      run: dotnet restore
+    - name: Restore dependencies
+      run: dotnet restore ./TheFactory/TheFactory.csproj
 
     - name: Build
       run: dotnet build ./TheFactory/TheFactory.csproj --configuration Release --no-restore
 
     - name: Publish
-      run: dotnet publish ./TheFactory/TheFactory.csproj -c Release -o publish
+      run: dotnet publish ./TheFactory/TheFactory.csproj --configuration Release --output ./publish
 
-    - name: Zip Published App
-      run: cd publish && zip -r ../TheFactory.zip .
+    - name: Zip published app
+      run: zip -r TheFactory.zip ./*
+      working-directory: ./publish
 
-    - name: Upload Artifact
+    - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: dotnet-webapp
-        path: TheFactory.zip  
+        path: ./publish/TheFactory.zip
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
 
     steps:
-    - name: Download Artifact
+    - name: Download artifact
       uses: actions/download-artifact@v4
       with:
         name: dotnet-webapp
+        path: ./deploy
 
     - name: Azure Login
       uses: azure/login@v2
       with:
         creds: ${{ secrets.FACTORY_AUTH_SECRET }}
 
-    - name: Deploy to Azure
+    - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
         app-name: AzureLinuxAppService
-        package: TheFactory.zip
+        package: ./deploy/TheFactory.zip
