@@ -48,6 +48,9 @@ jobs:
                 
         - name: List files before deploy
           run: ls -l
+
+        - name: List zip contents
+          run: unzip -l TheFactory.zip
   
     deploy:
         needs: build
