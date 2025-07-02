@@ -28,14 +28,16 @@ jobs:
       run: dotnet publish ./TheFactory/TheFactory.csproj --configuration Release --output ./publish
 
     - name: Zip published app
-      run: zip -r TheFactory.zip ./*
-      working-directory: ./publish
+      run: |
+        cd publish
+        zip -r ../TheFactory.zip .
+      shell: bash
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: dotnet-webapp
-        path: ./publish/TheFactory.zip
+        path: ./TheFactory.zip
 
   deploy:
     needs: build
@@ -46,7 +48,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: dotnet-webapp
-        path: ./deploy
+        path: ./
 
     - name: Azure Login
       uses: azure/login@v2
@@ -57,4 +59,4 @@ jobs:
       uses: azure/webapps-deploy@v2
       with:
         app-name: AzureLinuxAppService
-        package: ./deploy/TheFactory.zip
+        package: ./TheFactory.zip
