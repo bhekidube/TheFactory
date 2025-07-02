@@ -1,4 +1,4 @@
-name: Factory workflow
+name: Azure .NET Deploy Workflow
 
 on: 
   workflow_dispatch:
@@ -6,12 +6,11 @@ on:
     branches: ['main', 'dev']
 
 jobs:
-  build:
+  build: 
     runs-on: ubuntu-latest
 
-    steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+    steps: 
+    - uses: actions/checkout@v4
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -21,28 +20,20 @@ jobs:
     - name: Restore Dependencies
       run: dotnet restore
 
-    - id: build
-      name: Build
-      run: dotnet build ./TheFactory/TheFactory.csproj --no-restore
+    - name: Build
+      run: dotnet build ./TheFactory/TheFactory.csproj --configuration Release --no-restore
 
-    # Uncomment if you want to run tests
-    # - id: test
-    #   if: steps.build.outcome == 'success'
-    #   name: Test
-    #   run: dotnet test "TestTheFactory.csproj" --collect "XPlat Code Coverage"
+    - name: Publish
+      run: dotnet publish ./TheFactory/TheFactory.csproj -c Release -o publish
 
-    - id: publish
-      name: Publish
-      run: dotnet publish ./TheFactory/TheFactory.csproj -c Release -r linux-x64 --self-contained false -o ./publish
+    - name: Zip Published App
+      run: cd publish && zip -r ../TheFactory.zip .
 
-    - name: List published files
-      run: ls -lh ./publish
-
-    - name: Upload Published Files
+    - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: dotnet-webapp
-        path: publish/
+        path: TheFactory.zip  
 
   deploy:
     needs: build
@@ -53,22 +44,13 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: dotnet-webapp
-        path: ./publish
-
-    - name: Zip for Azure
-      run: |
-        cd publish
-        zip -r ../TheFactory.zip ./*
-
-    - name: Inspect ZIP (debug)
-      run: unzip -l TheFactory.zip
 
     - name: Azure Login
       uses: azure/login@v2
       with:
         creds: ${{ secrets.FACTORY_AUTH_SECRET }}
 
-    - name: Deploy To Azure
+    - name: Deploy to Azure
       uses: azure/webapps-deploy@v2
       with:
         app-name: AzureLinuxAppService
