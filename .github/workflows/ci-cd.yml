@@ -57,6 +57,10 @@ jobs:
         - name: Zip for Azure
           run: cd publish && zip -r ../TheFactory.zip .
 
+        - name: Verify ZIP Contents
+          run: unzip -l TheFactory.zip
+
+
         - name: Azure Login
           uses: azure/login@v2
           with:
