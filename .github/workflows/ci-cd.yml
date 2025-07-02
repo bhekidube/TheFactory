@@ -28,10 +28,8 @@ jobs:
       run: dotnet publish ./TheFactory/TheFactory.csproj --configuration Release --output ./publish
 
     - name: Zip published app
-      run: |
-        cd publish
-        zip -r ../TheFactory.zip .
-      shell: bash
+      run: zip -r TheFactory.zip ./*
+      working-directory: ./publish
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
