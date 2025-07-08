@@ -122,6 +122,8 @@
             border: 1px solid #ccc;
             border-radius: 6px;
             font-size: 1rem;
+            width: 100%; /* Ensure full width for all form controls */
+            box-sizing: border-box;
         }
 
         button {
@@ -182,8 +184,14 @@
     <section class="search-section">
         <h2>Find Your Bus</h2>
         <form>
-            <input type="text" placeholder="From (e.g. Capetown)" required />
-            <input type="text" placeholder="To (e.g. Johannesburg)" required />
+            <div style="position:relative;">
+                <input type="text" id="fromInput" name="from" placeholder="From (e.g. Gaborone)" autocomplete="off" required />
+                <ul id="fromSuggestions" style="position:absolute;z-index:10;background:white;border:1px solid #ccc;list-style:none;margin:0;padding:0;width:100%;display:none;"></ul>
+            </div>
+            <div style="position:relative;">
+                <input type="text" id="toInput" name="to" placeholder="To (e.g. Johannesburg)" autocomplete="off" required />
+                <ul id="toSuggestions" style="position:absolute;z-index:10;background:white;border:1px solid #ccc;list-style:none;margin:0;padding:0;width:100%;display:none;"></ul>
+            </div>
             <input type="date" required />
             <button type="submit">Search Buses</button>
         </form>
@@ -230,6 +238,48 @@
         }
 
         setInterval(updateMessage, 10000); // every 10 seconds
+
+        const cities = [
+    "Antananarivo", "Beira", "Blantyre", "Bloemfontein", "Bulawayo", "Cape Town", "Durban", "East London", "Francistown", "Gaborone", "Harare", "Johannesburg", "Lilongwe", "Livingstone", "Lusaka", "Manzini", "Maputo", "Maseru", "Mbabane", "Mutare", "Polokwane", "Port Elizabeth", "Pretoria", "Walvis Bay", "Windhoek"
+];
+
+function setupAutocomplete(inputId, suggestionsId) {
+    const input = document.getElementById(inputId);
+    const suggestions = document.getElementById(suggestionsId);
+    input.addEventListener('input', function() {
+        const value = this.value.toLowerCase();
+        suggestions.innerHTML = '';
+        if (!value) {
+            suggestions.style.display = 'none';
+            return;
+        }
+        const matches = cities.filter(city => city.toLowerCase().startsWith(value));
+        if (matches.length === 0) {
+            suggestions.style.display = 'none';
+            return;
+        }
+        matches.forEach(city => {
+            const li = document.createElement('li');
+            li.textContent = city;
+            li.style.padding = '8px';
+            li.style.cursor = 'pointer';
+            li.addEventListener('mousedown', function(e) {
+                input.value = city;
+                suggestions.style.display = 'none';
+            });
+            suggestions.appendChild(li);
+        });
+        suggestions.style.display = 'block';
+    });
+    document.addEventListener('click', function(e) {
+        if (!suggestions.contains(e.target) && e.target !== input) {
+            suggestions.style.display = 'none';
+        }
+    });
+}
+
+setupAutocomplete('fromInput', 'fromSuggestions');
+setupAutocomplete('toInput', 'toSuggestions');
     </script>
 </body>
 </html>
