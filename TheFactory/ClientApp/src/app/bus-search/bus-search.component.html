@@ -1,0 +1,49 @@
+<div class="digital-sign-container">
+  <div class="digital-sign-text">
+    {{ digitalText }}<span class="cursor">_</span>
+  </div>
+</div>
+<header>
+  <h1>HambaOnline</h1>
+  <p>Book buses quickly and easily across Southern Africa</p>
+</header>
+<section class="search-section">
+  <h2>Find Your Bus</h2>
+  <form>
+    <div style="position:relative;">
+      <input type="text" [(ngModel)]="fromInput" name="fromInput" placeholder="From (e.g. Gaborone)" autocomplete="off" required (input)="onFromInputChange()" />
+      <ul *ngIf="fromSuggestions.length" style="position:absolute;z-index:10;background:white;border:1px solid #ccc;list-style:none;margin:0;padding:0;width:100%;">
+        <li *ngFor="let city of fromSuggestions" (mousedown)="selectFromSuggestion(city)" style="padding:8px;cursor:pointer;">
+          {{ city }}
+        </li>
+      </ul>
+    </div>
+    <div style="position:relative;">
+      <input type="text" [(ngModel)]="toInput" name="toInput" placeholder="To (e.g. Johannesburg)" autocomplete="off" required (input)="onToInputChange()" />
+      <ul *ngIf="toSuggestions.length" style="position:absolute;z-index:10;background:white;border:1px solid #ccc;list-style:none;margin:0;padding:0;width:100%;">
+        <li *ngFor="let city of toSuggestions" (mousedown)="selectToSuggestion(city)" style="padding:8px;cursor:pointer;">
+          {{ city }}
+        </li>
+      </ul>
+    </div>
+    <input type="date" required />
+    <button type="submit">Search Buses</button>
+  </form>
+</section>
+<section class="features">
+  <div class="feature">
+    <h3>Compare Routes</h3>
+    <p>Easily compare multiple routes and fares to choose the best option.</p>
+  </div>
+  <div class="feature">
+    <h3>Trusted Operators</h3>
+    <p>We work only with vetted, reliable bus companies.</p>
+  </div>
+  <div class="feature">
+    <h3>Instant Booking</h3>
+    <p>Reserve and pay for your seat in just a few clicks.</p>
+  </div>
+</section>
+<footer>
+  &copy; 2025 HambaOnline. All rights reserved.
+</footer>
