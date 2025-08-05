@@ -7,9 +7,9 @@
   <h1>HambaOnline</h1>
   <p>Book buses quickly and easily across Southern Africa</p>
 </header>
-<section class="search-section">l,
+<section class="search-section">
   <h2>Find Your Bus</h2>
-  <form>
+  <form (ngSubmit)="onSearch()" #busForm="ngForm">
     <div style="position:relative;">
       <input type="text" [(ngModel)]="fromInput" name="fromInput" placeholder="From (e.g. Gaborone)" autocomplete="off" required (input)="onFromInputChange()" />
       <ul *ngIf="fromSuggestions.length" style="position:absolute;z-index:10;background:white;border:1px solid #ccc;list-style:none;margin:0;padding:0;width:100%;">
@@ -26,9 +26,19 @@
         </li>
       </ul>
     </div>
-    <input type="date" required />
+    <input type="date" [(ngModel)]="dateInput" name="dateInput" required />
     <button type="submit">Search Buses</button>
   </form>
+
+  <!-- Search Results -->
+  <div *ngIf="searchResults && searchResults.length" class="search-results">
+    <h3>Search Results</h3>
+    <ul>
+      <li *ngFor="let result of searchResults">
+        {{ result }}
+      </li>
+    </ul>
+  </div>
 </section>
 <section class="features">
   <div class="feature">

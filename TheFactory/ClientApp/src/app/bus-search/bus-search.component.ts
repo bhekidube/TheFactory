@@ -26,12 +26,20 @@ export class BusSearchComponent implements OnInit {
     "Bulawayo", "Chegutu", "Kwekwe", "Zvishavane", "Masvingo", "Durban", "East London", "Francistown", "Gaborone", "Harare", "Johannesburg", "Lilongwe", "Livingstone", "Lusaka", "Manzini", "Maputo", "Maseru", "Mbabane", "Mutare", "Polokwane", "Port Elizabeth", "Pretoria", "Walvis Bay", "Windhoek"
   ];
 
+  cityCodes: { [key: string]: string } = {
+    "Bulawayo": "BYO",
+    "Johannesburg": "Johannesburg",
+    // ...add more as needed
+  };
+
   digitalText = this.messages[0];
   index = 0;
   fromInput = '';
   toInput = '';
   fromSuggestions: string[] = [];
   toSuggestions: string[] = [];
+  searchResults: string[] = [];
+  dateInput: string = '';
 
   ngOnInit() {
     setInterval(() => this.updateMessage(), 10000);
@@ -64,5 +72,18 @@ export class BusSearchComponent implements OnInit {
   selectToSuggestion(city: string) {
     this.toInput = city;
     this.toSuggestions = [];
+  }
+
+  onSearch() {
+    const from = this.fromInput.trim().toLowerCase();
+    const to = this.toInput.trim().toLowerCase();
+    const fromCode = this.cityCodes[this.fromInput] || this.fromInput;
+    const toCode = this.cityCodes[this.toInput] || this.toInput;
+    this.searchResults = this.messages.filter(msg =>
+      msg.toLowerCase().includes(from.toLowerCase()) ||
+      msg.toLowerCase().includes(fromCode.toLowerCase()) ||
+      msg.toLowerCase().includes(to.toLowerCase()) ||
+      msg.toLowerCase().includes(toCode.toLowerCase())
+    );
   }
 }
