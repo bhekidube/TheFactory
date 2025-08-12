@@ -35,7 +35,16 @@
     <h3>Search Results</h3>
     <ul>
       <li *ngFor="let result of searchResults">
+        <!-- If result is a string -->
         {{ result }}
+
+        <!-- If result is an object, use: -->
+        <!--
+        <strong>{{ result.from }} → {{ result.to }}</strong><br>
+        Date: {{ result.date | date }}<br>
+        Departure: {{ result.departureTime }} | Arrival: {{ result.arrivalTime }}<br>
+        Price: {{ result.price | currency }}
+        -->
       </li>
     </ul>
   </div>

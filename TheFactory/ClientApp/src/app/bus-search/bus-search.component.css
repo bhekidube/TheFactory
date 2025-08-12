@@ -139,3 +139,44 @@ body {
             background-color: #004aad;
             color: white;
         }
+
+        .search-results {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            margin: 2rem 0;
+            padding: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .search-results h3 {
+            color: #0d6efd;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .search-results ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .search-results li {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            padding: 1rem 1.5rem;
+            font-size: 1.1rem;
+            color: #343a40;
+            box-shadow: 0 1px 4px rgba(13,110,253,0.04);
+            transition: background 0.2s;
+        }
+
+        .search-results li:hover {
+            background: #e9ecef;
+        }
