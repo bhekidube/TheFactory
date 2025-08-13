@@ -34,8 +34,8 @@ export class BusSearchComponent implements OnInit {
 
   digitalText = this.messages[0];
   index = 0;
-  fromInput = '';
-  toInput = '';
+  fromInput: string = 'Bulawayo';
+  toInput: string = 'Johannesburg';
   fromSuggestions: string[] = [];
   toSuggestions: string[] = [];
   searchResults: string[] = [];
@@ -43,6 +43,15 @@ export class BusSearchComponent implements OnInit {
 
   ngOnInit() {
     setInterval(() => this.updateMessage(), 10000);
+
+    const now = new Date();
+    if (now.getHours() < 18) {
+      // Format as yyyy-MM-dd for input[type="date"]
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      this.dateInput = `${yyyy}-${mm}-${dd}`;
+    }
   }
 
   updateMessage() {
