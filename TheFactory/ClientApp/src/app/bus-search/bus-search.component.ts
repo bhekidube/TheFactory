@@ -45,13 +45,16 @@ export class BusSearchComponent implements OnInit {
     setInterval(() => this.updateMessage(), 10000);
 
     const now = new Date();
-    if (now.getHours() < 18) {
-      // Format as yyyy-MM-dd for input[type="date"]
-      const yyyy = now.getFullYear();
-      const mm = String(now.getMonth() + 1).padStart(2, '0');
-      const dd = String(now.getDate()).padStart(2, '0');
-      this.dateInput = `${yyyy}-${mm}-${dd}`;
+    let dateToUse = new Date();
+    if (now.getHours() >= 18) {
+      // After 6pm, use tomorrow's date
+      dateToUse.setDate(now.getDate() + 1);
     }
+    // Format as yyyy-MM-dd for input[type="date"]
+    const yyyy = dateToUse.getFullYear();
+    const mm = String(dateToUse.getMonth() + 1).padStart(2, '0');
+    const dd = String(dateToUse.getDate()).padStart(2, '0');
+    this.dateInput = `${yyyy}-${mm}-${dd}`;
   }
 
   updateMessage() {
