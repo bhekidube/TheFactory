@@ -6,6 +6,7 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./bus-search.component.css']
 })
 export class BusSearchComponent implements OnInit {
+  showZimraForm = false;
   messages = [
     "EKUSENI...............🚌REVIVAL(POWER HOUSE to BYO) LEAVING 08:00...............🚌BRAVO(BYO) LEAVING 11:00...............🚌 REVIVAL(BYO) LEAVING 12:00",
     "🚌 SWISS(BYO) LEAVING POWER HOUSE  19:00",
@@ -34,8 +35,8 @@ export class BusSearchComponent implements OnInit {
 
   digitalText = this.messages[0];
   index = 0;
-  fromInput: string = 'Bulawayo';
-  toInput: string = 'Johannesburg';
+  fromInput = '';
+  toInput = '';
   fromSuggestions: string[] = [];
   toSuggestions: string[] = [];
   searchResults: string[] = [];
@@ -43,18 +44,6 @@ export class BusSearchComponent implements OnInit {
 
   ngOnInit() {
     setInterval(() => this.updateMessage(), 10000);
-
-    const now = new Date();
-    let dateToUse = new Date();
-    if (now.getHours() >= 18) {
-      // After 6pm, use tomorrow's date
-      dateToUse.setDate(now.getDate() + 1);
-    }
-    // Format as yyyy-MM-dd for input[type="date"]
-    const yyyy = dateToUse.getFullYear();
-    const mm = String(dateToUse.getMonth() + 1).padStart(2, '0');
-    const dd = String(dateToUse.getDate()).padStart(2, '0');
-    this.dateInput = `${yyyy}-${mm}-${dd}`;
   }
 
   updateMessage() {

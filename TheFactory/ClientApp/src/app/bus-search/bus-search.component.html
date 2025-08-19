@@ -63,6 +63,12 @@
     <p>Reserve and pay for your seat in just a few clicks.</p>
   </div>
 </section>
+<button class="btn btn-primary" (click)="showZimraForm = true">
+  Open ZIMRA Declaration Form
+</button>
+
+<!-- Show the form as a modal or inline when button is clicked -->
+<app-zimra-declaration *ngIf="showZimraForm" (close)="showZimraForm = false"></app-zimra-declaration>
 <footer>
   &copy; 2025 HambaOnline. All rights reserved.
 </footer>

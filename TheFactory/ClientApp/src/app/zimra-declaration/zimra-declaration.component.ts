@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 
 @Component({
   selector: 'app-zimra-declaration',
@@ -6,10 +6,14 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./zimra-declaration.component.css']
 })
 export class ZimraDeclarationComponent implements OnInit {
+  @Output() close = new EventEmitter<void>();
 
   constructor() { }
 
   ngOnInit(): void {
   }
 
+  closeForm() {
+    this.close.emit();
+  }
 }
