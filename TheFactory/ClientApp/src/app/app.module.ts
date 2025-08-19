@@ -10,6 +10,7 @@ import { HomeComponent } from './home/home.component';
 import { CounterComponent } from './counter/counter.component';
 import { FetchDataComponent } from './fetch-data/fetch-data.component';
 import { BusSearchComponent } from './bus-search/bus-search.component';
+import { ZimraDeclarationComponent } from './zimra-declaration/zimra-declaration.component';
 
 @NgModule({
   declarations: [
@@ -18,7 +19,8 @@ import { BusSearchComponent } from './bus-search/bus-search.component';
     HomeComponent,
     CounterComponent,
     FetchDataComponent,
-    BusSearchComponent
+    BusSearchComponent,
+    ZimraDeclarationComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
