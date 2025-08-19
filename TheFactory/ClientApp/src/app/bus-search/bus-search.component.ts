@@ -8,20 +8,20 @@ import { Component, OnInit } from '@angular/core';
 export class BusSearchComponent implements OnInit {
   showZimraForm = false;
   messages = [
-    "EKUSENI...............🚌REVIVAL(POWER HOUSE to BYO) LEAVING 08:00...............🚌BRAVO(BYO) LEAVING 11:00...............🚌 REVIVAL(BYO) LEAVING 12:00",
-    "🚌 SWISS(BYO) LEAVING POWER HOUSE  19:00",
-    "🚌 MZANSI(BYO) LEAVING POWER HOUSE  14:00",
-    "🚌 MZANSI(BYO) LEAVING POWER HOUSE  17:00",
+    "EKUSENI...............🚌REVIVAL(POWER HOUSE to BYO) LEAVING 08:00...............🚌BRAVO(BYO) LEAVING 11:00 (+27 82 715 6380)...............🚌 REVIVAL(BYO) LEAVING 12:00 (+27 61 843 2404)",
+    "🚌 SWISS(BYO) LEAVING POWER HOUSE  19:00 - +27 64 475 8301",
+    "🚌 MZANSI(BYO) LEAVING POWER HOUSE  14:00 +27 11 057 8418",
+    "🚌 MZANSI(BYO) LEAVING POWER HOUSE  17:00 +27 11 057 8418",
     "🚌 DELTA(BYO) LEAVING POWER HOUSE  15:00",
     "🚌 DELTA(BYO) LEAVING POWER HOUSE  16:00",
-    "🚌 SWISS(BYO) LEAVING POWER HOUSE  15:00",
-    "🚌 SWISS(BYO) LEAVING POWER HOUSE  16:00",
-    "🚌 SWISS(BYO) LEAVING POWER HOUSE  17:00",
-    "🚌 IMPERIAL(BYO) LEAVING POWER HOUSE  17:00",
-    "🚌 IMPERIAL(BYO) LEAVING POWER HOUSE  18:00",
-    "🚌 BROOKLYN(BYO) LEAVING POWER HOUSE  17:00",
-    "🚌 REGIONAL(BYO) LEAVING POWER HOUSE  17:00",
-    "🚌 MTHETHI(BYO) LEAVING POWER HOUSE  18:00",
+    "🚌 SWISS(BYO) LEAVING POWER HOUSE  15:00  +27 64 475 8301",
+    "🚌 SWISS(BYO) LEAVING POWER HOUSE  16:00  +27 64 475 8301",
+    "🚌 SWISS(BYO) LEAVING POWER HOUSE  17:00  +27 64 475 8301",
+    "🚌 IMPERIAL(BYO) LEAVING POWER HOUSE  17:00  +27 10 595 4367",
+    "🚌 IMPERIAL(BYO) LEAVING POWER HOUSE  18:00  +27 10 595 4367",
+    "🚌 BROOKLYN(BYO) LEAVING POWER HOUSE  17:00 +263 78 260 1615",
+    "🚌 REGIONAL(BYO) LEAVING POWER HOUSE  17:00 +27 78 047 5428",
+    "🚌 MTHETHI(BYO) LEAVING POWER HOUSE  18:00 +263 71 625 7718",
   ];
   cities = [
     "Bulawayo", "Chegutu", "Kwekwe", "Kadoma", "Zvishavane", "Masvingo", "Durban", "East London", "Francistown", "Gaborone", "Harare", "Johannesburg", "Lilongwe", "Livingstone", "Lusaka", "Manzini", "Maputo", "Maseru", "Mbabane", "Mutare", "Polokwane", "Port Elizabeth", "Pretoria", "Walvis Bay", "Windhoek"
