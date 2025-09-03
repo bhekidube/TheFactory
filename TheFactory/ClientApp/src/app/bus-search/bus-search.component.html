@@ -31,23 +31,28 @@
   </form>
 
   <!-- Search Results -->
-  <div *ngIf="searchResults && searchResults.length" class="search-results">
-    <h3>Search Results</h3>
-    <ul>
-      <li *ngFor="let result of searchResults">
-        <!-- If result is a string -->
-        {{ result }}
-
-        <!-- If result is an object, use: -->
-        <!--
-        <strong>{{ result.from }} → {{ result.to }}</strong><br>
-        Date: {{ result.date | date }}<br>
-        Departure: {{ result.departureTime }} | Arrival: {{ result.arrivalTime }}<br>
-        Price: {{ result.price | currency }}
-        -->
-      </li>
-    </ul>
-  </div>
+  <div *ngIf="searchResults && searchResults.length" class="search-results screenshot-table-container">
+    <h3>From {{ fromInput || '...' }}</h3>
+    <table class="airport-table screenshot-table">
+      <thead>
+        <tr>
+          <th>Bus Name</th>
+          <th>Travel To</th>
+          <th>Date</th>
+          <th>Departure</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let result of searchResults">
+          <td>{{ result.busName }}</td>
+          <td>{{ result.to }}</td>
+          <td>{{ result.date | date }}</td>
+          <td>{{ result.departureTime }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="screenshot-tip">Tip: Screenshot and share on Facebook!</div>
+  </div> 
 </section>
 <section class="features">
   <div class="feature">

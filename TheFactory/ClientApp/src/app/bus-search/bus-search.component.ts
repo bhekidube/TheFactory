@@ -35,11 +35,19 @@ export class BusSearchComponent implements OnInit {
 
   digitalText = this.messages[0];
   index = 0;
-  fromInput: string = 'Bulawayo';
-  toInput: string = 'Johannesburg';
+  fromInput: string = 'Power House - JNB';
+  toInput: string = 'Bulawayo';
   fromSuggestions: string[] = [];
   toSuggestions: string[] = [];
-  searchResults: string[] = [];
+  searchResults: {
+    from: string;
+    to: string;
+    date: string;
+    departureTime: string;
+    arrivalTime: string;
+    price: number;
+    busName: string;
+  }[] = [];
   dateInput: string = '';
 
   ngOnInit() {
@@ -56,6 +64,8 @@ export class BusSearchComponent implements OnInit {
     const mm = String(dateToUse.getMonth() + 1).padStart(2, '0');
     const dd = String(dateToUse.getDate()).padStart(2, '0');
     this.dateInput = `${yyyy}-${mm}-${dd}`;
+
+    this.onSearch();
   }
 
   updateMessage() {
@@ -92,11 +102,154 @@ export class BusSearchComponent implements OnInit {
     const to = this.toInput.trim().toLowerCase();
     const fromCode = this.cityCodes[this.fromInput] || this.fromInput;
     const toCode = this.cityCodes[this.toInput] || this.toInput;
-    this.searchResults = this.messages.filter(msg =>
-      msg.toLowerCase().includes(from.toLowerCase()) ||
-      msg.toLowerCase().includes(fromCode.toLowerCase()) ||
-      msg.toLowerCase().includes(to.toLowerCase()) ||
-      msg.toLowerCase().includes(toCode.toLowerCase())
+    this.searchResults = [
+      {
+        busName: 'Revival',
+        from: 'Power House - JNB',
+        to: 'Bulawayo',
+        date: '2025-09-04',
+        departureTime: '08:00',
+        arrivalTime: '10:00',
+        price: 100
+      },
+      {
+        busName: 'Bravo',
+        from: 'Power House - JNB',
+        to: 'Bulawayo',
+        date: '2025-09-04',
+        departureTime: '11:00',
+        arrivalTime: '14:00',
+        price: 100
+      },
+      {
+        busName: 'Revival',
+        from: 'Power House - JNB',
+        to: 'Bulawayo',
+        date: '2025-09-04',
+        departureTime: '12:00',
+        arrivalTime: '20:00',
+        price: 100
+      },
+      {
+        busName: 'Swiss',
+        from: 'Power House - JNB',
+        to: 'Bulawayo',
+        date: '2025-09-04',
+        departureTime: '19:00',
+        arrivalTime: '10:00',
+        price: 100
+      },
+      {
+        busName: 'Mzansi',
+        from: 'Power House - JNB',
+        to: 'Bulawayo',
+        date: '2025-09-04',
+        departureTime: '14:00',
+        arrivalTime: '06:00',
+        price: 100
+      },
+      {
+        busName: 'Mzansi',
+        from: 'Power House - JNB',
+        to: 'Bulawayo',
+        date: '2025-09-04',
+        departureTime: '17:00',
+        arrivalTime: '20:00',
+        price: 100
+      },
+      {
+        busName: 'Delta',
+        from: 'Power House - JNB',
+        to: 'Bulawayo',
+        date: '2025-09-04',
+        departureTime: '15:00',
+        arrivalTime: '10:00',
+        price: 100
+      },
+      {
+        busName: 'Delta',
+        from: 'Power House - JNB',
+        to: 'Bulawayo',
+        date: '2025-09-04',
+        departureTime: '16:00',
+        arrivalTime: '20:00',
+        price: 100
+      },
+      {
+        busName: 'Swiss',
+        from: 'Power House - JNB',
+        to: 'Bulawayo',
+        date: '2025-09-04',
+        departureTime: '15:00',
+        arrivalTime: '10:00',
+        price: 100
+      },
+      {
+        busName: 'Swiss',
+        from: 'Power House - JNB',
+        to: 'Bulawayo',
+        date: '2025-09-04',
+        departureTime: '16:00',
+        arrivalTime: '14:00',
+        price: 100
+      },
+       {
+        busName: 'Swiss',
+        from: 'Power House - JNB',
+        to: 'Bulawayo',
+        date: '2025-09-04',
+        departureTime: '17:00',
+        arrivalTime: '14:00',
+        price: 100
+      },
+            {
+        busName: 'Imperial',
+        from: 'Power House - JNB',
+        to: 'Bulawayo',
+        date: '2025-09-04',
+        departureTime: '17:00',
+        arrivalTime: '14:00',
+        price: 100
+      },
+            {
+        busName: 'Imperial',
+        from: 'Power House - JNB',
+        to: 'Bulawayo',
+        date: '2025-09-04',
+        departureTime: '18:00',
+        arrivalTime: '14:00',
+        price: 100
+      },
+     {
+        busName: 'Regional',
+        from: 'Power House - JNB',
+        to: 'Bulawayo',
+        date: '2025-09-04',
+        departureTime: '17:00',
+        arrivalTime: '14:00',
+        price: 100
+      },
+           {
+        busName: 'Mthethi',
+        from: 'Power House - JNB',
+        to: 'Bulawayo',
+        date: '2025-09-04',
+        departureTime: '18:00',
+        arrivalTime: '14:00',
+        price: 100
+      },
+      {
+        busName: 'Brooklyn',
+        from: 'Power House - JNB',
+        to: 'Bulawayo',
+        date: '2025-09-04',
+        departureTime: '17:00',
+        arrivalTime: '20:00',
+        price: 100
+      }
+    ].filter(result =>
+      result.from.toLowerCase().includes(from) &&
+      result.to.toLowerCase().includes(to)
     );
   }
 }
