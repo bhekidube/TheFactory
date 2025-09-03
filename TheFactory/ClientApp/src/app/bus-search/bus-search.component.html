@@ -32,7 +32,7 @@
 
   <!-- Search Results -->
   <div *ngIf="searchResults && searchResults.length" class="search-results screenshot-table-container">
-    <h3>From {{ fromInput || '...' }} to {{ toInput || '...' }}</h3>
+    <h3>{{ fromInput || '...' }} to {{ toInput || '...' }}</h3>
     <table class="airport-table screenshot-table">
       <thead>
         <tr>
