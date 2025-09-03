@@ -32,12 +32,11 @@
 
   <!-- Search Results -->
   <div *ngIf="searchResults && searchResults.length" class="search-results screenshot-table-container">
-    <h3>From {{ fromInput || '...' }}</h3>
+    <h3>From {{ fromInput || '...' }} to {{ toInput || '...' }}</h3>
     <table class="airport-table screenshot-table">
       <thead>
         <tr>
-          <th>Bus Name</th>
-          <th>Travel To</th>
+          <th>Bus</th>
           <th>Date</th>
           <th>Departure</th>
         </tr>
@@ -45,7 +44,6 @@
       <tbody>
         <tr *ngFor="let result of searchResults">
           <td>{{ result.busName }}</td>
-          <td>{{ result.to }}</td>
           <td>{{ result.date | date }}</td>
           <td>{{ result.departureTime }}</td>
         </tr>
