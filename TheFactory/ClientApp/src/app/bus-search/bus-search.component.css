@@ -11,24 +11,23 @@
         .screenshot-table {
             width: 100%;
             min-width: 340px;
-            border-collapse: separate;
-            border-spacing: 0;
+            border-collapse: collapse;
+            font-family: 'VT323', monospace;
+            font-size: 1.05rem;
             background: #002366;
             border-radius: 10px;
             overflow: hidden;
-            font-family: 'VT323', 'Fira Mono', 'Consolas', monospace;
-            font-size: 1.05rem;
+            table-layout: fixed;
         }
 
         .screenshot-table th, .screenshot-table td {
             padding: 0.7rem 0.4rem;
             text-align: left;
-            border: none;
             color: #fff;
             font-size: 1.08rem;
             white-space: nowrap;
-            /* Removed text-shadow for clarity */
-            text-shadow: none;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .screenshot-table th {
@@ -98,12 +97,12 @@
             margin: 0;
             box-shadow: none;
           }
-          .screenshot-table th, .screenshot-table td {
-            padding: 0.45rem 0.2rem;
-            font-size: 0.98rem;
-          }
           .screenshot-table {
             font-size: 0.98rem;
             min-width: 280px;
+          }
+          .screenshot-table th, .screenshot-table td {
+            padding: 0.45rem 0.2rem;
+            font-size: 0.98rem;
           }
         }
