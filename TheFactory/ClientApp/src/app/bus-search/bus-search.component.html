@@ -8,8 +8,11 @@
   <p>Book buses quickly and easily across Southern Africa</p>
 </header>
 <section class="search-section">
-  <h2>Find Your Bus</h2>
-  <form (ngSubmit)="onSearch()" #busForm="ngForm">
+  <!--<h2>Find Your Bus</h2>-->
+  <button type="button" (click)="showForm = true" *ngIf="!showForm" class="search-btn">
+    <span class="icon-magnifier" aria-hidden="true"></span> 
+  </button>
+  <form *ngIf="showForm" (ngSubmit)="onSearch()" #busForm="ngForm">
     <div style="position:relative;">
       <input type="text" [(ngModel)]="fromInput" name="fromInput" placeholder="From (e.g. Bulawayo)" autocomplete="off" required (input)="onFromInputChange()" />
       <ul *ngIf="fromSuggestions.length" style="position:absolute;z-index:10;background:white;border:1px solid #ccc;list-style:none;margin:0;padding:0;width:100%;">
@@ -33,7 +36,7 @@
   <!-- Search Results -->
   <div *ngIf="searchResults && searchResults.length" class="search-results screenshot-table-container">
     <h3>{{ fromInput || '...' }} to {{ toInput || '...' }}</h3>
-    <table class="airport-table screenshot-table">
+    <table class="screenshot-table">
       <thead>
         <tr>
           <th>Bus</th>

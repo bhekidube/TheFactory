@@ -7,6 +7,7 @@ import { Component, OnInit } from '@angular/core';
 })
 export class BusSearchComponent implements OnInit {
   showZimraForm = false;
+  showForm = false;
   messages = [
     "EKUSENI...............🚌REVIVAL(POWER HOUSE to BYO) LEAVING 08:00...............🚌BRAVO(BYO) LEAVING 11:00 (+27 82 715 6380)...............🚌 REVIVAL(BYO) LEAVING 12:00 (+27 61 843 2404)",
     "🚌 SWISS(BYO) LEAVING POWER HOUSE  19:00 - +27 64 475 8301",
@@ -35,7 +36,7 @@ export class BusSearchComponent implements OnInit {
 
   digitalText = this.messages[0];
   index = 0;
-  fromInput: string = 'Power House - JNB';
+  fromInput: string = 'Power House (Jozi)';
   toInput: string = 'Bulawayo';
   fromSuggestions: string[] = [];
   toSuggestions: string[] = [];
@@ -105,7 +106,7 @@ export class BusSearchComponent implements OnInit {
     this.searchResults = [
       {
         busName: 'Revival',
-        from: 'Power House - JNB',
+        from: 'Power House (Jozi)',
         to: 'Bulawayo',
         date: '2025-09-04',
         departureTime: '08:00',
@@ -114,7 +115,7 @@ export class BusSearchComponent implements OnInit {
       },
       {
         busName: 'Bravo',
-        from: 'Power House - JNB',
+        from: 'Power House (Jozi)',
         to: 'Bulawayo',
         date: '2025-09-04',
         departureTime: '11:00',
@@ -123,7 +124,7 @@ export class BusSearchComponent implements OnInit {
       },
       {
         busName: 'Revival',
-        from: 'Power House - JNB',
+        from: 'Power House (Jozi)',
         to: 'Bulawayo',
         date: '2025-09-04',
         departureTime: '12:00',
@@ -132,7 +133,7 @@ export class BusSearchComponent implements OnInit {
       },
       {
         busName: 'Swiss',
-        from: 'Power House - JNB',
+        from: 'Power House (Jozi)',
         to: 'Bulawayo',
         date: '2025-09-04',
         departureTime: '19:00',
@@ -141,7 +142,7 @@ export class BusSearchComponent implements OnInit {
       },
       {
         busName: 'Mzansi',
-        from: 'Power House - JNB',
+        from: 'Power House (Jozi)',
         to: 'Bulawayo',
         date: '2025-09-04',
         departureTime: '14:00',
@@ -150,7 +151,7 @@ export class BusSearchComponent implements OnInit {
       },
       {
         busName: 'Mzansi',
-        from: 'Power House - JNB',
+        from: 'Power House (Jozi)',
         to: 'Bulawayo',
         date: '2025-09-04',
         departureTime: '17:00',
@@ -159,7 +160,7 @@ export class BusSearchComponent implements OnInit {
       },
       {
         busName: 'Delta',
-        from: 'Power House - JNB',
+        from: 'Power House (Jozi)',
         to: 'Bulawayo',
         date: '2025-09-04',
         departureTime: '15:00',
@@ -168,7 +169,7 @@ export class BusSearchComponent implements OnInit {
       },
       {
         busName: 'Delta',
-        from: 'Power House - JNB',
+        from: 'Power House (Jozi)',
         to: 'Bulawayo',
         date: '2025-09-04',
         departureTime: '16:00',
@@ -177,7 +178,7 @@ export class BusSearchComponent implements OnInit {
       },
       {
         busName: 'Swiss',
-        from: 'Power House - JNB',
+        from: 'Power House (Jozi)',
         to: 'Bulawayo',
         date: '2025-09-04',
         departureTime: '15:00',
@@ -186,7 +187,7 @@ export class BusSearchComponent implements OnInit {
       },
       {
         busName: 'Swiss',
-        from: 'Power House - JNB',
+        from: 'Power House (Jozi)',
         to: 'Bulawayo',
         date: '2025-09-04',
         departureTime: '16:00',
@@ -195,7 +196,7 @@ export class BusSearchComponent implements OnInit {
       },
        {
         busName: 'Swiss',
-        from: 'Power House - JNB',
+        from: 'Power House (Jozi)',
         to: 'Bulawayo',
         date: '2025-09-04',
         departureTime: '17:00',
@@ -204,7 +205,7 @@ export class BusSearchComponent implements OnInit {
       },
             {
         busName: 'Imperial',
-        from: 'Power House - JNB',
+        from: 'Power House (Jozi)',
         to: 'Bulawayo',
         date: '2025-09-04',
         departureTime: '17:00',
@@ -213,7 +214,7 @@ export class BusSearchComponent implements OnInit {
       },
             {
         busName: 'Imperial',
-        from: 'Power House - JNB',
+        from: 'Power House (Jozi)',
         to: 'Bulawayo',
         date: '2025-09-04',
         departureTime: '18:00',
@@ -222,7 +223,7 @@ export class BusSearchComponent implements OnInit {
       },
      {
         busName: 'Regional',
-        from: 'Power House - JNB',
+        from: 'Power House (Jozi)',
         to: 'Bulawayo',
         date: '2025-09-04',
         departureTime: '17:00',
@@ -231,7 +232,7 @@ export class BusSearchComponent implements OnInit {
       },
            {
         busName: 'Mthethi',
-        from: 'Power House - JNB',
+        from: 'Power House (Jozi)',
         to: 'Bulawayo',
         date: '2025-09-04',
         departureTime: '18:00',
@@ -240,7 +241,7 @@ export class BusSearchComponent implements OnInit {
       },
       {
         busName: 'Brooklyn',
-        from: 'Power House - JNB',
+        from: 'Power House (Jozi)',
         to: 'Bulawayo',
         date: '2025-09-04',
         departureTime: '17:00',
