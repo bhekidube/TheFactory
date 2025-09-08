@@ -50,6 +50,18 @@ CREATE TABLE [User] (
     FOREIGN KEY (UserTypeId) REFERENCES UserType(UserTypeId)
 );
 
+CREATE TABLE OperatorType (
+    OperatorTypeId INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(50) NOT NULL
+);
+
+CREATE TABLE Operator (
+    OperatorId INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(100) NOT NULL,
+    OperatorTypeId INT NOT NULL,
+    FOREIGN KEY (OperatorTypeId) REFERENCES OperatorType(OperatorTypeId)
+);
+
 CREATE TABLE Route (
     RouteId INT IDENTITY(1,1) PRIMARY KEY,
     OperatorId INT NOT NULL,
@@ -69,19 +81,6 @@ CREATE TABLE Route (
     FOREIGN KEY (CreatedBy) REFERENCES [User](UserId),
     FOREIGN KEY (UpdatedBy) REFERENCES [User](UserId)
 );
-
-CREATE TABLE OperatorType (
-    OperatorTypeId INT IDENTITY(1,1) PRIMARY KEY,
-    Name NVARCHAR(50) NOT NULL
-);
-
-CREATE TABLE Operator (
-    OperatorId INT IDENTITY(1,1) PRIMARY KEY,
-    Name NVARCHAR(100) NOT NULL,
-    OperatorTypeId INT NOT NULL,
-    FOREIGN KEY (OperatorTypeId) REFERENCES OperatorType(OperatorTypeId)
-);
-
 
 
 CREATE TABLE OperatorContact (
