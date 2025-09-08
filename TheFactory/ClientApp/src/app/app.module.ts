@@ -11,6 +11,7 @@ import { CounterComponent } from './counter/counter.component';
 import { FetchDataComponent } from './fetch-data/fetch-data.component';
 import { BusSearchComponent } from './bus-search/bus-search.component';
 import { ZimraDeclarationComponent } from './zimra-declaration/zimra-declaration.component';
+import { OperatorRouteComponent } from './operator-route/operator-route.component';
 
 @NgModule({
   declarations: [
@@ -20,7 +21,8 @@ import { ZimraDeclarationComponent } from './zimra-declaration/zimra-declaration
     CounterComponent,
     FetchDataComponent,
     BusSearchComponent,
-    ZimraDeclarationComponent
+    ZimraDeclarationComponent,
+    OperatorRouteComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),

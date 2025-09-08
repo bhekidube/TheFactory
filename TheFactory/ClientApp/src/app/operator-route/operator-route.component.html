@@ -1,0 +1,52 @@
+<h2>Create Route</h2>
+<form (ngSubmit)="createRoute()">
+  <label for="fromId">From Location</label>
+  <select [(ngModel)]="route.fromId" name="fromId" id="fromId" required>
+    <option *ngFor="let location of locations" [value]="location.locationId">
+      {{ location.name }}
+    </option>
+  </select>
+
+  <label for="toId">To Location</label>
+  <select [(ngModel)]="route.toId" name="toId" id="toId" required>
+    <option *ngFor="let location of locations" [value]="location.locationId">
+      {{ location.name }}
+    </option>
+  </select>
+
+  <input [(ngModel)]="route.date" name="date" type="date" required>
+  <input [(ngModel)]="route.departureTime" name="departureTime" placeholder="Departure Time" required>
+  <input [(ngModel)]="route.arrivalTime" name="arrivalTime" placeholder="Arrival Time" required>
+  <input [(ngModel)]="route.price" name="price" type="number" required>
+  <button type="submit">Create Route</button>
+</form>
+
+<h2>Update Route</h2>
+<form (ngSubmit)="updateRoute()">
+  <label for="updateRouteId">Select Route</label>
+  <select [(ngModel)]="updateRouteId" name="updateRouteId" id="updateRouteId" required>
+    <option *ngFor="let route of routes" [value]="route.routeId">
+      {{ route.routeId }} - {{ route.fromName }} to {{ route.toName }} ({{ route.date }})
+    </option>
+  </select>
+
+  <label for="updateFromId">From Location</label>
+  <select [(ngModel)]="updateRouteData.fromId" name="updateFromId" id="updateFromId" required>
+    <option *ngFor="let location of locations" [value]="location.locationId">
+      {{ location.name }}
+    </option>
+  </select>
+
+  <label for="updateToId">To Location</label>
+  <select [(ngModel)]="updateRouteData.toId" name="updateToId" id="updateToId" required>
+    <option *ngFor="let location of locations" [value]="location.locationId">
+      {{ location.name }}
+    </option>
+  </select>
+
+  <input [(ngModel)]="updateRouteData.date" name="updateDate" type="date" required>
+  <input [(ngModel)]="updateRouteData.departureTime" name="updateDepartureTime" placeholder="Departure Time" required>
+  <input [(ngModel)]="updateRouteData.arrivalTime" name="updateArrivalTime" placeholder="Arrival Time" required>
+  <input [(ngModel)]="updateRouteData.price" name="updatePrice" type="number" required>
+  <button type="submit">Update Route</button>
+</form>
