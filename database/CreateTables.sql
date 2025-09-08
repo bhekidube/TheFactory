@@ -52,7 +52,7 @@ CREATE TABLE [User] (
 
 CREATE TABLE Route (
     RouteId INT IDENTITY(1,1) PRIMARY KEY,
-    BusName NVARCHAR(100) NOT NULL,
+    OperatorId INT NOT NULL,
     FromId INT NOT NULL,
     ToId INT NOT NULL,
     Date DATE NOT NULL,
@@ -63,6 +63,7 @@ CREATE TABLE Route (
     CreatedDate DATETIME NOT NULL DEFAULT GETDATE(),
     UpdatedBy INT NULL,
     UpdatedDate DATETIME NULL,
+    FOREIGN KEY (OperatorId) REFERENCES Operator(OperatorId),
     FOREIGN KEY (FromId) REFERENCES Town(TownId),
     FOREIGN KEY (ToId) REFERENCES Town(TownId),
     FOREIGN KEY (CreatedBy) REFERENCES [User](UserId),
