@@ -27,14 +27,14 @@ export class OperatorRouteComponent implements OnInit {
   constructor(private routeService: RouteService, private http: HttpClient) {}
 
   ngOnInit() {
-    // Load locations
-    this.http.get<any[]>('/api/location').subscribe(data => {
-      this.locations = data;
+    this.http.get<any[]>('/api/location').subscribe({
+      next: data => this.locations = data,
+      error: err => console.error('Location error:', err)
     });
 
-    // Load routes
-    this.http.get<any[]>('/api/route').subscribe(data => {
-      this.routes = data;
+    this.http.get<any[]>('/api/route').subscribe({
+      next: data => this.routes = data,
+      error: err => console.error('Route error:', err)
     });
   }
 
