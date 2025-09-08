@@ -1,2 +1,5 @@
 <app-bus-search></app-bus-search>
-<app-operator-route></app-operator-route>
+<button (click)="toggleOperatorRoute()">
+  {{ showOperatorRoute ? 'Hide Operator Route' : '..' }}
+</button>
+<app-operator-route *ngIf="showOperatorRoute"></app-operator-route>
