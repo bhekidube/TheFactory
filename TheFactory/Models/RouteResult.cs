@@ -1,4 +1,4 @@
-public class BusResult
+public class RouteResult
 {
     public string BusName { get; set; }
     public string From { get; set; }

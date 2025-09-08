@@ -6,20 +6,20 @@ using System.Threading.Tasks;
 
 [ApiController]
 [Route("api/[controller]")]
-public class BusController : ControllerBase
+public class RouteController : ControllerBase
 {
     private readonly IConfiguration _config;
-    public BusController(IConfiguration config) { _config = config; }
+    public RouteController(IConfiguration config) { _config = config; }
 
     [HttpGet]
-    public async Task<IActionResult> GetBuses([FromQuery] string from, [FromQuery] string to, [FromQuery] string date)
+    public async Task<IActionResult> Routes([FromQuery] string from, [FromQuery] string to, [FromQuery] string date)
     {
-        var results = new List<BusResult>();
+        var results = new List<RouteResult>();
         using (var conn = new SqlConnection(_config.GetConnectionString("AzureSqlDb")))
         {
             await conn.OpenAsync();
             var cmd = new SqlCommand(
-                "SELECT BusName, [From], [To], Date, DepartureTime, ArrivalTime, Price FROM Buses WHERE [From]=@from AND [To]=@to AND Date=@date",
+                "SELECT BusName, [From], [To], Date, DepartureTime, ArrivalTime, Price FROM Route WHERE [From]=@from AND [To]=@to AND Date=@date",
                 conn);
             cmd.Parameters.AddWithValue("@from", from);
             cmd.Parameters.AddWithValue("@to", to);
@@ -29,7 +29,7 @@ public class BusController : ControllerBase
             {
                 while (await reader.ReadAsync())
                 {
-                    results.Add(new BusResult
+                    results.Add(new RouteResult
                     {
                         BusName = reader["BusName"].ToString(),
                         From = reader["From"].ToString(),
