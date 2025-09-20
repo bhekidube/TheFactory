@@ -199,7 +199,7 @@ IF NOT EXISTS (
     VALUES ('Kezi', (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
 
 IF NOT EXISTS (
-    SELECT 1 FROM Town 
+    SELECT
     WHERE Name = 'Figtree' 
       AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
 )
@@ -426,7 +426,7 @@ IF NOT EXISTS (
     INSERT INTO Town (Name, RegionId) 
     VALUES ('Muzarabani', (SELECT RegionId FROM Region WHERE Name = 'Mashonaland Central' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
 
-IF NOT EXISTS (
+IF NOT EXISTS
     SELECT 1 FROM Town 
     WHERE Name = 'Shamva' 
       AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Mashonaland Central' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
@@ -758,4 +758,64 @@ IF NOT EXISTS (
         (SELECT RegionId FROM Region WHERE Name = 'Gauteng' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'South Africa')),
         (SELECT CountryId FROM Country WHERE Name = 'South Africa'),
         (SELECT LocationTypeId FROM LocationType WHERE Name = 'Bus stop')
+    );
+
+-- Insert "Swift" location in Bulawayo only if it does not already exist
+IF NOT EXISTS (
+    SELECT 1 FROM Location 
+    WHERE Name = 'Swift'
+      AND TownId = (SELECT TownId FROM Town WHERE Name = 'Bulawayo')
+)
+    INSERT INTO Location (Name, TownId, RegionId, CountryId, LocationTypeId)
+    VALUES (
+        'Swift',
+        (SELECT TownId FROM Town WHERE Name = 'Bulawayo'),
+        (SELECT RegionId FROM Region WHERE Name = 'Bulawayo' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')),
+        (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'),
+        (SELECT LocationTypeId FROM LocationType WHERE Name = 'Bus station')
+    );
+
+-- Insert "RG Mugabe/ 5 St" location in Bulawayo only if it does not already exist
+IF NOT EXISTS (
+    SELECT 1 FROM Location 
+    WHERE Name = 'RG Mugabe/Five St'
+      AND TownId = (SELECT TownId FROM Town WHERE Name = 'Bulawayo')
+)
+    INSERT INTO Location (Name, TownId, RegionId, CountryId, LocationTypeId)
+    VALUES (
+        'RG Mugabe/Five St',
+        (SELECT TownId FROM Town WHERE Name = 'Bulawayo'),
+        (SELECT RegionId FROM Region WHERE Name = 'Bulawayo' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')),
+        (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'),
+        (SELECT LocationTypeId FROM LocationType WHERE Name = 'Bus station')
+    );
+
+-- Insert "Renkini" location in Bulawayo only if it does not already exist
+IF NOT EXISTS (
+    SELECT 1 FROM Location 
+    WHERE Name = 'Renkini'
+      AND TownId = (SELECT TownId FROM Town WHERE Name = 'Bulawayo')
+)
+    INSERT INTO Location (Name, TownId, RegionId, CountryId, LocationTypeId)
+    VALUES (
+        'Renkini',
+        (SELECT TownId FROM Town WHERE Name = 'Bulawayo'),
+        (SELECT RegionId FROM Region WHERE Name = 'Bulawayo' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')),
+        (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'),
+        (SELECT LocationTypeId FROM LocationType WHERE Name = 'Bus station')
+    );
+
+    -- Insert "Roadport" location in Harare only if it does not already exist
+IF NOT EXISTS (
+    SELECT 1 FROM Location 
+    WHERE Name = 'Roadport'
+      AND TownId = (SELECT TownId FROM Town WHERE Name = 'Harare')
+)
+    INSERT INTO Location (Name, TownId, RegionId, CountryId, LocationTypeId)
+    VALUES (
+        'Roadport',
+        (SELECT TownId FROM Town WHERE Name = 'Harare'),
+        (SELECT RegionId FROM Region WHERE Name = 'Harare' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')),
+        (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'),
+        (SELECT LocationTypeId FROM LocationType WHERE Name = 'Bus station')
     );
