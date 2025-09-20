@@ -10,10 +10,12 @@ using TheFactory.Models;
 public class BusTripsController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly IConfiguration _configuration;
 
-    public BusTripsController(AppDbContext context)
+    public BusTripsController(AppDbContext context, IConfiguration configuration)
     {
         _context = context;
+        _configuration = configuration;
     }
 
     [HttpGet]
@@ -41,7 +43,7 @@ public class BusTripsController : ControllerBase
     private async Task UseSqlConnection()
     {
         var accessToken = await GetAccessToken();
-        var connectionString = builder.Configuration.GetConnectionString("AzureSqlDb");
+        var connectionString = _configuration.GetConnectionString("AzureSqlDb");
         using (var conn = new SqlConnection(connectionString))
         {
             conn.AccessToken = accessToken;
