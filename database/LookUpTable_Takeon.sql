@@ -29,11 +29,11 @@ IF NOT EXISTS (SELECT 1 FROM Country WHERE Name = 'Zimbabwe')
 
 
 -- Insert regions for Zimbabwe only if they do not already exist
-IF NOT EXISTS (SELECT 1 FROM Region WHERE Name = 'Matebeland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
-    INSERT INTO Region (Name, CountryId) VALUES ('Matebeland North', (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'));
+IF NOT EXISTS (SELECT 1 FROM Region WHERE Name = 'Matabeleland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
+    INSERT INTO Region (Name, CountryId) VALUES ('Matabeleland North', (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'));
 
-IF NOT EXISTS (SELECT 1 FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
-    INSERT INTO Region (Name, CountryId) VALUES ('Matebeland South', (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'));
+IF NOT EXISTS (SELECT 1 FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
+    INSERT INTO Region (Name, CountryId) VALUES ('Matabeleland South', (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'));
 
 IF NOT EXISTS (SELECT 1 FROM Region WHERE Name = 'Masvingo' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
     INSERT INTO Region (Name, CountryId) VALUES ('Masvingo', (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'));
@@ -59,160 +59,166 @@ IF NOT EXISTS (SELECT 1 FROM Region WHERE Name = 'Manicaland' AND CountryId = (S
     INSERT INTO Region (Name, CountryId) VALUES ('Manicaland', (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'));
 
 
--- Insert towns for Matebeland North in Zimbabwe only if they do not already exist
+-- Insert towns for Matabeleland North in Zimbabwe only if they do not already exist
 IF NOT EXISTS (
     SELECT 1 FROM Town 
     WHERE Name = 'Lupane' 
-      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matebeland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
+      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matabeleland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
 )
     INSERT INTO Town (Name, RegionId) 
-    VALUES ('Lupane', (SELECT RegionId FROM Region WHERE Name = 'Matebeland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
+    VALUES ('Lupane', (SELECT RegionId FROM Region WHERE Name = 'Matabeleland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
 
 IF NOT EXISTS (
     SELECT 1 FROM Town 
     WHERE Name = 'Victoria Falls' 
-      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matebeland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
+      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matabeleland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
 )
     INSERT INTO Town (Name, RegionId) 
-    VALUES ('Victoria Falls', (SELECT RegionId FROM Region WHERE Name = 'Matebeland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
+    VALUES ('Victoria Falls', (SELECT RegionId FROM Region WHERE Name = 'Matabeleland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
 
 IF NOT EXISTS (
     SELECT 1 FROM Town 
     WHERE Name = 'Hwange' 
-      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matebeland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
+      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matabeleland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
 )
     INSERT INTO Town (Name, RegionId) 
-    VALUES ('Hwange', (SELECT RegionId FROM Region WHERE Name = 'Matebeland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
+    VALUES ('Hwange', (SELECT RegionId FROM Region WHERE Name = 'Matabeleland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
 
 IF NOT EXISTS (
     SELECT 1 FROM Town 
     WHERE Name = 'Binga' 
-      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matebeland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
+      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matabeleland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
 )
     INSERT INTO Town (Name, RegionId) 
-    VALUES ('Binga', (SELECT RegionId FROM Region WHERE Name = 'Matebeland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
+    VALUES ('Binga', (SELECT RegionId FROM Region WHERE Name = 'Matabeleland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
 
 IF NOT EXISTS (
     SELECT 1 FROM Town 
     WHERE Name = 'Nkayi' 
-      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matebeland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
+      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matabeleland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
 )
     INSERT INTO Town (Name, RegionId) 
-    VALUES ('Nkayi', (SELECT RegionId FROM Region WHERE Name = 'Matebeland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
+    VALUES ('Nkayi', (SELECT RegionId FROM Region WHERE Name = 'Matabeleland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
 
 IF NOT EXISTS (
     SELECT 1 FROM Town 
     WHERE Name = 'Tsholotsho' 
-      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matebeland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
+      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matabeleland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
 )
     INSERT INTO Town (Name, RegionId) 
-    VALUES ('Tsholotsho', (SELECT RegionId FROM Region WHERE Name = 'Matebeland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
-
-
--- Insert towns for Matebeland South in Zimbabwe only if they do not already exist
+    VALUES ('Tsholotsho', (SELECT RegionId FROM Region WHERE Name = 'Matabeleland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
+-- Ensure Bulawayo exists in Town table before inserting locations
+IF NOT EXISTS (
+    SELECT 1 FROM Town 
+    WHERE Name = 'Bulawayo' 
+      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matabeleland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
+)
+    INSERT INTO Town (Name, RegionId)
+    VALUES ('Bulawayo', (SELECT RegionId FROM Region WHERE Name = 'Matabeleland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
+-- Insert towns for Matabeleland South in Zimbabwe only if they do not already exist
 IF NOT EXISTS (
     SELECT 1 FROM Town 
     WHERE Name = 'Gwanda' 
-      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
+      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
 )
     INSERT INTO Town (Name, RegionId) 
-    VALUES ('Gwanda', (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
+    VALUES ('Gwanda', (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
 
 IF NOT EXISTS (
     SELECT 1 FROM Town 
     WHERE Name = 'Beitbridge' 
-      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
+      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
 )
     INSERT INTO Town (Name, RegionId) 
-    VALUES ('Beitbridge', (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
+    VALUES ('Beitbridge', (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
 
 IF NOT EXISTS (
     SELECT 1 FROM Town 
     WHERE Name = 'Plumtree' 
-      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
+      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
 )
     INSERT INTO Town (Name, RegionId) 
-    VALUES ('Plumtree', (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
+    VALUES ('Plumtree', (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
 
 IF NOT EXISTS (
     SELECT 1 FROM Town 
     WHERE Name = 'Esigodini' 
-      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
+      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
 )
     INSERT INTO Town (Name, RegionId) 
-    VALUES ('Esigodini', (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
+    VALUES ('Esigodini', (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
 
 IF NOT EXISTS (
     SELECT 1 FROM Town 
     WHERE Name = 'Maphisa' 
-      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
+      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
 )
     INSERT INTO Town (Name, RegionId) 
-    VALUES ('Maphisa', (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
+    VALUES ('Maphisa', (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
 
 IF NOT EXISTS (
     SELECT 1 FROM Town 
     WHERE Name = 'Filabusi' 
-      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
+      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
 )
     INSERT INTO Town (Name, RegionId) 
-    VALUES ('Filabusi', (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
+    VALUES ('Filabusi', (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
 
 IF NOT EXISTS (
     SELECT 1 FROM Town 
     WHERE Name = 'West Nicholson' 
-      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
+      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
 )
     INSERT INTO Town (Name, RegionId) 
-    VALUES ('West Nicholson', (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
+    VALUES ('West Nicholson', (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
 
 IF NOT EXISTS (
     SELECT 1 FROM Town 
     WHERE Name = 'Ndolwane' 
-      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
+      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
 )
     INSERT INTO Town (Name, RegionId) 
-    VALUES ('Ndolwane', (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
+    VALUES ('Ndolwane', (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
 
 IF NOT EXISTS (
     SELECT 1 FROM Town 
     WHERE Name = 'Shangani' 
-      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
+      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
 )
     INSERT INTO Town (Name, RegionId) 
-    VALUES ('Shangani', (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
+    VALUES ('Shangani', (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
 
 IF NOT EXISTS (
     SELECT 1 FROM Town 
     WHERE Name = 'Stanmore' 
-      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
+      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
 )
     INSERT INTO Town (Name, RegionId) 
-    VALUES ('Stanmore', (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
+    VALUES ('Stanmore', (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
 
 IF NOT EXISTS (
     SELECT 1 FROM Town 
     WHERE Name = 'Kezi' 
-      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
+      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
 )
     INSERT INTO Town (Name, RegionId) 
-    VALUES ('Kezi', (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
+    VALUES ('Kezi', (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
 
 IF NOT EXISTS (
-    SELECT
+    SELECT 1 FROM Town 
     WHERE Name = 'Figtree' 
-      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
+      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
 )
     INSERT INTO Town (Name, RegionId) 
-    VALUES ('Figtree', (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
+    VALUES ('Figtree', (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
 
 IF NOT EXISTS (
     SELECT 1 FROM Town 
     WHERE Name = 'Manama' 
-      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
+      AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
 )
     INSERT INTO Town (Name, RegionId) 
-    VALUES ('Manama', (SELECT RegionId FROM Region WHERE Name = 'Matebeland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
+    VALUES ('Manama', (SELECT RegionId FROM Region WHERE Name = 'Matabeleland South' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
 
 
 -- Insert towns for Masvingo in Zimbabwe only if they do not already exist
@@ -426,7 +432,7 @@ IF NOT EXISTS (
     INSERT INTO Town (Name, RegionId) 
     VALUES ('Muzarabani', (SELECT RegionId FROM Region WHERE Name = 'Mashonaland Central' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')));
 
-IF NOT EXISTS
+IF NOT EXISTS (
     SELECT 1 FROM Town 
     WHERE Name = 'Shamva' 
       AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Mashonaland Central' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'))
@@ -770,7 +776,7 @@ IF NOT EXISTS (
     VALUES (
         'Swift',
         (SELECT TownId FROM Town WHERE Name = 'Bulawayo'),
-        (SELECT RegionId FROM Region WHERE Name = 'Bulawayo' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')),
+        (SELECT RegionId FROM Region WHERE Name = 'Matabeleland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')),
         (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'),
         (SELECT LocationTypeId FROM LocationType WHERE Name = 'Bus station')
     );
@@ -785,7 +791,7 @@ IF NOT EXISTS (
     VALUES (
         'RG Mugabe/Five St',
         (SELECT TownId FROM Town WHERE Name = 'Bulawayo'),
-        (SELECT RegionId FROM Region WHERE Name = 'Bulawayo' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')),
+        (SELECT RegionId FROM Region WHERE Name = 'Matabeleland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')),
         (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'),
         (SELECT LocationTypeId FROM LocationType WHERE Name = 'Bus station')
     );
@@ -800,7 +806,7 @@ IF NOT EXISTS (
     VALUES (
         'Renkini',
         (SELECT TownId FROM Town WHERE Name = 'Bulawayo'),
-        (SELECT RegionId FROM Region WHERE Name = 'Bulawayo' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')),
+        (SELECT RegionId FROM Region WHERE Name = 'Matabeleland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')),
         (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'),
         (SELECT LocationTypeId FROM LocationType WHERE Name = 'Bus station')
     );
@@ -808,14 +814,37 @@ IF NOT EXISTS (
     -- Insert "Roadport" location in Harare only if it does not already exist
 IF NOT EXISTS (
     SELECT 1 FROM Location 
-    WHERE Name = 'Roadport'
+    WHERE Name = 'Road port'
       AND TownId = (SELECT TownId FROM Town WHERE Name = 'Harare')
 )
     INSERT INTO Location (Name, TownId, RegionId, CountryId, LocationTypeId)
     VALUES (
-        'Roadport',
+        'Road port',
         (SELECT TownId FROM Town WHERE Name = 'Harare'),
         (SELECT RegionId FROM Region WHERE Name = 'Harare' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')),
         (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'),
         (SELECT LocationTypeId FROM LocationType WHERE Name = 'Bus station')
     );
+
+-- Insert "Bus operator" into OperatorType only if it does not already exist
+IF NOT EXISTS (SELECT 1 FROM OperatorType WHERE Name = 'Bus operator')
+    INSERT INTO OperatorType (Name) VALUES ('Bus operator');
+
+
+
+-- Insert "Swift" location in Bulawayo only if it does not already exist
+IF NOT EXISTS (
+    SELECT 1 FROM Location 
+    WHERE Name = 'Swift'
+      AND TownId = (SELECT TownId FROM Town WHERE Name = 'Bulawayo')
+)
+    INSERT INTO Location (Name, TownId, RegionId, CountryId, LocationTypeId)
+    VALUES (
+        'Swift',
+        (SELECT TownId FROM Town WHERE Name = 'Bulawayo'),
+        (SELECT RegionId FROM Region WHERE Name = 'Bulawayo' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')),
+        (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'),
+        (SELECT LocationTypeId FROM LocationType WHERE Name = 'Bus station')
+    );
+
+
