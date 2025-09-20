@@ -35,19 +35,19 @@ CREATE TABLE Location (
     FOREIGN KEY (LocationTypeId) REFERENCES LocationType(LocationTypeId)
 );
 
-CREATE TABLE UserType (
-    UserTypeId INT IDENTITY(1,1) PRIMARY KEY,
+CREATE TABLE UserRole (
+    UserRoleId INT IDENTITY(1,1) PRIMARY KEY,
     Name NVARCHAR(50) NOT NULL
 );
 
 CREATE TABLE [User] (
     UserId INT IDENTITY(1,1) PRIMARY KEY,
-    UserTypeId INT NOT NULL,
+    UserRoleId INT NOT NULL,
     Name NVARCHAR(100) NOT NULL,
     Email NVARCHAR(100),
     CellPhoneNo NVARCHAR(30),
     AlternateCellPhoneNo NVARCHAR(30),
-    FOREIGN KEY (UserTypeId) REFERENCES UserType(UserTypeId)
+    FOREIGN KEY (UserRoleId) REFERENCES UserRole(UserRoleId)
 );
 
 CREATE TABLE OperatorType (

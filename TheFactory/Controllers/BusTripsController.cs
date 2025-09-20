@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
+using Microsoft.Identity.Client;
 using System.Collections.Generic;
 using System.Linq;
 using TheFactory.Models;
@@ -18,5 +20,33 @@ public class BusTripsController : ControllerBase
     public ActionResult<IEnumerable<BusTrip>> GetBusTrips()
     {
         return _context.BusTrips.ToList();
+    }
+
+    private async Task<string> GetAccessToken()
+    {
+        var tenantId = "<your-tenant-id>";
+        var clientId = "<your-client-id>";
+        var clientSecret = "<your-client-secret>";
+        var sqlResource = "https://database.windows.net/";
+
+        var app = ConfidentialClientApplicationBuilder.Create(clientId)
+            .WithClientSecret(clientSecret)
+            .WithAuthority(new Uri($"https://login.microsoftonline.com/{tenantId}"))
+            .Build();
+
+        var result = await app.AcquireTokenForClient(new[] { sqlResource + "/.default" }).ExecuteAsync();
+        return result.AccessToken;
+    }
+
+    private async Task UseSqlConnection()
+    {
+        var accessToken = await GetAccessToken();
+        var connectionString = builder.Configuration.GetConnectionString("AzureSqlDb");
+        using (var conn = new SqlConnection(connectionString))
+        {
+            conn.AccessToken = accessToken;
+            conn.Open();
+            // ... use your connection ...
+        }
     }
 }
