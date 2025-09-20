@@ -848,3 +848,27 @@ IF NOT EXISTS (
     );
 
 
+-- Insert operators with OperatorTypeId = 1 only if they do not already exist
+IF NOT EXISTS (SELECT 1 FROM Operator WHERE Name = 'Revival')
+    INSERT INTO Operator (Name, OperatorTypeId) VALUES ('Revival', 1);
+
+IF NOT EXISTS (SELECT 1 FROM Operator WHERE Name = 'Bravo')
+    INSERT INTO Operator (Name, OperatorTypeId) VALUES ('Bravo', 1);
+
+IF NOT EXISTS (SELECT 1 FROM Operator WHERE Name = 'Swiss')
+    INSERT INTO Operator (Name, OperatorTypeId) VALUES ('Swiss', 1);
+
+IF NOT EXISTS (SELECT 1 FROM Operator WHERE Name = 'Mzansi')
+    INSERT INTO Operator (Name, OperatorTypeId) VALUES ('Mzansi', 1);
+
+IF NOT EXISTS (SELECT 1 FROM Operator WHERE Name = 'Delta')
+    INSERT INTO Operator (Name, OperatorTypeId) VALUES ('Delta', 1);
+
+IF NOT EXISTS (SELECT 1 FROM Operator WHERE Name = 'Imperial lane')
+    INSERT INTO Operator (Name, OperatorTypeId) VALUES ('Imperial lane', 1);
+
+IF NOT EXISTS (SELECT 1 FROM Operator WHERE Name = 'Regional')
+    INSERT INTO Operator (Name, OperatorTypeId) VALUES ('Regional', 1);
+
+IF NOT EXISTS (SELECT 1 FROM Operator WHERE Name = 'Mthethi')
+    INSERT INTO Operator (Name, OperatorTypeId) VALUES ('Mthethi', 1);
