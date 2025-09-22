@@ -1,8 +1,21 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using Azure.Identity;
+using Azure.Extensions.AspNetCore.Configuration.Secrets;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add Key Vault
+builder.Host.ConfigureAppConfiguration((context, config) =>
+{
+    var builtConfig = config.Build();
+    var keyVaultUrl = builtConfig["KeyVaultUrl"];
+    if (!string.IsNullOrEmpty(keyVaultUrl))
+    {
+        config.AddAzureKeyVault(new Uri(keyVaultUrl), new DefaultAzureCredential());
+    }
+});
 
 // Add services to the container.
 builder.Services.AddControllers();

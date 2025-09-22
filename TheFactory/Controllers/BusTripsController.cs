@@ -40,7 +40,7 @@ public class BusTripsController : ControllerBase
     {
         var tenantId = "00159d0c-a64d-4739-91a6-442253d89666";
         var clientId = "3e58a20c-ffee-49ff-8be0-7156d4fb1deb";
-        var clientSecret = "REMOVED_SECRET";
+        var clientSecret = "";
         var sqlResource = "https://database.windows.net/";
 
         var app = ConfidentialClientApplicationBuilder.Create(clientId)
