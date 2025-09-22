@@ -26,9 +26,9 @@ public class BusTripsController : ControllerBase
 
     private async Task<string> GetAccessToken()
     {
-        var tenantId = "<your-tenant-id>";
-        var clientId = "<your-client-id>";
-        var clientSecret = "<your-client-secret>";
+        var tenantId = "00159d0c-a64d-4739-91a6-442253d89666";
+        var clientId = "3e58a20c-ffee-49ff-8be0-7156d4fb1deb";
+        var clientSecret = "106452f9-187b-4958-86e7-1de759f339a3";
         var sqlResource = "https://database.windows.net/";
 
         var app = ConfidentialClientApplicationBuilder.Create(clientId)
