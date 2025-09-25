@@ -6,7 +6,7 @@ DECLARE @UserRoleId int=1
 SELECT @UserRoleId = UserRoleId FROM UserRole WHERE Name LIKE 'SystemAdmin'
 
 
-DECLARE @Name nvarchar(100)= 'Dev Advocate'
+DECLARE @Name nvarchar(100)= 'Code Advocate'
 DECLARE @Email nvarchar(100)= 'bhekinkosidube@gmail.com'
 DECLARE @CellPhoneNo nvarchar(30)='0785570422'
 DECLARE @AlternateCellPhoneNo nvarchar(30)=''
@@ -24,3 +24,13 @@ EXECUTE @RC = [dbo].[CreateUser]
 --ROLLBACK
 
 GO
+
+{
+  "operatorId": 6,
+  "fromId": 1,
+  "toId": 8,
+  "createdBy": 1
+}
+
+
+EXEC sp_who2;  -- Check active queries
