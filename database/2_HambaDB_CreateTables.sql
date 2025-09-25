@@ -67,6 +67,22 @@ CREATE TABLE Route (
     OperatorId INT NOT NULL,
     FromId INT NOT NULL,
     ToId INT NOT NULL,
+    CreatedBy INT NOT NULL,
+    CreatedDate DATETIME NOT NULL DEFAULT GETDATE(),
+    UpdatedBy INT NULL,
+    UpdatedDate DATETIME NULL,
+    Active BIT NOT NULL DEFAULT 1,  
+    Notes NVARCHAR(255) NULL,
+    CONSTRAINT FK_Route_Operator FOREIGN KEY (OperatorId) REFERENCES Operator(OperatorId),
+    CONSTRAINT FK_Route_Town_From FOREIGN KEY (FromId) REFERENCES Town(TownId),
+    CONSTRAINT FK_Route_Town_To FOREIGN KEY (ToId) REFERENCES Town(TownId),
+    CONSTRAINT FK_Route_User_CreatedBy FOREIGN KEY (CreatedBy) REFERENCES [User](UserId),
+    CONSTRAINT FK_Route_User_UpdatedBy FOREIGN KEY (UpdatedBy) REFERENCES [User](UserId)
+);
+
+CREATE TABLE RouteTrip (
+    TripId INT IDENTITY(1,1) PRIMARY KEY,
+    RouteId INT NOT NULL,
     DepartureDateTime DATETIME NOT NULL,
     ArrivalDateTime DATETIME NOT NULL,
     Price DECIMAL(18,2) NOT NULL,
@@ -74,11 +90,11 @@ CREATE TABLE Route (
     CreatedDate DATETIME NOT NULL DEFAULT GETDATE(),
     UpdatedBy INT NULL,
     UpdatedDate DATETIME NULL,
-    FOREIGN KEY (OperatorId) REFERENCES Operator(OperatorId),
-    FOREIGN KEY (FromId) REFERENCES Town(TownId),
-    FOREIGN KEY (ToId) REFERENCES Town(TownId),
-    FOREIGN KEY (CreatedBy) REFERENCES [User](UserId),
-    FOREIGN KEY (UpdatedBy) REFERENCES [User](UserId)
+    Notes NVARCHAR(255) NULL,
+    Active BIT NOT NULL DEFAULT 1,
+    CONSTRAINT FK_RouteTrip_Route FOREIGN KEY (RouteId) REFERENCES Route(RouteId),
+    CONSTRAINT FK_RouteTrip_CreatedBy FOREIGN KEY (CreatedBy) REFERENCES [User](UserId),
+    CONSTRAINT FK_RouteTrip_UpdatedBy FOREIGN KEY (UpdatedBy) REFERENCES [User](UserId)
 );
 
 
@@ -89,6 +105,22 @@ CREATE TABLE OperatorContact (
     CellPhoneNo NVARCHAR(30),
     Address NVARCHAR(200),
     OperatorContactPersonId INT NOT NULL,
-    FOREIGN KEY (OperatorId) REFERENCES Operator(OperatorId),
-    FOREIGN KEY (OperatorContactPersonId) REFERENCES [User](UserId)
+    CONSTRAINT FK_OperatorContact_Operator FOREIGN KEY (OperatorId) REFERENCES Operator(OperatorId),
+    CONSTRAINT FK_OperatorContact_Person FOREIGN KEY (OperatorContactPersonId) REFERENCES [User](UserId)
 );
+
+IF OBJECT_ID('Ticket', 'U') IS NULL
+BEGIN
+    CREATE TABLE Ticket (
+        TicketId INT IDENTITY(1,1) PRIMARY KEY,
+        RouteId INT NOT NULL,
+        UserId INT NOT NULL,
+        SeatNumber NVARCHAR(20) NOT NULL,
+        Price DECIMAL(18,2) NOT NULL,
+        PurchaseDate DATETIME NOT NULL DEFAULT GETDATE(),
+        Status NVARCHAR(50) NOT NULL,
+        FOREIGN KEY (RouteId) REFERENCES Route(RouteId),
+        FOREIGN KEY (UserId) REFERENCES [User](UserId)
+    );
+END
+GO
