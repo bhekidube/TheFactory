@@ -150,17 +150,30 @@ public class BusTripsController : ControllerBase
     [HttpPost("InsertRoute")]
     public async Task<IActionResult> InsertRoute([FromBody] RouteInsertModel model)
     {
-        using (var conn = await GetSqlConnection())
-        using (var command = new SqlCommand("dbo.InsertRoute", conn))
+        try
         {
-            command.CommandType = CommandType.StoredProcedure;
-            command.Parameters.AddWithValue("@OperatorId", model.OperatorId);
-            command.Parameters.AddWithValue("@FromId", model.FromId);
-            command.Parameters.AddWithValue("@ToId", model.ToId);
-            command.Parameters.AddWithValue("@CreatedBy", model.CreatedBy);
+            using (var conn = await GetSqlConnection())
+            using (var command = new SqlCommand("dbo.InsertRoute", conn))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.Parameters.AddWithValue("@OperatorId", model.OperatorId);
+                command.Parameters.AddWithValue("@FromId", model.FromId);
+                command.Parameters.AddWithValue("@ToId", model.ToId);
+                command.Parameters.AddWithValue("@CreatedBy", model.CreatedBy);
 
-            var result = await command.ExecuteNonQueryAsync();
-            return Ok(new { RowsAffected = result });
+                var result = await command.ExecuteNonQueryAsync();
+                return Ok(new { RowsAffected = result });
+            }
+        }
+        catch (SqlException ex)
+        {
+            // Log exception as needed
+            return StatusCode(500, new { error = "A database error occurred.", details = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            // Log exception as needed
+            return StatusCode(500, new { error = "An unexpected error occurred.", details = ex.Message });
         }
     }
 
