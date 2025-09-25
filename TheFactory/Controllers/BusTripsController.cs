@@ -93,7 +93,6 @@ public class BusTripsController : ControllerBase
         var accessToken = await GetAccessToken();
         var connectionString = _configuration.GetConnectionString("AzureSqlDb");
         var conn = new SqlConnection(connectionString);
-        conn.AccessToken = accessToken;
         await conn.OpenAsync();
         return conn;
     }
