@@ -95,3 +95,8 @@ FROM sys.database_principals
 WHERE name = 'AzureLinuxAppService';
 
 --GRANT EXECUTE ON OBJECT::dbo.InsertRoute TO [AzureLinuxAppService];
+
+
+
+
+SELECT GETDATE()

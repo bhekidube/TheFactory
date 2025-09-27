@@ -44,9 +44,13 @@ CREATE TABLE [User] (
     UserId INT IDENTITY(1,1) PRIMARY KEY,
     UserRoleId INT NOT NULL,
     Name NVARCHAR(100) NOT NULL,
-    Email NVARCHAR(100),
+    Email NVARCHAR(100) UNIQUE, -- Add unique constraint to Email
     CellPhoneNo NVARCHAR(30),
     AlternateCellPhoneNo NVARCHAR(30),
+    PasswordHash NVARCHAR(256) NOT NULL,
+    Salt NVARCHAR(50) NOT NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    LastLogin DATETIME2 NULL,
     FOREIGN KEY (UserRoleId) REFERENCES UserRole(UserRoleId)
 );
 
