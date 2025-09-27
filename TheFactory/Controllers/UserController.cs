@@ -1,0 +1,45 @@
+public class UserController : ControllerBase
+{
+    private readonly SqlConnectionService _sqlService;
+
+    public UserController(SqlConnectionService sqlService)
+    {
+        _sqlService = sqlService;
+    }
+
+    [HttpPost("InsertUser")]
+    public async Task<IActionResult> InsertUser([FromBody] UserInsertModel model)
+    {
+        try
+        {
+            using (var conn = await _sqlService.GetSqlConnectionAsync())
+            using (var command = new SqlCommand(@"
+                INSERT INTO [User] 
+                    (UserRoleId, Name, Email, CellPhoneNo, AlternateCellPhoneNo, PasswordHash, Salt, CreatedAt)
+                VALUES
+                    (@UserRoleId, @Name, @Email, @CellPhoneNo, @AlternateCellPhoneNo, @PasswordHash, @Salt, SYSUTCDATETIME());
+                SELECT SCOPE_IDENTITY();
+            ", conn))
+            {
+                command.Parameters.AddWithValue("@UserRoleId", model.UserRoleId);
+                command.Parameters.AddWithValue("@Name", model.Name);
+                command.Parameters.AddWithValue("@Email", model.Email ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@CellPhoneNo", model.CellPhoneNo ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@AlternateCellPhoneNo", model.AlternateCellPhoneNo ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@PasswordHash", model.PasswordHash);
+                command.Parameters.AddWithValue("@Salt", model.Salt);
+
+                var newId = await command.ExecuteScalarAsync();
+                return Ok(new { UserId = Convert.ToInt32(newId) });
+            }
+        }
+        catch (SqlException ex)
+        {
+            return StatusCode(500, new { error = "A database error occurred.", details = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "An unexpected error occurred.", details = ex.Message });
+        }
+    }
+}

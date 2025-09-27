@@ -23,6 +23,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("AzureSqlDb")));
+builder.Services.AddScoped<SqlConnectionService>();
 
 // Use the PORT environment variable if set (Azure best practice)
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
