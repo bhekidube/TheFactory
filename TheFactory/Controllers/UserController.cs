@@ -93,9 +93,23 @@ public class UserController : ControllerBase
                     var inputHash = HashPassword(model.Password, salt);
 
                     if (storedHash == inputHash)
+                    {
+                        reader.Close(); // Close reader before executing another command
+
+                        using (var updateCmd = new SqlCommand(@"
+                            UPDATE [User] SET LastLogin = SYSUTCDATETIME() WHERE Email = @Email
+                        ", conn))
+                        {
+                            updateCmd.Parameters.AddWithValue("@Email", model.Email);
+                            await updateCmd.ExecuteNonQueryAsync();
+                        }
+
                         return Ok(new { message = "Login successful." });
+                    }
                     else
+                    {
                         return Unauthorized(new { error = "Invalid credentials." });
+                    }
                 }
             }
         }
