@@ -1,3 +1,5 @@
+using Microsoft.Data.SqlClient;
+
 public class SqlConnectionService
 {
     private readonly IConfiguration _configuration;
