@@ -1,0 +1,32 @@
+<div class="auth-container">
+  <h2>Login</h2>
+  <form #loginForm="ngForm" (ngSubmit)="login()" novalidate>
+    <input type="email" [(ngModel)]="loginModel.email" name="loginEmail" placeholder="Email" required #loginEmail="ngModel" />
+    <div *ngIf="loginEmail.invalid && loginEmail.touched" class="error">Valid email is required.</div>
+    <input type="password" [(ngModel)]="loginModel.password" name="loginPassword" placeholder="Password" required minlength="6" #loginPassword="ngModel" />
+    <div *ngIf="loginPassword.invalid && loginPassword.touched" class="error">Password is required (min 6 chars).</div>
+    <button type="submit" [disabled]="loginForm.invalid">Login</button>
+  </form>
+
+  <a class="forgot-password" (click)="forgotPassword()">Forgot password?</a>
+  <button (click)="toggleRegister()">
+    {{ showRegister ? 'Hide Register' : 'Show Register' }}
+  </button>
+
+  <div *ngIf="showRegister">
+    <h2>Register</h2>
+    <form #registerForm="ngForm" (ngSubmit)="register()" novalidate>
+      <input type="text" [(ngModel)]="registerModel.name" name="registerName" placeholder="Name" required #registerName="ngModel" />
+      <div *ngIf="registerName.invalid && registerName.touched" class="error">Name is required.</div>
+      <input type="email" [(ngModel)]="registerModel.email" name="registerEmail" placeholder="Email" required #registerEmail="ngModel" />
+      <div *ngIf="registerEmail.invalid && registerEmail.touched" class="error">Valid email is required.</div>
+      <input type="text" [(ngModel)]="registerModel.cellPhoneNo" name="registerCellPhoneNo" placeholder="Cell Phone" />
+      <input type="text" [(ngModel)]="registerModel.alternateCellPhoneNo" name="registerAlternateCellPhoneNo" placeholder="Alternate Cell Phone" />
+      <input type="password" [(ngModel)]="registerModel.password" name="registerPassword" placeholder="Password" required minlength="6" #registerPassword="ngModel" />
+      <div *ngIf="registerPassword.invalid && registerPassword.touched" class="error">Password is required (min 6 chars).</div>
+      <button type="submit" [disabled]="registerForm.invalid">Register</button>
+    </form>
+  </div>
+
+  <div *ngIf="error" class="error">{{ error }}</div>
+</div>

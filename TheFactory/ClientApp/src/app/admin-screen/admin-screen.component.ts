@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 
 interface AdminSummary {
   totalUsers: number;
   totalOperators: number;
   totalRoutes: number;
   totalTickets: number;
-  UserRole: number; // Add this line
 }
 
 type UserRole = 'SystemAdmin' | 'Admin' | 'OperatorAdmin' | 'Operator' | 'Customer' | 'Public';
@@ -20,13 +20,21 @@ export class AdminScreenComponent implements OnInit {
   summary: AdminSummary | null = null;
   loading = true;
   error: string | null = null;
-  userRole: UserRole = 'Public'; // Default, should be set from authentication
+  userRole: UserRole = 'Public'; // Should be set from authentication
+  isLoggedIn = false; // Track login status
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
   ngOnInit(): void {
-    // TODO: Replace with actual user role from authentication service
+    // Replace with actual authentication check
+    this.isLoggedIn = this.checkLogin();
     this.userRole = this.getUserRole();
+
+    if (!this.isLoggedIn) {
+      // Redirect to login page if not logged in
+      this.router.navigate(['/auth']);
+      return;
+    }
 
     if (this.isAdminRole(this.userRole)) {
       this.http.get<AdminSummary>('https://AzureLinuxAppService.azurewebsites.net/api/Admin/Summary').subscribe({
@@ -42,6 +50,12 @@ export class AdminScreenComponent implements OnInit {
     } else {
       this.loading = false;
     }
+  }
+
+  checkLogin(): boolean {
+    // TODO: Replace with real authentication logic
+    // Example: return !!localStorage.getItem('authToken');
+    return false;
   }
 
   getUserRole(): UserRole {

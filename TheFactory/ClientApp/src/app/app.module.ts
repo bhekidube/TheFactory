@@ -13,6 +13,8 @@ import { BusSearchComponent } from './bus-search/bus-search.component';
 import { ZimraDeclarationComponent } from './zimra-declaration/zimra-declaration.component';
 import { OperatorRouteComponent } from './operator-route/operator-route.component';
 import { AdminScreenComponent } from './admin-screen/admin-screen.component';
+import { AuthComponent } from './auth/auth.component';
+import { AppRoutingModule } from './app-routing.module';
 
 @NgModule({
   declarations: [
@@ -24,12 +26,14 @@ import { AdminScreenComponent } from './admin-screen/admin-screen.component';
     BusSearchComponent,
     ZimraDeclarationComponent,
     OperatorRouteComponent,
-    AdminScreenComponent
+    AdminScreenComponent,
+    AuthComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
     HttpClientModule,
     FormsModule,
+    AppRoutingModule,
     RouterModule.forRoot([
       { path: '', component: HomeComponent, pathMatch: 'full' },
       { path: 'counter', component: CounterComponent },

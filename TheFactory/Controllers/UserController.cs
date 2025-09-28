@@ -61,11 +61,11 @@ public class UserController : ControllerBase
         }
         catch (SqlException ex)
         {
-            return StatusCode(500, new { error = "A database error occurred.", details = ex.Message });
+            return StatusCode(500, new { error = "A database error occurred.", details = ex.InnerException?.Message ?? ex.Message });
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { error = "An unexpected error occurred.", details = ex.Message });
+            return StatusCode(500, new { error = "An unexpected error occurred.", details = ex.InnerException?.Message ?? ex.Message });
         }
     }
 
