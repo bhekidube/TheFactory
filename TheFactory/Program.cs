@@ -6,6 +6,9 @@ using Azure.Extensions.AspNetCore.Configuration.Secrets;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Use builder.Configuration directly for config access
+var configuration = builder.Configuration;
+
 // Add Key Vault
 builder.Host.ConfigureAppConfiguration((context, config) =>
 {
@@ -24,6 +27,15 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("AzureSqlDb")));
 builder.Services.AddScoped<SqlConnectionService>();
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("https://localhost:44411")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 // Use the PORT environment variable if set (Azure best practice)
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
@@ -41,6 +53,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthorization();
+app.UseCors();
 
 if (app.Environment.IsDevelopment())
 {

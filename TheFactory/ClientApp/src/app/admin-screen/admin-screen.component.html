@@ -1,0 +1,12 @@
+<div *ngIf="loading">Loading...</div>
+<div *ngIf="error">{{ error }}</div>
+<div *ngIf="!loading && !isAdminRole(userRole)">
+  <p>You do not have permission to view this screen.</p>
+</div>
+<div *ngIf="summary && isAdminRole(userRole)">
+  <h2>Admin Summary</h2>
+  <ul>
+    <li>Total Users: {{ summary.totalUsers }}</li>
+    <li>Total Operators: {{ summary.totalOperators }}</li>
+  </ul>
+</div>

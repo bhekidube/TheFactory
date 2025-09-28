@@ -12,6 +12,7 @@ import { FetchDataComponent } from './fetch-data/fetch-data.component';
 import { BusSearchComponent } from './bus-search/bus-search.component';
 import { ZimraDeclarationComponent } from './zimra-declaration/zimra-declaration.component';
 import { OperatorRouteComponent } from './operator-route/operator-route.component';
+import { AdminScreenComponent } from './admin-screen/admin-screen.component';
 
 @NgModule({
   declarations: [
@@ -22,7 +23,8 @@ import { OperatorRouteComponent } from './operator-route/operator-route.componen
     FetchDataComponent,
     BusSearchComponent,
     ZimraDeclarationComponent,
-    OperatorRouteComponent
+    OperatorRouteComponent,
+    AdminScreenComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
