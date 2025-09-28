@@ -31,9 +31,13 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("https://localhost:44411")
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        policy.WithOrigins(
+            "https://localhost:44411",           // local dev
+            "https://www.hambaonline.com",       // production frontend
+            "https://hambaonline.com"            // (optional, non-www)
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod();
     });
 });
 
