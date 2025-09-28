@@ -44,7 +44,6 @@ public class AdminController : ControllerBase
             using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Ticket", conn))
                 summary.TotalTickets = (int)await cmd.ExecuteScalarAsync();
 
-
         }
 
         return Ok(summary);
