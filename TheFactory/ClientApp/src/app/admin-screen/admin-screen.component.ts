@@ -29,7 +29,7 @@ export class AdminScreenComponent implements OnInit {
     this.userRole = this.getUserRole();
 
     if (this.isAdminRole(this.userRole)) {
-      this.http.get<AdminSummary>('http://localhost:8080/api/Admin/Summary').subscribe({
+      this.http.get<AdminSummary>('https://AzureLinuxAppService.azurewebsites.net/api/Admin/Summary').subscribe({
         next: data => {
           this.summary = data;
           this.loading = false;
