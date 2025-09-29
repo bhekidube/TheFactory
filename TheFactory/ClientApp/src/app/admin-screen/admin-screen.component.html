@@ -3,8 +3,7 @@
 <div *ngIf="!loading && isLoggedIn">
   <p>
     Logged in as <strong>{{ userName }}</strong>
-    (<span>{{ userRole }}</span>).
-    <a class="logout-link" (click)="logout()">Log out</a>
+    ({{ userRole }}). <a class="logout-link" (click)="logout()">Log out</a>
   </p>
 </div>
 <div *ngIf="!loading && !isLoggedIn">
@@ -22,4 +21,20 @@
 <div *ngIf="isLoggedIn && !isAdminRole(userRole)">
   <p>You do not have permission to view this screen.</p>
   <button (click)="requestPermission()">Request Permission</button>
+</div>
+<div *ngIf="isLoggedIn && isAdminRole(userRole)">
+  <h3>Change User Role</h3>
+  <form (ngSubmit)="changeUserRole()">
+    <input type="email" [(ngModel)]="targetEmail" name="targetEmail" placeholder="User Email" required />
+    <select [(ngModel)]="newUserRoleId" name="newUserRoleId" required>
+      <option [value]="1">SystemAdmin</option>
+      <option [value]="2">Admin</option>
+      <option [value]="3">OperatorAdmin</option>
+      <option [value]="4">Operator</option>
+      <option [value]="5">Customer</option>
+      <option [value]="6">Public</option>
+    </select>
+    <button type="submit">Change Role</button>
+  </form>
+  <div *ngIf="roleChangeMessage">{{ roleChangeMessage }}</div>
 </div>

@@ -19,6 +19,12 @@ public class UserLoginModel
     public string Password { get; set; }
 }
 
+public class ChangeUserRoleModel
+{
+    public string Email { get; set; }
+    public int NewUserRoleId { get; set; }
+}
+
 [ApiController]
 [Route("api/[controller]")]
 public class UserController : ControllerBase
@@ -115,6 +121,44 @@ public class UserController : ControllerBase
                     {
                         return Unauthorized(new { error = "Invalid credentials." });
                     }
+                }
+            }
+        }
+        catch (SqlException ex)
+        {
+            return StatusCode(500, new { error = "A database error occurred.", details = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "An unexpected error occurred.", details = ex.Message });
+        }
+    }
+
+    [HttpPost("ChangeUserRole")]
+    public async Task<IActionResult> ChangeUserRole([FromBody] ChangeUserRoleModel model)
+    {
+        // Optionally: Check if the current user is an admin (implement your own authorization logic here)
+
+        try
+        {
+            using (var conn = await _sqlService.GetSqlConnectionAsync())
+            using (var command = new SqlCommand(@"
+                UPDATE [User]
+                SET UserRoleId = @NewUserRoleId
+                WHERE Email = @Email
+            ", conn))
+            {
+                command.Parameters.AddWithValue("@NewUserRoleId", model.NewUserRoleId);
+                command.Parameters.AddWithValue("@Email", model.Email);
+
+                var rowsAffected = await command.ExecuteNonQueryAsync();
+                if (rowsAffected > 0)
+                {
+                    return Ok(new { message = "User role updated successfully." });
+                }
+                else
+                {
+                    return NotFound(new { error = "User not found." });
                 }
             }
         }

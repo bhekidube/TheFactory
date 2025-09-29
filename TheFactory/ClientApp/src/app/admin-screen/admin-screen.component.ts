@@ -23,6 +23,9 @@ export class AdminScreenComponent implements OnInit {
   userRole: UserRole = 'Public'; // Should be set from authentication
   isLoggedIn = false; // Track login status
   userName: string = 'Unknown User'; // Default value
+  targetEmail: string = '';
+  newUserRoleId: number = 2; // Default to Admin
+  roleChangeMessage: string = '';
 
   constructor(private http: HttpClient, private router: Router) {}
 
@@ -65,7 +68,7 @@ alert(this.userName);
   }
 
   isAdminRole(role: UserRole): boolean {
-    return role === 'SystemAdmin' || role === 'Admin' || role === 'OperatorAdmin';
+    return role === 'SystemAdmin' || role === 'Admin';
   }
 
   logout(): void {
@@ -79,5 +82,19 @@ alert(this.userName);
   requestPermission(): void {
     alert('Your request for admin access has been sent. An administrator will review your request.');
     // You can implement an API call here to actually request permission
+  }
+
+  changeUserRole(): void {
+    this.http.post<{ message: string, error?: string }>(
+      'https://AzureLinuxAppService.azurewebsites.net/api/User/ChangeUserRole',
+      { email: this.targetEmail, newUserRoleId: this.newUserRoleId }
+    ).subscribe({
+      next: res => {
+        this.roleChangeMessage = res.message;
+      },
+      error: err => {
+        this.roleChangeMessage = err.error?.error || 'Failed to change user role.';
+      }
+    });
   }
 }
