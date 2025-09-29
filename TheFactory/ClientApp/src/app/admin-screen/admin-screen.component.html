@@ -13,9 +13,11 @@
 <div *ngIf="summary && isLoggedIn && isAdminRole(userRole)">
   <h2>Admin Summary</h2>
   <ul>
-    <li>Total Users: {{ summary.totalUsers }}</li>
-    <li>Total Operators: {{ summary.totalOperators }}</li>
-    <li>Total Routes: {{ summary.totalRoutes }}</li>
-    <li>Total Tickets: {{ summary.totalTickets }}</li>
+    <li>My Buses: {{ summary.totalUsers }}</li>
+    <li>My Routes: {{ summary.totalOperators }}</li>
+    <li>My Trips: {{ summary.totalRoutes }}</li>
+    <li>My Tickets: {{ summary.totalTickets }}</li>
   </ul>
 </div>
+<div *ngIf="isLoggedIn && !isAdminRole(userRole)">
+  <p>You do not have permission to view this screen.</p>

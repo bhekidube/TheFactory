@@ -104,7 +104,7 @@ public class UserController : ControllerBase
                             await updateCmd.ExecuteNonQueryAsync();
                         }
 
-                        return Ok(new { message = "Login successful." });
+                        return Ok(new { message = "Login successful.", userName = model.Email });
                     }
                     else
                     {

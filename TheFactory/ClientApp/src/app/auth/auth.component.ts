@@ -11,7 +11,7 @@ export class AuthComponent {
   showRegister = false; // Controls register form visibility
 
   registerModel = {
-    userRoleId: 2,
+    userRoleId: 4, // Default to 'Operator'
     name: '',
     email: '',
     cellPhoneNo: '',
@@ -46,9 +46,10 @@ export class AuthComponent {
   }
 
   login() {
-    this.http.post('https://AzureLinuxAppService.azurewebsites.net/api/User/Login', this.loginModel).subscribe({
-      next: () => {
+    this.http.post<{ userName: string }>('https://AzureLinuxAppService.azurewebsites.net/api/User/Login', this.loginModel).subscribe({
+      next: (response) => {
         this.error = null;
+        localStorage.setItem('userName', response.userName);
         this.router.navigate(['/admin-screen']);
       },
       error: err => {

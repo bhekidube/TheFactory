@@ -21,8 +21,8 @@ export class AdminScreenComponent implements OnInit {
   loading = true;
   error: string | null = null;
   userRole: UserRole = 'Public'; // Should be set from authentication
-  userName: string = 'John Doe'; // Set this from authentication
   isLoggedIn = false; // Track login status
+  userName: string = 'Unknown User'; // Default value
 
   constructor(private http: HttpClient, private router: Router) {}
 
@@ -30,7 +30,7 @@ export class AdminScreenComponent implements OnInit {
     this.isLoggedIn = this.checkLogin();
     this.userRole = this.getUserRole();
     this.userName = this.getUserName(); // Add this line
-
+alert(this.userName);
     if (!this.isLoggedIn) {
       this.router.navigate(['/auth']);
       return;
@@ -53,7 +53,6 @@ export class AdminScreenComponent implements OnInit {
   }
 
   checkLogin(): boolean {
-    // TODO: Replace with real authentication logic
     return true;
   }
 
@@ -63,8 +62,7 @@ export class AdminScreenComponent implements OnInit {
   }
 
   getUserName(): string {
-    // TODO: Replace with actual logic to get user name from authentication
-    return 'John Doe';
+    return localStorage.getItem('userName') || 'Unknown User';
   }
 
   isAdminRole(role: UserRole): boolean {
@@ -74,6 +72,7 @@ export class AdminScreenComponent implements OnInit {
   logout(): void {
     // Clear authentication (example: remove token from localStorage)
     localStorage.removeItem('authToken');
+    localStorage.removeItem('userName');
     this.isLoggedIn = false;
     this.router.navigate(['/auth']);
   }
