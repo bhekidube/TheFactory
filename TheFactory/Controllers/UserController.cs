@@ -76,7 +76,10 @@ public class UserController : ControllerBase
         {
             using (var conn = await _sqlService.GetSqlConnectionAsync())
             using (var command = new SqlCommand(@"
-                SELECT PasswordHash, Salt FROM [User] WHERE Email = @Email
+                SELECT u.Name, u.PasswordHash, u.Salt, ur.Name AS UserRole
+                FROM [User] u
+                INNER JOIN [UserRole] ur ON u.UserRoleId = ur.UserRoleId
+                WHERE u.Email = @Email
             ", conn))
             {
                 command.Parameters.AddWithValue("@Email", model.Email);
@@ -87,14 +90,16 @@ public class UserController : ControllerBase
                         return Unauthorized(new { error = "Invalid credentials." });
 
                     await reader.ReadAsync();
-                    var storedHash = reader.GetString(0);
-                    var salt = reader.GetString(1);
+                    var userName = reader.GetString(0);
+                    var storedHash = reader.GetString(1);
+                    var salt = reader.GetString(2);
+                    var userRole = reader.GetString(3);
 
                     var inputHash = HashPassword(model.Password, salt);
 
                     if (storedHash == inputHash)
                     {
-                        reader.Close(); // Close reader before executing another command
+                        reader.Close();
 
                         using (var updateCmd = new SqlCommand(@"
                             UPDATE [User] SET LastLogin = SYSUTCDATETIME() WHERE Email = @Email
@@ -104,7 +109,7 @@ public class UserController : ControllerBase
                             await updateCmd.ExecuteNonQueryAsync();
                         }
 
-                        return Ok(new { message = "Login successful.", userName = model.Email });
+                        return Ok(new { message = "Login successful.", userName, userRole });
                     }
                     else
                     {

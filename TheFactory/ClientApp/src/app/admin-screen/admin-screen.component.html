@@ -2,7 +2,7 @@
 <div *ngIf="error">{{ error }}</div>
 <div *ngIf="!loading && isLoggedIn">
   <p>
-    You are logged in as <strong>{{ userName }}</strong>
+    Logged in as <strong>{{ userName }}</strong>
     (<span>{{ userRole }}</span>).
     <a class="logout-link" (click)="logout()">Log out</a>
   </p>
@@ -21,3 +21,5 @@
 </div>
 <div *ngIf="isLoggedIn && !isAdminRole(userRole)">
   <p>You do not have permission to view this screen.</p>
+  <button (click)="requestPermission()">Request Permission</button>
+</div>

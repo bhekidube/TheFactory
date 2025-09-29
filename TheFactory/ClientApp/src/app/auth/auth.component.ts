@@ -46,10 +46,11 @@ export class AuthComponent {
   }
 
   login() {
-    this.http.post<{ userName: string }>('https://AzureLinuxAppService.azurewebsites.net/api/User/Login', this.loginModel).subscribe({
+    this.http.post<{ userName: string, userRole: string }>('https://AzureLinuxAppService.azurewebsites.net/api/User/Login', this.loginModel).subscribe({
       next: (response) => {
         this.error = null;
         localStorage.setItem('userName', response.userName);
+        localStorage.setItem('userRole', response.userRole); // Save userRole
         this.router.navigate(['/admin-screen']);
       },
       error: err => {

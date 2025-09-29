@@ -57,8 +57,7 @@ alert(this.userName);
   }
 
   getUserRole(): UserRole {
-    // TODO: Replace with actual logic to get user role from authentication
-    return 'Admin';
+    return (localStorage.getItem('userRole') as UserRole) || 'Public';
   }
 
   getUserName(): string {
@@ -75,5 +74,10 @@ alert(this.userName);
     localStorage.removeItem('userName');
     this.isLoggedIn = false;
     this.router.navigate(['/auth']);
+  }
+
+  requestPermission(): void {
+    alert('Your request for admin access has been sent. An administrator will review your request.');
+    // You can implement an API call here to actually request permission
   }
 }
