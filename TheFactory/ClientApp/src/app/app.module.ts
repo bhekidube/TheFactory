@@ -15,6 +15,7 @@ import { OperatorRouteComponent } from './operator-route/operator-route.componen
 import { AdminScreenComponent } from './admin-screen/admin-screen.component';
 import { AuthComponent } from './auth/auth.component';
 import { AppRoutingModule } from './app-routing.module';
+import { OperatorAdminComponent } from './operator-admin/operator-admin.component';
 
 @NgModule({
   declarations: [
@@ -27,7 +28,8 @@ import { AppRoutingModule } from './app-routing.module';
     ZimraDeclarationComponent,
     OperatorRouteComponent,
     AdminScreenComponent,
-    AuthComponent
+    AuthComponent,
+    OperatorAdminComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),

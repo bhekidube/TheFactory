@@ -12,13 +12,13 @@
 <div *ngIf="summary && isLoggedIn && isAdminRole(userRole)">
   <h2>Admin Summary</h2>
   <ul>
-    <li>My Buses: {{ summary.totalUsers }}</li>
+    <li>My Operators: {{ summary.totaOperators }}</li>
     <li>My Routes: {{ summary.totalOperators }}</li>
     <li>My Trips: {{ summary.totalRoutes }}</li>
     <li>My Tickets: {{ summary.totalTickets }}</li>
   </ul>
 </div>
-<div *ngIf="isLoggedIn && !isAdminRole(userRole)">
+<div *ngIf="isLoggedIn && !isAdminRole(userRole) && userRole !== 'OperatorAdmin'">
   <p>You do not have permission to view this screen.</p>
   <button (click)="requestPermission()">Request Permission</button>
 </div>
@@ -38,3 +38,4 @@
   </form>
   <div *ngIf="roleChangeMessage">{{ roleChangeMessage }}</div>
 </div>
+<app-operator-admin *ngIf="isLoggedIn && userRole === 'OperatorAdmin'"></app-operator-admin>

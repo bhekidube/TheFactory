@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 
 interface AdminSummary {
-  totalUsers: number;
+  totaOperators: number;
   totalOperators: number;
   totalRoutes: number;
   totalTickets: number;
