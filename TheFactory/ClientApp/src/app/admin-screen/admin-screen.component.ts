@@ -21,17 +21,17 @@ export class AdminScreenComponent implements OnInit {
   loading = true;
   error: string | null = null;
   userRole: UserRole = 'Public'; // Should be set from authentication
+  userName: string = 'John Doe'; // Set this from authentication
   isLoggedIn = false; // Track login status
 
   constructor(private http: HttpClient, private router: Router) {}
 
   ngOnInit(): void {
-    // Replace with actual authentication check
     this.isLoggedIn = this.checkLogin();
     this.userRole = this.getUserRole();
+    this.userName = this.getUserName(); // Add this line
 
     if (!this.isLoggedIn) {
-      // Redirect to login page if not logged in
       this.router.navigate(['/auth']);
       return;
     }
@@ -54,8 +54,7 @@ export class AdminScreenComponent implements OnInit {
 
   checkLogin(): boolean {
     // TODO: Replace with real authentication logic
-    // Example: return !!localStorage.getItem('authToken');
-    return false;
+    return true;
   }
 
   getUserRole(): UserRole {
@@ -63,7 +62,19 @@ export class AdminScreenComponent implements OnInit {
     return 'Admin';
   }
 
+  getUserName(): string {
+    // TODO: Replace with actual logic to get user name from authentication
+    return 'John Doe';
+  }
+
   isAdminRole(role: UserRole): boolean {
     return role === 'SystemAdmin' || role === 'Admin' || role === 'OperatorAdmin';
+  }
+
+  logout(): void {
+    // Clear authentication (example: remove token from localStorage)
+    localStorage.removeItem('authToken');
+    this.isLoggedIn = false;
+    this.router.navigate(['/auth']);
   }
 }

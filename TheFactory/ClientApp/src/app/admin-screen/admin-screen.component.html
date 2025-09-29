@@ -1,12 +1,21 @@
 <div *ngIf="loading">Loading...</div>
 <div *ngIf="error">{{ error }}</div>
-<div *ngIf="!loading && !isAdminRole(userRole)">
-  <p>You do not have permission to view this screen.</p>
+<div *ngIf="!loading && isLoggedIn">
+  <p>
+    You are logged in as <strong>{{ userName }}</strong>
+    (<span>{{ userRole }}</span>).
+    <a class="logout-link" (click)="logout()">Log out</a>
+  </p>
 </div>
-<div *ngIf="summary && isAdminRole(userRole)">
+<div *ngIf="!loading && !isLoggedIn">
+  <p>You must be logged in to view this screen.</p>
+</div>
+<div *ngIf="summary && isLoggedIn && isAdminRole(userRole)">
   <h2>Admin Summary</h2>
   <ul>
     <li>Total Users: {{ summary.totalUsers }}</li>
     <li>Total Operators: {{ summary.totalOperators }}</li>
+    <li>Total Routes: {{ summary.totalRoutes }}</li>
+    <li>Total Tickets: {{ summary.totalTickets }}</li>
   </ul>
 </div>
