@@ -7,4 +7,8 @@ import { Component, Input } from '@angular/core';
 })
 export class OperatorAdminComponent {
   @Input() operatorName: string = '';
+  @Input() summary: any;
+
+  userRole: string = localStorage.getItem('userRole') || 'Public';
+  isLoggedIn: boolean = !!localStorage.getItem('userName');
 }

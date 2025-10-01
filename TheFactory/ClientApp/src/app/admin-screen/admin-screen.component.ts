@@ -23,7 +23,7 @@ type UserRole = 'SystemAdmin' | 'Admin' | 'OperatorAdmin' | 'Operator' | 'Custom
 })
 export class AdminScreenComponent implements OnInit {
   summary: AdminSummary | null = null;
-  operatorAdminSummary: OperatorAdminSummary | null = null;
+  operatorAdminSummary: any = null;
   loading = true;
   error: string | null = null;
   userRole: UserRole = (localStorage.getItem('userRole') as UserRole) || 'Public'; // Should be set from authentication
@@ -108,13 +108,11 @@ export class AdminScreenComponent implements OnInit {
 
   viewOperator(operator: string): void {
     this.selectedOperator = operator;
-    // Call the API to get operator summary
+    this.operatorAdminSummary = null; // Reset previous summary
     this.http.get<any>(`https://AzureLinuxAppService.azurewebsites.net/api/Admin/GetOperatorSummary?name=${encodeURIComponent(operator)}`)
       .subscribe({
         next: summary => {
-          // You can pass this summary to your operator-admin component or handle it as needed
-          this.operatorAdminSummary = summary.operatorAdminSummary;
-          // If using a shared service or input, update accordingly
+          this.operatorAdminSummary = summary;
         },
         error: err => {
           this.roleChangeMessage = 'Failed to load operator summary.';

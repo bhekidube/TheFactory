@@ -1,17 +1,12 @@
-<div class="operator-admin-summary">
+<div *ngIf="isLoggedIn && (userRole === 'Admin' || userRole === 'SystemAdmin')">
   <h2>Operator Admin Dashboard</h2>
+  <h3>Operator: {{ operatorName }}</h3>
   <ul>
-    <li><strong>My Buses:</strong> <!-- Add dynamic value or description here --></li>
-    <li><strong>My Routes:</strong> <!-- Add dynamic value or description here --></li>
-    <li><strong>My Trips:</strong> <!-- Add dynamic value or description here --></li>
-    <li><strong>My Tickets:</strong> <!-- Add dynamic value or description here --></li>
-    <li><strong>My Staff:</strong> <!-- Add dynamic value or description here --></li>
+    <li><strong>My Buses:</strong> {{ summary?.buses }}</li>
+    <li><strong>My Routes:</strong> {{ summary?.routes }}</li>
+    <li><strong>My Trips:</strong> {{ summary?.trips }}</li>
   </ul>
 </div>
-<div *ngIf="operatorName">
-  <h2>Operator: {{ operatorName }}</h2>
-  <!-- Operator details here -->
-</div>
-<div *ngIf="!operatorName">
-  <p>No operator selected.</p>
+<div *ngIf="!isLoggedIn || (userRole !== 'Admin' && userRole !== 'SystemAdmin')">
+  <p>You do not have permission to view this operator's details.</p>
 </div>

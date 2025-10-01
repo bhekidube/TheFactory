@@ -13,12 +13,12 @@
   <h2>Admin Summary</h2>
   <ul>
       <li>My Operators: {{ summary.totalOperators }}</li>
-      <ul>
-        <li *ngFor="let operator of summary.operatorNames">
-          <a href="#" (click)="viewOperator(operator)">{{ operator }}</a>
-        </li>
-      </ul>   
   </ul>
+  <ul>
+    <li *ngFor="let operator of summary.operatorNames">
+      <a href="#" (click)="viewOperator(operator)">{{ operator }}</a>
+    </li>
+  </ul>   
 </div>
 <div *ngIf="isLoggedIn && !isAdminRole(userRole) && userRole !== 'OperatorAdmin'">
   <p>You do not have permission to view this screen.</p>
@@ -40,4 +40,8 @@
   </form>
   <div *ngIf="roleChangeMessage">{{ roleChangeMessage }}</div>
 </div>
-<app-operator-admin *ngIf="selectedOperator" [operatorName]="selectedOperator"></app-operator-admin>
+<app-operator-admin
+  *ngIf="selectedOperator && operatorAdminSummary && isAdminRole(userRole)"
+  [operatorName]="selectedOperator"
+  [summary]="operatorAdminSummary">
+</app-operator-admin>
