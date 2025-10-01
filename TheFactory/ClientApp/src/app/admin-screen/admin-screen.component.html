@@ -40,4 +40,4 @@
   </form>
   <div *ngIf="roleChangeMessage">{{ roleChangeMessage }}</div>
 </div>
-<app-operator-admin *ngIf="isLoggedIn && userRole === 'OperatorAdmin'"></app-operator-admin>
+<app-operator-admin *ngIf="selectedOperator" [operatorName]="selectedOperator"></app-operator-admin>

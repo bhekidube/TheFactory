@@ -10,6 +10,10 @@ interface AdminSummary {
   operatorNames: string[];
 }
 
+interface OperatorAdminSummary {
+  totalOperators: number;
+}
+
 type UserRole = 'SystemAdmin' | 'Admin' | 'OperatorAdmin' | 'Operator' | 'Customer' | 'Public';
 
 @Component({
@@ -19,22 +23,25 @@ type UserRole = 'SystemAdmin' | 'Admin' | 'OperatorAdmin' | 'Operator' | 'Custom
 })
 export class AdminScreenComponent implements OnInit {
   summary: AdminSummary | null = null;
+  operatorAdminSummary: OperatorAdminSummary | null = null;
   loading = true;
   error: string | null = null;
-  userRole: UserRole = 'Public'; // Should be set from authentication
+  userRole: UserRole = (localStorage.getItem('userRole') as UserRole) || 'Public'; // Should be set from authentication
   isLoggedIn = false; // Track login status
   userName: string = 'Unknown User'; // Default value
   targetEmail: string = '';
   newUserRoleId: number = 2; // Default to Admin
   roleChangeMessage: string = '';
+  selectedOperator: string | null = null;
 
   constructor(private http: HttpClient, private router: Router) {}
 
-  ngOnInit(): void {
+  ngOnInit(): void 
+  {
     this.isLoggedIn = this.checkLogin();
     this.userRole = this.getUserRole();
-    this.userName = this.getUserName(); // Add this line
-alert(this.userName);
+    this.userName = this.getUserName(); 
+
     if (!this.isLoggedIn) {
       this.router.navigate(['/auth']);
       return;
@@ -100,7 +107,18 @@ alert(this.userName);
   }
 
   viewOperator(operator: string): void {
-    alert(`Operator selected: ${operator}`);
-    // You can add navigation or more logic here
+    this.selectedOperator = operator;
+    // Call the API to get operator summary
+    this.http.get<any>(`https://AzureLinuxAppService.azurewebsites.net/api/Admin/GetOperatorSummary?name=${encodeURIComponent(operator)}`)
+      .subscribe({
+        next: summary => {
+          // You can pass this summary to your operator-admin component or handle it as needed
+          this.operatorAdminSummary = summary.operatorAdminSummary;
+          // If using a shared service or input, update accordingly
+        },
+        error: err => {
+          this.roleChangeMessage = 'Failed to load operator summary.';
+        }
+      });
   }
 }

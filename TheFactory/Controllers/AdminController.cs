@@ -12,6 +12,11 @@ public class AdminSummary
     public List<string> operatorNames { get; set; } = new List<string>();
 }
 
+public class OperatorAdminSummary
+{
+    public int totalUsers { get; set; }
+
+}
 [ApiController]
 [Route("api/[controller]")]
 public class AdminController : ControllerBase
@@ -57,5 +62,19 @@ public class AdminController : ControllerBase
         }
 
         return Ok(summary);
+    }
+
+    [HttpGet("OperatorSummary")]
+    public async Task<IActionResult> GetOperatorSummary()
+    {
+        var operatorAdminSummary = new OperatorAdminSummary();
+
+        using (var conn = await _sqlService.GetSqlConnectionAsync())
+        {
+            using (var cmd = new SqlCommand("SELECT COUNT(*) FROM [User]", conn))
+                operatorAdminSummary.totalUsers = (int)await cmd.ExecuteScalarAsync();
+
+        }
+        return Ok(operatorAdminSummary);
     }
 }

@@ -8,3 +8,10 @@
     <li><strong>My Staff:</strong> <!-- Add dynamic value or description here --></li>
   </ul>
 </div>
+<div *ngIf="operatorName">
+  <h2>Operator: {{ operatorName }}</h2>
+  <!-- Operator details here -->
+</div>
+<div *ngIf="!operatorName">
+  <p>No operator selected.</p>
+</div>
