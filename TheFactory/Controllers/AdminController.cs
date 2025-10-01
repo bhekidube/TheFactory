@@ -4,11 +4,12 @@ using System.Threading.Tasks;
 
 public class AdminSummary
 {
-    public int TotalUsers { get; set; }
-    public int TotalOperators { get; set; }
-    public int TotalRoutes { get; set; }
-    public int TotalTickets { get; set; }
-    public string UserRole { get; set; }
+    public int totalUsers { get; set; }
+    public int totalOperators { get; set; }
+    public int totalRoutes { get; set; }
+    public int totalTickets { get; set; }
+    public string userRole { get; set; }
+    public List<string> operatorNames { get; set; } = new List<string>();
 }
 
 [ApiController]
@@ -30,19 +31,25 @@ public class AdminController : ControllerBase
         using (var conn = await _sqlService.GetSqlConnectionAsync())
         {
             using (var cmd = new SqlCommand("SELECT COUNT(*) FROM [User]", conn))
-                summary.TotalUsers = (int)await cmd.ExecuteScalarAsync();
+                summary.totalUsers = (int)await cmd.ExecuteScalarAsync();
 
             using (var cmd = new SqlCommand("SELECT Name FROM [UserRole] WHERE UserRoleId = 2", conn))
-                summary.UserRole = (string)await cmd.ExecuteScalarAsync();
+                summary.userRole = (string)await cmd.ExecuteScalarAsync();
 
-            using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Operator", conn))
-                summary.TotalOperators = (int)await cmd.ExecuteScalarAsync();
+            using (var cmd = new SqlCommand("SELECT Name FROM Operator", conn))
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    summary.operatorNames.Add(reader.GetString(0));
+                }
+            }
 
             using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Route", conn))
-                summary.TotalRoutes = (int)await cmd.ExecuteScalarAsync();
+                summary.totalRoutes = (int)await cmd.ExecuteScalarAsync();
 
             using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Ticket", conn))
-                summary.TotalTickets = (int)await cmd.ExecuteScalarAsync();
+                summary.totalTickets = (int)await cmd.ExecuteScalarAsync();
 
         }
 

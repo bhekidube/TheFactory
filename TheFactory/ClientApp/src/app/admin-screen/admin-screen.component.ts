@@ -3,10 +3,11 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 
 interface AdminSummary {
-  totaOperators: number;
   totalOperators: number;
   totalRoutes: number;
+  totalTrips: number;
   totalTickets: number;
+  operatorNames: string[];
 }
 
 type UserRole = 'SystemAdmin' | 'Admin' | 'OperatorAdmin' | 'Operator' | 'Customer' | 'Public';
