@@ -12,10 +12,11 @@
 <div *ngIf="summary && isLoggedIn && isAdminRole(userRole)">
   <h2>Admin Summary</h2>
   <ul>
-    <li>My Operators: {{ summary.totalOperators }}</li>
-  <h3>Operator List</h3>
+  <li>My Operators: {{ summary.totalOperators }}</li>
   <ul>
-    <li *ngFor="let operator of summary.operatorNames">{{ operator }}</li>
+    <li *ngFor="let operator of summary.operatorNames">
+      <a href="#" (click)="viewOperator(operator)">{{ operator }}</a>
+    </li>
   </ul>
     <li>My Routes: {{ summary.totalRoutes }}</li>
     <li>My Trips: {{ summary.totalTrips }}</li>

@@ -98,4 +98,9 @@ alert(this.userName);
       }
     });
   }
+
+  viewOperator(operator: string): void {
+    alert(`Operator selected: ${operator}`);
+    // You can add navigation or more logic here
+  }
 }
