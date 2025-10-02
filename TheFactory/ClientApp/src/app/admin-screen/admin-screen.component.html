@@ -16,7 +16,7 @@
   </ul>
   <ul>
     <li *ngFor="let operator of summary.operatorNames">
-      <a href="#" (click)="viewOperator(operator)">{{ operator }}</a>
+      <a href="#" (click)="viewOperator(operator); $event.preventDefault()">{{ operator }}</a>
     </li>
   </ul>   
 </div>

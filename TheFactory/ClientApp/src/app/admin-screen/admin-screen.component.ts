@@ -107,16 +107,6 @@ export class AdminScreenComponent implements OnInit {
   }
 
   viewOperator(operator: string): void {
-    this.selectedOperator = operator;
-    this.operatorAdminSummary = null; // Reset previous summary
-    this.http.get<any>(`https://AzureLinuxAppService.azurewebsites.net/api/Admin/GetOperatorSummary?name=${encodeURIComponent(operator)}`)
-      .subscribe({
-        next: summary => {
-          this.operatorAdminSummary = summary;
-        },
-        error: err => {
-          this.roleChangeMessage = 'Failed to load operator summary.';
-        }
-      });
+    this.router.navigate(['/operator-admin', operator]);
   }
 }

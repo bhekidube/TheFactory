@@ -51,7 +51,11 @@ export class AuthComponent {
         this.error = null;
         localStorage.setItem('userName', response.userName);
         localStorage.setItem('userRole', response.userRole); // Save userRole
-        this.router.navigate(['/admin-screen']);
+        if (response.userRole === 'OperatorAdmin') {
+          this.router.navigate(['/operator-admin', response.userName]);
+        } else {
+          this.router.navigate(['/admin-screen']);
+        }
       },
       error: err => {
         this.error = err.error?.error || 'Login failed';

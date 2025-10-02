@@ -1,12 +1,15 @@
-<div *ngIf="isLoggedIn && (userRole === 'Admin' || userRole === 'SystemAdmin')">
-  <h2>Operator Admin Dashboard</h2>
-  <h3>Operator: {{ operatorName }}</h3>
+<div *ngIf="isLoggedIn && (userRole === 'Admin' || userRole === 'SystemAdmin' || userRole === 'OperatorAdmin')">
+  <app-logout-link></app-logout-link><h2>{{ operatorName }} - Admin Dashboard</h2>
+
   <ul>
     <li><strong>My Buses:</strong> {{ summary?.buses }}</li>
     <li><strong>My Routes:</strong> {{ summary?.routes }}</li>
     <li><strong>My Trips:</strong> {{ summary?.trips }}</li>
   </ul>
 </div>
-<div *ngIf="!isLoggedIn || (userRole !== 'Admin' && userRole !== 'SystemAdmin')">
+<div *ngIf="!isLoggedIn || (userRole !== 'Admin' && userRole !== 'SystemAdmin' && userRole !== 'OperatorAdmin')">
   <p>You do not have permission to view this operator's details.</p>
 </div>
+
+
+

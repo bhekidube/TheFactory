@@ -16,6 +16,7 @@ import { AdminScreenComponent } from './admin-screen/admin-screen.component';
 import { AuthComponent } from './auth/auth.component';
 import { AppRoutingModule } from './app-routing.module';
 import { OperatorAdminComponent } from './operator-admin/operator-admin.component';
+import { LogoutLinkComponent } from './logout-link/logout-link.component';
 
 @NgModule({
   declarations: [
@@ -29,7 +30,8 @@ import { OperatorAdminComponent } from './operator-admin/operator-admin.componen
     OperatorRouteComponent,
     AdminScreenComponent,
     AuthComponent,
-    OperatorAdminComponent
+    OperatorAdminComponent,
+    LogoutLinkComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
