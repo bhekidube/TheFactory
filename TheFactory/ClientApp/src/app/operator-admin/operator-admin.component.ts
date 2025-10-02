@@ -17,6 +17,13 @@ export class OperatorAdminComponent {
     this.operatorName = this.route.snapshot.paramMap.get('operator') || '';
     const summaryString = localStorage.getItem('operatorAdminSummary');
     this.summary = summaryString ? JSON.parse(summaryString) : null;
+
+    // Get lookup data for locations
+    this.http.get<any[]>('https://AzureLinuxAppService.azurewebsites.net/api/Lookup/Locations')
+      .subscribe({
+        next: data => this.locations = data,
+        error: err => console.error('Failed to load locations', err)
+      });
   }
   
   userRole: string = localStorage.getItem('userRole') || 'Public';
@@ -29,18 +36,17 @@ export class OperatorAdminComponent {
 
   showCreateRouteForm = false;
   createRouteMessage = '';
+  locations: any[] = [];
   newRoute = {
-    fromLocation: '',
-    toLocation: '',
-    operatorType: ''
+    fromLocationId: '',
+    toLocationId: ''
   };
 
   insertRoute(): void {
     const payload = {
       operatorName: this.operatorName,
-      fromLocation: this.newRoute.fromLocation,
-      toLocation: this.newRoute.toLocation,
-      operatorType: this.newRoute.operatorType
+      fromLocationId: this.newRoute.fromLocationId,
+      toLocationId: this.newRoute.toLocationId,
     };
 
     // Replace with your actual API endpoint

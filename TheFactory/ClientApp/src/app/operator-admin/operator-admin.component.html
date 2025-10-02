@@ -26,11 +26,15 @@
   <form *ngIf="showCreateRouteForm" (ngSubmit)="insertRoute()" style="margin-top: 1em;">
     <label>
       From Location:
-      <input type="text" [(ngModel)]="newRoute.fromLocation" name="fromLocation" required />
+      <select [(ngModel)]="newRoute.fromLocationId" name="fromLocationId" required>
+        <option *ngFor="let loc of locations" [value]="loc.LocationID">{{ loc.location }} ({{ loc.town }})</option>
+      </select>
     </label>
     <label>
       To Location:
-      <input type="text" [(ngModel)]="newRoute.toLocation" name="toLocation" required />
+      <select [(ngModel)]="newRoute.toLocationId" name="toLocationId" required>
+        <option *ngFor="let loc of locations" [value]="loc.LocationID">{{ loc.location }} ({{ loc.town }})</option>
+      </select>
     </label>
     <button type="submit">Create Route</button>
     <span *ngIf="createRouteMessage">{{ createRouteMessage }}</span>
