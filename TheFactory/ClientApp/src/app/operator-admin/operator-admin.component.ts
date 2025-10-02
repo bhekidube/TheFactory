@@ -44,12 +44,12 @@ export class OperatorAdminComponent {
 
   insertRoute(): void {
     const payload = {
-      operatorName: this.operatorName,
-      fromLocationId: this.newRoute.fromLocationId,
-      toLocationId: this.newRoute.toLocationId,
+      operatorId: this.summary?.operatorId || 0,
+      fromId: this.newRoute.fromLocationId,
+      toId: this.newRoute.toLocationId,
+      createdBy: localStorage.getItem('userId') || 0 // or get from your auth context
     };
 
-    // Replace with your actual API endpoint
     this.http.post<any>('https://AzureLinuxAppService.azurewebsites.net/api/BusTrips/InsertRoute', payload)
       .subscribe({
         next: res => {
