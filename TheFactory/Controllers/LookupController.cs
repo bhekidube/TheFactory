@@ -17,14 +17,24 @@ public class LookupController : ControllerBase
     {
         var locations = new List<object>();
         using (var conn = await _sqlService.GetSqlConnectionAsync())
-        using (var cmd = new SqlCommand("SELECT LocationID, Name FROM [Location]", conn))
+        using (var cmd = new SqlCommand(@"
+        SELECT 
+            L.LocationID, 
+            L.Name AS Location, 
+            T.Name AS Town, 
+            C.Name AS Country
+        FROM [Location] L
+        INNER JOIN [Town] T ON T.TownId = L.TownId
+        INNER JOIN [Country] C ON C.CountryId = L.CountryId", conn))
         using (var reader = await cmd.ExecuteReaderAsync())
         {
             while (await reader.ReadAsync())
             {
                 locations.Add(new {
                     LocationID = reader.GetInt32(0),
-                    Name = reader.GetString(1)
+                    Location = reader.GetString(1),
+                    Town = reader.GetString(2),
+                    Country = reader.GetString(3)
                 });
             }
         }
