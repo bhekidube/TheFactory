@@ -15,8 +15,22 @@ public class AdminSummary
 public class OperatorAdminSummary
 {
     public string OperatorName { get; set; }
-
+    public List<RouteSummary> Routes { get; set; } = new List<RouteSummary>();
 }
+
+public class RouteSummary
+{
+    public int RouteId { get; set; }
+    public string OperatorType { get; set; }
+    public string OperatorName { get; set; }
+    public string FromLocation { get; set; }
+    public string ToLocation { get; set; }
+    public string Creator { get; set; }
+    public DateTime CreatedDate { get; set; }
+    public bool Active { get; set; }
+    public int OperatorId { get; set; }
+}
+
 [ApiController]
 [Route("api/[controller]")]
 public class AdminController : ControllerBase
@@ -76,7 +90,57 @@ public class AdminController : ControllerBase
                 cmd.Parameters.AddWithValue("@OperatorName", operatorName);
                 operatorAdminSummary.OperatorName = (string)await cmd.ExecuteScalarAsync();
             }
+
+            using (var cmd = new SqlCommand(@"SELECT 
+    r.RouteId,
+    OT.Name AS OperatorType,
+    O.Name AS OperatorName,
+    frm.Name AS FromLocation,
+    LTo.Name AS ToLocation,
+    crtr.Name AS Creator,
+    r.CreatedDate,
+    r.Active,
+    O.OperatorId
+    FROM [dbo].[Route] r
+    INNER JOIN Operator O ON r.OperatorId = O.OperatorId
+    INNER JOIN [Location] frm ON frm.LocationId = r.FromId
+    INNER JOIN [Location] LTo ON LTo.LocationId = r.ToId
+    INNER JOIN [User] crtr ON crtr.UserId = r.CreatedBy
+    INNER JOIN [OperatorType] OT ON OT.OperatorTypeId = O.OperatorTypeId
+    WHERE O.Name = @OperatorName", conn))
+            {
+                cmd.Parameters.AddWithValue("@OperatorName", operatorName);
+                using (var reader = await cmd.ExecuteReaderAsync())
+                {
+                    var routes = new List<RouteSummary>();
+                    while (await reader.ReadAsync())
+                    {
+                        routes.Add(new RouteSummary
+                        {
+                            RouteId = reader.GetInt32(0),
+                            OperatorType = reader.GetString(1),
+                            OperatorName = reader.GetString(2),
+                            FromLocation = reader.GetString(3),
+                            ToLocation = reader.GetString(4),
+                            Creator = reader.GetString(5),
+                            CreatedDate = reader.GetDateTime(6),
+                            Active = reader.GetBoolean(7),
+                            OperatorId = reader.GetInt32(8)
+                        });
+                    }
+                    operatorAdminSummary.Routes = routes;
+                }
+            }
+
+
+
+
         }
         return Ok(operatorAdminSummary);
     }
+
+
+
+    
 }
+

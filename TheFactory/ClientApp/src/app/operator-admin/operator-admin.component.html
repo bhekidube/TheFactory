@@ -6,6 +6,16 @@
     <li><strong>My Routes:</strong> {{ summary?.routes }}</li>
     <li><strong>My Trips:</strong> {{ summary?.trips }}</li>
   </ul>
+
+  <ul *ngIf="summary?.Routes?.length">
+    <li *ngFor="let route of summary.Routes">
+      <strong>Route #{{ route.RouteId }}:</strong>
+      {{ route.FromLocation }} → {{ route.ToLocation }} |
+      Type: {{ route.OperatorType }} |
+      Created by: {{ route.Creator }} on {{ route.CreatedDate | date:'short' }} |
+      Active: {{ route.Active ? 'Yes' : 'No' }}
+    </li>
+  </ul>
 </div>
 <div *ngIf="!isLoggedIn || (userRole !== 'Admin' && userRole !== 'SystemAdmin' && userRole !== 'OperatorAdmin')">
   <p>You do not have permission to view this operator's details.</p>
