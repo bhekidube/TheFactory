@@ -8,6 +8,17 @@ interface AdminSummary {
   totalTrips: number;
   totalTickets: number;
   operatorNames: string[];
+  routes: RouteSummary[]; // Add routes property
+}
+
+interface RouteSummary {
+  routeId: number;
+  fromLocation: string;
+  toLocation: string;
+  operatorType: string;
+  creator: string;
+  createdDate: string;
+  active: boolean;
 }
 
 interface OperatorAdminSummary {
@@ -107,6 +118,16 @@ export class AdminScreenComponent implements OnInit {
   }
 
   viewOperator(operator: string): void {
-    this.router.navigate(['/operator-admin', operator]);
+    this.http.get<any>(`https://AzureLinuxAppService.azurewebsites.net/api/Admin/OperatorSummary?operatorName=${encodeURIComponent(operator)}`)
+      .subscribe({
+        next: summary => {
+          // Store summary in localStorage for access in OperatorAdminComponent
+          localStorage.setItem('operatorAdminSummary', JSON.stringify(summary));
+          this.router.navigate(['/operator-admin', operator]);
+        },
+        error: err => {
+          this.error = 'Failed to load operator summary.';
+        }
+      });
   }
 }

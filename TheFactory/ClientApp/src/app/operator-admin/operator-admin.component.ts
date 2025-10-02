@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-operator-admin',
@@ -10,12 +11,49 @@ export class OperatorAdminComponent {
   @Input() operatorName: string = '';
   @Input() summary: any;
 
-  constructor(private route: ActivatedRoute) {}
+  constructor(private route: ActivatedRoute, private http: HttpClient) {}
 
   ngOnInit(): void {
     this.operatorName = this.route.snapshot.paramMap.get('operator') || '';
+    const summaryString = localStorage.getItem('operatorAdminSummary');
+    this.summary = summaryString ? JSON.parse(summaryString) : null;
   }
   
   userRole: string = localStorage.getItem('userRole') || 'Public';
   isLoggedIn: boolean = !!localStorage.getItem('userName');
+
+  viewRoute(route: any): void {
+    // Implement your logic here, e.g. show route details or navigate
+    alert(`Viewing route from ${route.fromLocation} to ${route.toLocation}`);
+  }
+
+  showCreateRouteForm = false;
+  createRouteMessage = '';
+  newRoute = {
+    fromLocation: '',
+    toLocation: '',
+    operatorType: ''
+  };
+
+  insertRoute(): void {
+    const payload = {
+      operatorName: this.operatorName,
+      fromLocation: this.newRoute.fromLocation,
+      toLocation: this.newRoute.toLocation,
+      operatorType: this.newRoute.operatorType
+    };
+
+    // Replace with your actual API endpoint
+    this.http.post<any>('https://AzureLinuxAppService.azurewebsites.net/api/Admin/InsertRoute', payload)
+      .subscribe({
+        next: res => {
+          this.createRouteMessage = 'Route created successfully!';
+          this.showCreateRouteForm = false;
+          // Optionally refresh routes list here
+        },
+        error: err => {
+          this.createRouteMessage = err.error?.error || 'Failed to create route.';
+        }
+      });
+  }
 }
