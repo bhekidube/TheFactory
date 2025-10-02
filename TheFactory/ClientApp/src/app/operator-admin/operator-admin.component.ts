@@ -50,7 +50,7 @@ export class OperatorAdminComponent {
     };
 
     // Replace with your actual API endpoint
-    this.http.post<any>('https://AzureLinuxAppService.azurewebsites.net/api/Admin/InsertRoute', payload)
+    this.http.post<any>('https://AzureLinuxAppService.azurewebsites.net/api/BusTrips/InsertRoute', payload)
       .subscribe({
         next: res => {
           this.createRouteMessage = 'Route created successfully!';
