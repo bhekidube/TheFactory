@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { environment } from '../../environments/environment';
 
 interface AdminSummary {
   totalOperators: number;
@@ -59,7 +60,7 @@ export class AdminScreenComponent implements OnInit {
     }
 
     if (this.isAdminRole(this.userRole)) {
-      this.http.get<AdminSummary>('https://AzureLinuxAppService.azurewebsites.net/api/Admin/Summary').subscribe({
+      this.http.get<AdminSummary>(`${environment.apiBaseUrl}/api/Admin/Summary`).subscribe({
         next: data => {
           this.summary = data;
           this.loading = false;
@@ -105,7 +106,7 @@ export class AdminScreenComponent implements OnInit {
 
   changeUserRole(): void {
     this.http.post<{ message: string, error?: string }>(
-      'https://AzureLinuxAppService.azurewebsites.net/api/User/ChangeUserRole',
+      `${environment.apiBaseUrl}/api/User/ChangeUserRole`,
       { email: this.targetEmail, newUserRoleId: this.newUserRoleId }
     ).subscribe({
       next: res => {
@@ -118,7 +119,7 @@ export class AdminScreenComponent implements OnInit {
   }
 
   viewOperator(operator: string): void {
-    this.http.get<any>(`https://AzureLinuxAppService.azurewebsites.net/api/Admin/OperatorSummary?operatorName=${encodeURIComponent(operator)}`)
+    this.http.get<any>(`${environment.apiBaseUrl}/api/Admin/OperatorSummary?operatorName=${encodeURIComponent(operator)}`)
       .subscribe({
         next: summary => {
           // Store summary in localStorage for access in OperatorAdminComponent

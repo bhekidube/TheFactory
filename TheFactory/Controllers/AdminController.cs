@@ -14,6 +14,7 @@ public class AdminSummary
 
 public class OperatorAdminSummary
 {
+    public int OperatorId { get; set; }
     public string OperatorName { get; set; }
     public List<RouteSummary> Routes { get; set; } = new List<RouteSummary>();
 }

@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-operator-admin',
@@ -18,8 +19,11 @@ export class OperatorAdminComponent {
     const summaryString = localStorage.getItem('operatorAdminSummary');
     this.summary = summaryString ? JSON.parse(summaryString) : null;
 
+    alert(JSON.stringify(summaryString));
+    alert(JSON.stringify('test__'+ this.summary)); // Check if operatorId is present
+
     // Get lookup data for locations
-    this.http.get<any[]>('https://AzureLinuxAppService.azurewebsites.net/api/Lookup/Locations')
+    this.http.get<any[]>(`${environment.apiBaseUrl}/api/Lookup/Locations`)
       .subscribe({
         next: data => this.locations = data,
         error: err => console.error('Failed to load locations', err)
@@ -38,19 +42,21 @@ export class OperatorAdminComponent {
   createRouteMessage = '';
   locations: any[] = [];
   newRoute = {
-    fromLocationId: '',
-    toLocationId: ''
+    fromLocationId: null,
+    toLocationId: null
   };
 
   insertRoute(): void {
     const payload = {
-      operatorId: this.summary?.operatorId || 0,
-      fromId: this.newRoute.fromLocationId,
-      toId: this.newRoute.toLocationId,
-      createdBy: localStorage.getItem('userId') || 0 // or get from your auth context
+      operatorId: Number(this.summary?.operatorId) || 0,
+      fromId: Number(this.newRoute.fromLocationId),
+      toId: Number(this.newRoute.toLocationId),
+      createdBy: Number(localStorage.getItem('userId')) || 0
     };
+    alert(this.summary.operatorId);
 
-    this.http.post<any>('https://AzureLinuxAppService.azurewebsites.net/api/BusTrips/InsertRoute', payload)
+    alert(JSON.stringify(payload));
+    this.http.post<any>(`${environment.apiBaseUrl}/api/BusTrips/InsertRoute`, payload)
       .subscribe({
         next: res => {
           this.createRouteMessage = 'Route created successfully!';
@@ -58,7 +64,7 @@ export class OperatorAdminComponent {
           // Optionally refresh routes list here
         },
         error: err => {
-          this.createRouteMessage = err.error?.error || 'Failed to create route.';
+          this.createRouteMessage = err.error?.error || err.message || 'Failed to create route.';
         }
       });
   }
