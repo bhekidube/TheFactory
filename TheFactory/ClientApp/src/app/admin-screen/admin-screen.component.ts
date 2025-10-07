@@ -24,6 +24,10 @@ interface RouteSummary {
 
 interface OperatorAdminSummary {
   totalOperators: number;
+  totalRoutes: number;
+  totalTickets: number;
+  operatorId: number;
+  operatorRoutes: RouteSummary[]; 
 }
 
 type UserRole = 'SystemAdmin' | 'Admin' | 'OperatorAdmin' | 'Operator' | 'Customer' | 'Public';
@@ -87,6 +91,10 @@ export class AdminScreenComponent implements OnInit {
     return localStorage.getItem('userName') || 'Unknown User';
   }
 
+  getUserId(): number {
+    return Number(localStorage.getItem('userId')) || 0;
+  }
+
   isAdminRole(role: UserRole): boolean {
     return role === 'SystemAdmin' || role === 'Admin';
   }
@@ -115,7 +123,7 @@ export class AdminScreenComponent implements OnInit {
       error: err => {
         this.roleChangeMessage = err.error?.error || 'Failed to change user role.';
       }
-    });
+    });  
   }
 
   viewOperator(operator: string): void {
@@ -124,6 +132,7 @@ export class AdminScreenComponent implements OnInit {
         next: summary => {
           // Store summary in localStorage for access in OperatorAdminComponent
           localStorage.setItem('operatorAdminSummary', JSON.stringify(summary));
+          localStorage.setItem('userId', JSON.stringify(this.getUserId()));alert('userId: ' + this.getUserId());
           this.router.navigate(['/operator-admin', operator]);
         },
         error: err => {

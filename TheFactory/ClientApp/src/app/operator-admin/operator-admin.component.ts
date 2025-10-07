@@ -20,7 +20,7 @@ export class OperatorAdminComponent {
     this.summary = summaryString ? JSON.parse(summaryString) : null;
 
     alert(JSON.stringify(summaryString));
-    alert(JSON.stringify('test__'+ this.summary)); // Check if operatorId is present
+
 
     // Get lookup data for locations
     this.http.get<any[]>(`${environment.apiBaseUrl}/api/Lookup/Locations`)

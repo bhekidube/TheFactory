@@ -27,13 +27,13 @@
     <label>
       From Location:
       <select [(ngModel)]="newRoute.fromLocationId" name="fromLocationId" required>
-        <option *ngFor="let loc of locations" [value]="loc.LocationID">{{ loc.location }} ({{ loc.town }})</option>
+        <option *ngFor="let loc of locations" [value]="loc.locationID">{{ loc.location }} ({{ loc.town }})</option>
       </select>
     </label>
     <label>
       To Location:
       <select [(ngModel)]="newRoute.toLocationId" name="toLocationId" required>
-        <option *ngFor="let loc of locations" [value]="loc.LocationID">{{ loc.location }} ({{ loc.town }})</option>
+        <option *ngFor="let loc of locations" [value]="loc.locationID">{{ loc.location }} ({{ loc.town }})</option>
       </select>
     </label>
     <button type="submit">Create Route</button>

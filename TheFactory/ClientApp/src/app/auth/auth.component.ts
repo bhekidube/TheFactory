@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-auth',
@@ -33,7 +34,7 @@ export class AuthComponent {
   }
 
   register() {
-    this.http.post('https://AzureLinuxAppService.azurewebsites.net/api/User/Register', this.registerModel).subscribe({
+    this.http.post(`${environment.apiBaseUrl}/api/User/Register`, this.registerModel).subscribe({
       next: () => {
         this.error = null;
         alert('Registration successful! Please login.');
@@ -46,11 +47,14 @@ export class AuthComponent {
   }
 
   login() {
-    this.http.post<{ userName: string, userRole: string }>('https://AzureLinuxAppService.azurewebsites.net/api/User/Login', this.loginModel).subscribe({
+    this.http.post<{ userName: string, userRole: string, userId: number }>(
+      `${environment.apiBaseUrl}/api/User/Login`, this.loginModel
+    ).subscribe({
       next: (response) => {
         this.error = null;
         localStorage.setItem('userName', response.userName);
-        localStorage.setItem('userRole', response.userRole); // Save userRole
+        localStorage.setItem('userRole', response.userRole);
+        localStorage.setItem('userId', response.userId?.toString() || '');
         if (response.userRole === 'OperatorAdmin') {
           this.router.navigate(['/operator-admin', response.userName]);
         } else {

@@ -86,13 +86,20 @@ public class AdminController : ControllerBase
 
         using (var conn = await _sqlService.GetSqlConnectionAsync())
         {
-            using (var cmd = new SqlCommand("SELECT Name FROM [Operator] WHERE Name = @OperatorName", conn))
+            using (var cmd = new SqlCommand("SELECT Name, OperatorId FROM [Operator] WHERE Name = @OperatorName", conn))
             {
                 cmd.Parameters.AddWithValue("@OperatorName", operatorName);
-                operatorAdminSummary.OperatorName = (string)await cmd.ExecuteScalarAsync();
+                using (var reader = await cmd.ExecuteReaderAsync())
+                {
+                    if (await reader.ReadAsync())
+                    {
+                        operatorAdminSummary.OperatorName = reader.GetString(0);
+                        operatorAdminSummary.OperatorId = reader.GetInt32(1);
+                    }
+                }
             }
 
-            using (var cmd = new SqlCommand(@"SELECT 
+            using (var cmd = new SqlCommand(@"SELECT        
     r.RouteId,
     OT.Name AS OperatorType,
     O.Name AS OperatorName,
