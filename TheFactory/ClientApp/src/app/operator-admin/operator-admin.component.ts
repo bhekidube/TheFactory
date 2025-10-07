@@ -53,15 +53,23 @@ export class OperatorAdminComponent {
       toId: Number(this.newRoute.toLocationId),
       createdBy: Number(localStorage.getItem('userId')) || 0
     };
-    alert(this.summary.operatorId);
 
-    alert(JSON.stringify(payload));
     this.http.post<any>(`${environment.apiBaseUrl}/api/BusTrips/InsertRoute`, payload)
       .subscribe({
         next: res => {
           this.createRouteMessage = 'Route created successfully!';
           this.showCreateRouteForm = false;
-          // Optionally refresh routes list here
+          // Refresh the operator summary to update the route list
+          this.http.get<any>(`${environment.apiBaseUrl}/api/Admin/OperatorSummary?operatorName=${encodeURIComponent(this.operatorName)}`)
+            .subscribe({
+              next: summary => {
+                this.summary = summary;
+                localStorage.setItem('operatorAdminSummary', JSON.stringify(summary));
+              },
+              error: err => {
+                this.createRouteMessage = 'Route created, but failed to refresh route list.';
+              }
+            });
         },
         error: err => {
           this.createRouteMessage = err.error?.error || err.message || 'Failed to create route.';
