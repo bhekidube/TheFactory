@@ -7,6 +7,9 @@ import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSortModule } from '@angular/material/sort';
 import { ScrollingModule } from '@angular/cdk/scrolling';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 import { AppComponent } from './app.component';
 import { NavMenuComponent } from './nav-menu/nav-menu.component';
@@ -54,7 +57,10 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     MatTableModule,
     MatPaginatorModule,
     MatSortModule,
-    ScrollingModule
+    ScrollingModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatCheckboxModule,
   ],
   providers: [],
   bootstrap: [AppComponent]
