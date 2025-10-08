@@ -24,9 +24,14 @@ export class OperatorRouteTripComponent implements OnInit, OnChanges {
     arrivalDateTime: '',
     price: null,
     notes: '',
-    active: true
+    active: true,
+    createdBy: null,
+    createdDate: '',
+    updatedBy: null,
+    updatedDate: ''
   };
   createTripMessage = '';
+  showCreateTripForm = false;
 
   constructor(private http: HttpClient) {}
 
@@ -52,23 +57,35 @@ export class OperatorRouteTripComponent implements OnInit, OnChanges {
 
   createTrip() {
     if (!this.route?.routeId) return;
+    const userId = Number(localStorage.getItem('userId')) || 0;
     const payload = {
       routeId: this.route.routeId,
       departureDateTime: this.newTrip.departureDateTime,
       arrivalDateTime: this.newTrip.arrivalDateTime,
       price: this.newTrip.price,
-      createdBy: Number(localStorage.getItem('userId')) || 0,
+      createdBy: userId,
       notes: this.newTrip.notes,
       active: this.newTrip.active,
-      updatedBy: null,
+      updatedBy: userId, // Set in the background
       updatedDate: null
     };
     this.http.post<any>(`${environment.apiBaseUrl}/api/BusTrips/InsertRouteTrip`, payload)
       .subscribe({
         next: res => {
           this.createTripMessage = 'Trip created!';
-          this.loadTrips();
-          this.newTrip = { departureDateTime: '', arrivalDateTime: '', price: null, notes: '', active: true };
+          this.loadTrips(); // <-- Refresh the table after creating a trip
+          this.newTrip = {
+            departureDateTime: '',
+            arrivalDateTime: '',
+            price: null,
+            notes: '',
+            active: true,
+            createdBy: null,
+            createdDate: '',
+            updatedBy: null,
+            updatedDate: ''
+          };
+          this.showCreateTripForm = false; // Optionally close the form after saving
         },
         error: err => {
           this.createTripMessage = err.error?.error || 'Failed to create trip.';
