@@ -13,6 +13,10 @@
       </a> |
       Created by: {{ route.creator }} on {{ route.createdDate | date:'short' }}
 
+    <!-- Render the trip component below the clicked route -->
+    <div *ngIf="selectedRoute === route">
+      <app-operator-route-trip [route]="route"></app-operator-route-trip>
+    </div>
     </li>
   </ul>
 </div>

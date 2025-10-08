@@ -33,9 +33,10 @@ export class OperatorAdminComponent {
   userRole: string = localStorage.getItem('userRole') || 'Public';
   isLoggedIn: boolean = !!localStorage.getItem('userName');
 
+  selectedRoute: any = null;
+
   viewRoute(route: any): void {
-    // Implement your logic here, e.g. show route details or navigate
-    alert(`Viewing route from ${route.fromLocation} to ${route.toLocation}`);
+    this.selectedRoute = route;
   }
 
   showCreateRouteForm = false;
