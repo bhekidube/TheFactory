@@ -32,6 +32,8 @@ export class OperatorRouteTripComponent implements OnInit, OnChanges {
   };
   createTripMessage = '';
   showCreateTripForm = false;
+  editMode = false;
+  editingTripId: number | null = null;
 
   constructor(private http: HttpClient) {}
 
@@ -89,6 +91,62 @@ export class OperatorRouteTripComponent implements OnInit, OnChanges {
         },
         error: err => {
           this.createTripMessage = err.error?.error || 'Failed to create trip.';
+        }
+      });
+  }
+
+  editTrip(trip: any) {
+    this.editMode = true;
+    this.showCreateTripForm = true;
+    this.editingTripId = trip.tripId;
+    this.newTrip = {
+      departureDateTime: trip.departureDateTime ? trip.departureDateTime.substring(0, 16) : '',
+      arrivalDateTime: trip.arrivalDateTime ? trip.arrivalDateTime.substring(0, 16) : '',
+      price: trip.price,
+      notes: trip.notes,
+      active: trip.active,
+      createdBy: trip.createdBy,
+      createdDate: trip.createdDate,
+      updatedBy: trip.updatedBy,
+      updatedDate: trip.updatedDate
+    };
+  }
+
+  updateTrip() {
+    if (!this.route?.routeId || !this.editingTripId) return;
+    const userId = Number(localStorage.getItem('userId')) || 0;
+    const payload = {
+      tripId: this.editingTripId,
+      routeId: this.route.routeId,
+      departureDateTime: this.newTrip.departureDateTime,
+      arrivalDateTime: this.newTrip.arrivalDateTime,
+      price: this.newTrip.price,
+      notes: this.newTrip.notes,
+      active: this.newTrip.active,
+      updatedBy: userId
+    };
+    this.http.put<any>(`${environment.apiBaseUrl}/api/BusTrips/UpdateRouteTrip`, payload)
+      .subscribe({
+        next: res => {
+          this.createTripMessage = 'Trip updated!';
+          this.loadTrips();
+          this.newTrip = {
+            departureDateTime: '',
+            arrivalDateTime: '',
+            price: null,
+            notes: '',
+            active: true,
+            createdBy: null,
+            createdDate: '',
+            updatedBy: null,
+            updatedDate: ''
+          };
+          this.editMode = false;
+          this.editingTripId = null;
+          this.showCreateTripForm = false;
+        },
+        error: err => {
+          this.createTripMessage = err.error?.error || 'Failed to update trip.';
         }
       });
   }

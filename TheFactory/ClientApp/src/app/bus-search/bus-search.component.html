@@ -45,10 +45,10 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let result of searchResults">
-          <td>{{ result.busName }}</td>
-          <td>{{ result.date | date }}</td>
-          <td>{{ result.departureTime }}</td>
+        <tr *ngFor="let row of searchResults; let i = index" [class.alt-row]="i % 2 === 1">
+          <td>{{ row.operatorName }}</td>
+          <td>{{ row.departureDateTime | date:'MMM d, y' }}</td>
+          <td>{{ row.departureDateTime | date:'HH:mm' }}</td>
         </tr>
       </tbody>
     </table>

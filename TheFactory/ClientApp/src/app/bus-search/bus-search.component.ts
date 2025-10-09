@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment'; // adjust path if needed
 
 @Component({
   selector: 'app-bus-search',
@@ -40,16 +42,10 @@ export class BusSearchComponent implements OnInit {
   toInput: string = 'Bulawayo';
   fromSuggestions: string[] = [];
   toSuggestions: string[] = [];
-  searchResults: {
-    from: string;
-    to: string;
-    date: string;
-    departureTime: string;
-    arrivalTime: string;
-    price: number;
-    busName: string;
-  }[] = [];
+  searchResults: any[] = [];
   dateInput: string = '';
+
+  constructor(private http: HttpClient) {}
 
   ngOnInit() {
     setInterval(() => this.updateMessage(), 10000);
@@ -99,158 +95,14 @@ export class BusSearchComponent implements OnInit {
   }
 
   onSearch() {
-    const from = this.fromInput.trim().toLowerCase();
-    const to = this.toInput.trim().toLowerCase();
-    const fromCode = this.cityCodes[this.fromInput] || this.fromInput;
-    const toCode = this.cityCodes[this.toInput] || this.toInput;
-    this.searchResults = [
-      {
-        busName: 'Revival',
-        from: 'Power House (Jozi)',
-        to: 'Bulawayo',
-        date: '2025-09-04',
-        departureTime: '08:00',
-        arrivalTime: '10:00',
-        price: 100
-      },
-      {
-        busName: 'Bravo',
-        from: 'Power House (Jozi)',
-        to: 'Bulawayo',
-        date: '2025-09-04',
-        departureTime: '11:00',
-        arrivalTime: '14:00',
-        price: 100
-      },
-      {
-        busName: 'Revival',
-        from: 'Power House (Jozi)',
-        to: 'Bulawayo',
-        date: '2025-09-04',
-        departureTime: '12:00',
-        arrivalTime: '20:00',
-        price: 100
-      },
-      {
-        busName: 'Swiss',
-        from: 'Power House (Jozi)',
-        to: 'Bulawayo',
-        date: '2025-09-04',
-        departureTime: '19:00',
-        arrivalTime: '10:00',
-        price: 100
-      },
-      {
-        busName: 'Mzansi',
-        from: 'Power House (Jozi)',
-        to: 'Bulawayo',
-        date: '2025-09-04',
-        departureTime: '14:00',
-        arrivalTime: '06:00',
-        price: 100
-      },
-      {
-        busName: 'Mzansi',
-        from: 'Power House (Jozi)',
-        to: 'Bulawayo',
-        date: '2025-09-04',
-        departureTime: '17:00',
-        arrivalTime: '20:00',
-        price: 100
-      },
-      {
-        busName: 'Delta',
-        from: 'Power House (Jozi)',
-        to: 'Bulawayo',
-        date: '2025-09-04',
-        departureTime: '15:00',
-        arrivalTime: '10:00',
-        price: 100
-      },
-      {
-        busName: 'Delta',
-        from: 'Power House (Jozi)',
-        to: 'Bulawayo',
-        date: '2025-09-04',
-        departureTime: '16:00',
-        arrivalTime: '20:00',
-        price: 100
-      },
-      {
-        busName: 'Swiss',
-        from: 'Power House (Jozi)',
-        to: 'Bulawayo',
-        date: '2025-09-04',
-        departureTime: '15:00',
-        arrivalTime: '10:00',
-        price: 100
-      },
-      {
-        busName: 'Swiss',
-        from: 'Power House (Jozi)',
-        to: 'Bulawayo',
-        date: '2025-09-04',
-        departureTime: '16:00',
-        arrivalTime: '14:00',
-        price: 100
-      },
-       {
-        busName: 'Swiss',
-        from: 'Power House (Jozi)',
-        to: 'Bulawayo',
-        date: '2025-09-04',
-        departureTime: '17:00',
-        arrivalTime: '14:00',
-        price: 100
-      },
-            {
-        busName: 'Imperial',
-        from: 'Power House (Jozi)',
-        to: 'Bulawayo',
-        date: '2025-09-04',
-        departureTime: '17:00',
-        arrivalTime: '14:00',
-        price: 100
-      },
-            {
-        busName: 'Imperial',
-        from: 'Power House (Jozi)',
-        to: 'Bulawayo',
-        date: '2025-09-04',
-        departureTime: '18:00',
-        arrivalTime: '14:00',
-        price: 100
-      },
-     {
-        busName: 'Regional',
-        from: 'Power House (Jozi)',
-        to: 'Bulawayo',
-        date: '2025-09-04',
-        departureTime: '17:00',
-        arrivalTime: '14:00',
-        price: 100
-      },
-           {
-        busName: 'Mthethi',
-        from: 'Power House (Jozi)',
-        to: 'Bulawayo',
-        date: '2025-09-04',
-        departureTime: '18:00',
-        arrivalTime: '14:00',
-        price: 100
-      },
-      {
-        busName: 'Brooklyn',
-        from: 'Power House (Jozi)',
-        to: 'Bulawayo',
-        date: '2025-09-04',
-        departureTime: '17:00',
-        arrivalTime: '20:00',
-        price: 100
-      }
-    ].filter(result =>
-      result.from.toLowerCase().includes(from) &&
-      result.to.toLowerCase().includes(to)
-    );
+    const departureDate = this.dateInput;
+    this.http.get<any[]>(`${environment.apiBaseUrl}/api/BusTrips/GetRouteTrips`, {
+      params: { departureDate }
+    }).subscribe(results => {
+      this.searchResults = results;
+    }, error => {
+      this.searchResults = [];
+      // Optionally handle error
+    });
   }
 }

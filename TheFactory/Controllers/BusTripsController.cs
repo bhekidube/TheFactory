@@ -212,6 +212,47 @@ public class BusTripsController : ControllerBase
         }
     }
 
+    [HttpPut("UpdateRouteTrip")]
+    public async Task<IActionResult> UpdateRouteTrip([FromBody] RouteTripUpdateModel model)
+    {
+        try
+        {
+            using (var conn = await GetSqlConnection())
+            using (var command = new SqlCommand(@"
+                UPDATE [dbo].[RouteTrip]
+                SET
+                    DepartureDateTime = @DepartureDateTime,
+                    ArrivalDateTime = @ArrivalDateTime,
+                    Price = @Price,
+                    Notes = @Notes,
+                    Active = @Active,
+                    UpdatedBy = @UpdatedBy,
+                    UpdatedDate = GETDATE()
+                WHERE TripId = @TripId
+            ", conn))
+            {
+                command.Parameters.AddWithValue("@TripId", model.TripId);
+                command.Parameters.AddWithValue("@DepartureDateTime", model.DepartureDateTime);
+                command.Parameters.AddWithValue("@ArrivalDateTime", model.ArrivalDateTime);
+                command.Parameters.AddWithValue("@Price", model.Price);
+                command.Parameters.AddWithValue("@Notes", (object?)model.Notes ?? DBNull.Value);
+                command.Parameters.AddWithValue("@Active", model.Active);
+                command.Parameters.AddWithValue("@UpdatedBy", model.UpdatedBy);
+
+                var rowsAffected = await command.ExecuteNonQueryAsync();
+                return Ok(new { RowsAffected = rowsAffected });
+            }
+        }
+        catch (SqlException ex)
+        {
+            return StatusCode(500, new { error = "A database error occurred.", details = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "An unexpected error occurred.", details = ex.Message });
+        }
+    }
+
     [HttpGet("whoami")]
     public async Task<IActionResult> WhoAmI()
     {
@@ -282,6 +323,75 @@ public class BusTripsController : ControllerBase
             return StatusCode(500, new { error = "An unexpected error occurred.", details = ex.Message });
         }
     }
+
+    [HttpGet("GetRouteTrips")]
+    public async Task<IActionResult> GetRouteTrips([FromQuery] DateTime departureDate)
+    {
+        try
+        {
+            var trips = new List<object>();
+            using (var conn = await GetSqlConnection())
+            using (var command = new SqlCommand(@"
+                SELECT 
+                    FORMAT(GETDATE(), 'MMM d, yyyy') AS FormattedDate,
+                    RT.TripId,
+                    RT.RouteId,
+                    RT.DepartureDateTime,
+                    RT.ArrivalDateTime,
+                    RT.Price,
+                    RT.CreatedBy,
+                    RT.CreatedDate,
+                    RT.UpdatedBy,
+                    RT.UpdatedDate,
+                    RT.Notes,
+                    RT.Active,
+                    R.RouteId AS Route_RouteId,
+                    O.OperatorId AS Operator_OperatorId,
+                    O.Name AS OperatorName
+                FROM [dbo].[RouteTrip] RT
+                INNER JOIN [ROUTE] R ON RT.RouteId = R.RouteId
+                INNER JOIN Operator O ON O.OperatorId = R.OperatorId
+                WHERE CAST(RT.DepartureDateTime AS DATE) = CAST(@DepartureDate AS DATE) AND rt.Active = 1
+            ", conn))
+            {
+                command.Parameters.AddWithValue("@DepartureDate", departureDate.Date);
+
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        trips.Add(new
+                        {
+                            FormattedDate = reader.GetString(0),
+                            TripId = reader.GetInt32(1),
+                            RouteId = reader.GetInt32(2),
+                            DepartureDateTime = reader.GetDateTime(3),
+                            ArrivalDateTime = reader.GetDateTime(4),
+                            Price = reader.GetDecimal(5),
+                            CreatedBy = reader.GetInt32(6),
+                            CreatedDate = reader.GetDateTime(7),
+                            UpdatedBy = reader.IsDBNull(8) ? (int?)null : reader.GetInt32(8),
+                            UpdatedDate = reader.IsDBNull(9) ? (DateTime?)null : reader.GetDateTime(9),
+                            Notes = reader.IsDBNull(10) ? null : reader.GetString(10),
+                            Active = reader.GetBoolean(11),
+                            Route_RouteId = reader.GetInt32(12),
+                            Operator_OperatorId = reader.GetInt32(13),
+                            OperatorName = reader.GetString(14)
+                        });
+                    }
+                }
+            }
+            return Ok(trips);
+        }
+        catch (SqlException ex)
+        {
+            return StatusCode(500, new { error = "A database error occurred.", details = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "An unexpected error occurred.", details = ex.Message });
+        }
+    }
 }
 
 // Place this model in the same file or in a shared models file
@@ -312,4 +422,16 @@ public class RouteTripDto
     public DateTime? UpdatedDate { get; set; }
     public string? Notes { get; set; }
     public bool Active { get; set; }
+}
+
+// Place this model in the same file or in a shared models file
+public class RouteTripUpdateModel
+{
+    public int TripId { get; set; }
+    public DateTime DepartureDateTime { get; set; }
+    public DateTime ArrivalDateTime { get; set; }
+    public decimal Price { get; set; }
+    public string? Notes { get; set; }
+    public bool Active { get; set; }
+    public int UpdatedBy { get; set; }
 }
