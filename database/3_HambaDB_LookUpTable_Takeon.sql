@@ -848,6 +848,22 @@ IF NOT EXISTS (
     );
 
 
+-- Insert "6th Ave, G Silundika" location in Bulawayo only if it does not already exist
+IF NOT EXISTS (
+    SELECT 1 FROM Location 
+    WHERE Name = '6th Ave, G Silundika'
+      AND TownId = (SELECT TownId FROM Town WHERE Name = 'Bulawayo')
+)
+    INSERT INTO Location (Name, TownId, RegionId, CountryId, LocationTypeId)
+    VALUES (
+        '6th Ave, G Silundika',
+        (SELECT TownId FROM Town WHERE Name = 'Bulawayo'),
+        (SELECT RegionId FROM Region WHERE Name = 'Matabeleland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')),
+        (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'),
+        (SELECT LocationTypeId FROM LocationType WHERE Name = 'Bus station')
+    );    
+
+
 -- Insert operators with OperatorTypeId = 1 only if they do not already exist
 IF NOT EXISTS (SELECT 1 FROM Operator WHERE Name = 'Revival')
     INSERT INTO Operator (Name, OperatorTypeId) VALUES ('Revival', 1);
@@ -872,3 +888,12 @@ IF NOT EXISTS (SELECT 1 FROM Operator WHERE Name = 'Regional')
 
 IF NOT EXISTS (SELECT 1 FROM Operator WHERE Name = 'Mthethi')
     INSERT INTO Operator (Name, OperatorTypeId) VALUES ('Mthethi', 1);
+
+IF NOT EXISTS (SELECT 1 FROM Operator WHERE Name = 'Brooklyn Express')
+    INSERT INTO Operator (Name, OperatorTypeId) VALUES ('Brooklyn Express', 1);
+
+IF NOT EXISTS (SELECT 1 FROM Operator WHERE Name = 'Asambeni')
+    INSERT INTO Operator (Name, OperatorTypeId) VALUES ('Asambeni', 1);
+
+IF NOT EXISTS (SELECT 1 FROM Operator WHERE Name = 'Godzilla')
+    INSERT INTO Operator (Name, OperatorTypeId) VALUES ('Godzilla', 1);
