@@ -352,6 +352,7 @@ public class BusTripsController : ControllerBase
                 INNER JOIN [ROUTE] R ON RT.RouteId = R.RouteId
                 INNER JOIN Operator O ON O.OperatorId = R.OperatorId
                 WHERE CAST(RT.DepartureDateTime AS DATE) = CAST(@DepartureDate AS DATE) AND rt.Active = 1
+                AND R.FromId = 1
                 ORDER BY RT.DepartureDateTime ASC
             ", conn))
             {
