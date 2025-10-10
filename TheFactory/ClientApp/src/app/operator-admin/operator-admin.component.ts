@@ -19,7 +19,7 @@ export class OperatorAdminComponent {
     const summaryString = localStorage.getItem('operatorAdminSummary');
     this.summary = summaryString ? JSON.parse(summaryString) : null;
 
-    alert(JSON.stringify(summaryString));
+
 
 
     // Get lookup data for locations

@@ -132,7 +132,7 @@ export class AdminScreenComponent implements OnInit {
         next: summary => {
           // Store summary in localStorage for access in OperatorAdminComponent
           localStorage.setItem('operatorAdminSummary', JSON.stringify(summary));
-          localStorage.setItem('userId', JSON.stringify(this.getUserId()));alert('userId: ' + this.getUserId());
+          localStorage.setItem('userId', JSON.stringify(this.getUserId()));
           this.router.navigate(['/operator-admin', operator]);
         },
         error: err => {
