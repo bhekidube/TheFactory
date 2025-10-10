@@ -72,9 +72,9 @@ export class BusSearchComponent implements OnInit {
         this.toInput = defaultTo.location;
         this.selectedTo = defaultTo;
       }
+      // Only search after defaults are set
+      this.onSearch();
     });
-
-    this.onSearch();
   }
 
   updateMessage() {
