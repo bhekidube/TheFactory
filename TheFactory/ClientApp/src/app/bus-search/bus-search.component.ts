@@ -36,12 +36,14 @@ export class BusSearchComponent implements OnInit {
 
   digitalText = this.messages[0];
   index = 0;
-  fromInput: string = 'Power House (Jozi)';
-  toInput: string = 'Bulawayo';
-  fromSuggestions: string[] = [];
-  toSuggestions: string[] = [];
-  searchResults: any[] = [];
+  fromInput: string = '';
+  toInput: string = '';
+  fromSuggestions: any[] = [];
+  toSuggestions: any[] = [];
+  selectedFrom: any = null;
+  selectedTo: any = null;
   dateInput: string = '';
+  searchResults: any[] = [];
 
   constructor(private http: HttpClient) {}
 
@@ -51,14 +53,26 @@ export class BusSearchComponent implements OnInit {
     const now = new Date();
     let dateToUse = new Date();
     if (now.getHours() >= 18) {
-      // After 6pm, use tomorrow's date
       dateToUse.setDate(now.getDate() + 1);
     }
-    // Format as yyyy-MM-dd for input[type="date"]
     const yyyy = dateToUse.getFullYear();
     const mm = String(dateToUse.getMonth() + 1).padStart(2, '0');
     const dd = String(dateToUse.getDate()).padStart(2, '0');
     this.dateInput = `${yyyy}-${mm}-${dd}`;
+
+    // Fetch locations and set default fromInput to location with ID 1 and toInput to location with ID 4
+    this.http.get<any[]>(`${environment.apiBaseUrl}/api/Lookup/Locations`).subscribe(locations => {
+      const defaultFrom = locations.find(l => l.locationID === 1);
+      if (defaultFrom) {
+        this.fromInput = defaultFrom.location;
+        this.selectedFrom = defaultFrom;
+      }
+      const defaultTo = locations.find(l => l.locationID === 4);
+      if (defaultTo) {
+        this.toInput = defaultTo.location;
+        this.selectedTo = defaultTo;
+      }
+    });
 
     this.onSearch();
   }
@@ -69,33 +83,53 @@ export class BusSearchComponent implements OnInit {
   }
 
   onFromInputChange() {
-    const value = this.fromInput.toLowerCase();
-    this.fromSuggestions = value
-      ? this.cities.filter(city => city.toLowerCase().startsWith(value))
-      : [];
+    if (!this.fromInput || this.fromInput.length < 2) {
+      this.fromSuggestions = [];
+      return;
+    }
+    this.http.get<any[]>(`${environment.apiBaseUrl}/api/Lookup/Locations`).subscribe(locations => {
+      this.fromSuggestions = locations.filter(l =>
+        l.location.toLowerCase().includes(this.fromInput.toLowerCase())
+      );
+    });
   }
 
   onToInputChange() {
-    const value = this.toInput.toLowerCase();
-    this.toSuggestions = value
-      ? this.cities.filter(city => city.toLowerCase().startsWith(value))
-      : [];
+    if (!this.toInput || this.toInput.length < 2) {
+      this.toSuggestions = [];
+      return;
+    }
+    this.http.get<any[]>(`${environment.apiBaseUrl}/api/Lookup/Locations`).subscribe(locations => {
+      this.toSuggestions = locations.filter(l =>
+        l.location.toLowerCase().includes(this.toInput.toLowerCase())
+      );
+    });
   }
 
-  selectFromSuggestion(city: string) {
-    this.fromInput = city;
+  selectFromSuggestion(loc: any) {
+    this.fromInput = loc.location;
+    this.selectedFrom = loc;
     this.fromSuggestions = [];
   }
 
-  selectToSuggestion(city: string) {
-    this.toInput = city;
+  selectToSuggestion(loc: any) {
+    this.toInput = loc.location;
+    this.selectedTo = loc;
     this.toSuggestions = [];
   }
 
   onSearch() {
+    if (!this.selectedFrom || !this.selectedTo) {
+      // Optionally show error to user
+      return;
+    }
     const departureDate = this.dateInput;
     this.http.get<any[]>(`${environment.apiBaseUrl}/api/BusTrips/GetRouteTrips`, {
-      params: { departureDate }
+      params: {
+        departureDate,
+        fromId: this.selectedFrom.locationID,
+        toId: this.selectedTo.locationID
+      }
     }).subscribe(results => {
       this.searchResults = results;
     }, error => {

@@ -325,7 +325,7 @@ public class BusTripsController : ControllerBase
     }
 
     [HttpGet("GetRouteTrips")]
-    public async Task<IActionResult> GetRouteTrips([FromQuery] DateTime departureDate)
+    public async Task<IActionResult> GetRouteTrips([FromQuery] DateTime departureDate, [FromQuery] int fromId, [FromQuery] int toId)
     {
         try
         {
@@ -351,12 +351,16 @@ public class BusTripsController : ControllerBase
                 FROM [dbo].[RouteTrip] RT
                 INNER JOIN [ROUTE] R ON RT.RouteId = R.RouteId
                 INNER JOIN Operator O ON O.OperatorId = R.OperatorId
+                INNER JOIN [Location] toL on r.ToId = toL.LocationId
                 WHERE CAST(RT.DepartureDateTime AS DATE) = CAST(@DepartureDate AS DATE) AND rt.Active = 1
-                AND R.FromId = 1
+                AND R.FromId = @FromId
+                AND toL.TownId IN (SELECT TownId FROM LOCATION WHERE LocationId = @ToId)
                 ORDER BY RT.DepartureDateTime ASC
             ", conn))
             {
                 command.Parameters.AddWithValue("@DepartureDate", departureDate.Date);
+                command.Parameters.AddWithValue("@FromId", fromId);
+                command.Parameters.AddWithValue("@ToId", toId);
 
                 using (var reader = await command.ExecuteReaderAsync())
                 {

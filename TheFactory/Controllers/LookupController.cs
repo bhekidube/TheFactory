@@ -20,7 +20,7 @@ public class LookupController : ControllerBase
         using (var cmd = new SqlCommand(@"
         SELECT 
             L.LocationID, 
-            L.Name AS Location, 
+            L.Name + ' ('+ T.Name +')' AS Location,  
             T.Name AS Town, 
             C.Name AS Country
         FROM [Location] L
