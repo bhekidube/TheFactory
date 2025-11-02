@@ -911,3 +911,6 @@ IF NOT EXISTS (SELECT 1 FROM Operator WHERE Name = 'Asambeni')
 
 IF NOT EXISTS (SELECT 1 FROM Operator WHERE Name = 'Godzilla')
     INSERT INTO Operator (Name, OperatorTypeId) VALUES ('Godzilla', 1);
+
+IF NOT EXISTS (SELECT 1 FROM Operator WHERE Name = 'Sebatha Luxury Coaches')
+    INSERT INTO Operator (Name, OperatorTypeId) VALUES ('Sebatha Luxury Coaches', 1);
