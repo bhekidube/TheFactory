@@ -352,7 +352,9 @@ public class BusTripsController : ControllerBase
                 INNER JOIN [ROUTE] R ON RT.RouteId = R.RouteId
                 INNER JOIN Operator O ON O.OperatorId = R.OperatorId
                 INNER JOIN [Location] toL on r.ToId = toL.LocationId
-                WHERE CAST(RT.DepartureDateTime AS DATE) = CAST(@DepartureDate AS DATE) AND rt.Active = 1
+                WHERE 
+                (CAST(RT.DepartureDateTime AS DATE) = CAST(@DepartureDate AS DATE) OR RT.Notes LIKE '%Daily%')
+                AND rt.Active = 1
                 AND R.FromId = @FromId
                 AND toL.TownId IN (SELECT TownId FROM LOCATION WHERE LocationId = @ToId)
                 ORDER BY RT.DepartureDateTime ASC
