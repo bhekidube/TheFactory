@@ -336,7 +336,7 @@ public class BusTripsController : ControllerBase
                     FORMAT(GETDATE(), 'MMM d, yyyy') AS FormattedDate,
                     RT.TripId,
                     RT.RouteId,
-                    RT.DepartureDateTime,
+                    CASE WHEN RT.Notes LIKE '%Daily%' THEN DATEADD(SECOND, DATEDIFF(SECOND, 0, CAST(RT.DepartureDateTime AS time)), CAST(@DepartureDate AS datetime)) ELSE RT.DepartureDateTime END AS DepartureDateTime,
                     RT.ArrivalDateTime,
                     RT.Price,
                     RT.CreatedBy,
