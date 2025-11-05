@@ -357,7 +357,7 @@ public class BusTripsController : ControllerBase
                 AND rt.Active = 1
                 AND R.FromId = @FromId
                 AND toL.TownId IN (SELECT TownId FROM LOCATION WHERE LocationId = @ToId)
-                ORDER BY RT.DepartureDateTime ASC
+                ORDER BY DATEADD(SECOND, DATEDIFF(SECOND, 0, CAST(RT.DepartureDateTime AS time)), CAST(@DepartureDate AS datetime)) ASC
             ", conn))
             {
                 command.Parameters.AddWithValue("@DepartureDate", departureDate.Date);
