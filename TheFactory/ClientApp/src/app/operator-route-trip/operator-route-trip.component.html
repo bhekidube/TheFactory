@@ -1,69 +1,69 @@
 <div style="height: 400px; overflow: auto;">
+  <div class="responsive-table-container">
+    <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8">
 
+      <!-- Actions Column - FIRST -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef class="actions-column">Actions</th>
+        <td mat-cell *matCellDef="let row" class="actions-column">
+          <button mat-icon-button (click)="editTrip(row)">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button (click)="deleteTrip(row)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
 
+      <ng-container matColumnDef="departureDateTime">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Departure</th>
+        <td mat-cell *matCellDef="let row" class="departure-column">{{ row.departureDateTime | date:'short' }}</td>
+      </ng-container>
 
-  <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8">
-    <ng-container matColumnDef="departureDateTime">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>Departure</th>
-      <td mat-cell *matCellDef="let row">{{ row.departureDateTime | date:'short' }}</td>
-    </ng-container>
+      <ng-container matColumnDef="arrivalDateTime">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Arrival</th>
+        <td mat-cell *matCellDef="let row" class="departure-column">{{ row.arrivalDateTime | date:'short' }}</td>
+      </ng-container>
 
-    <ng-container matColumnDef="arrivalDateTime">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>Arrival</th>
-      <td mat-cell *matCellDef="let row">{{ row.arrivalDateTime | date:'short' }}</td>
-    </ng-container>
+      <ng-container matColumnDef="price">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Price</th>
+        <td mat-cell *matCellDef="let row">{{ row.price | currency }}</td>
+      </ng-container>
 
-    <ng-container matColumnDef="price">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>Price</th>
-      <td mat-cell *matCellDef="let row">{{ row.price | currency }}</td>
-    </ng-container>
+      <ng-container matColumnDef="notes">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Notes</th>
+        <td mat-cell *matCellDef="let row">{{ row.notes }}</td>
+      </ng-container>
 
-    <ng-container matColumnDef="notes">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>Notes</th>
-      <td mat-cell *matCellDef="let row">{{ row.notes }}</td>
-    </ng-container>
+      <ng-container matColumnDef="createdBy">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Created By</th>
+        <td mat-cell *matCellDef="let row" >{{ row.createdBy }}</td>
+      </ng-container>
 
-    <ng-container matColumnDef="createdBy">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>Created By</th>
-      <td mat-cell *matCellDef="let row">{{ row.createdBy }}</td>
-    </ng-container>
+      <ng-container matColumnDef="createdDate">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Created Date</th>
+        <td mat-cell *matCellDef="let row" class="departure-column">{{ row.createdDate | date:'short' }}</td>
+      </ng-container>
 
-    <ng-container matColumnDef="createdDate">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>Created Date</th>
-      <td mat-cell *matCellDef="let row">{{ row.createdDate | date:'short' }}</td>
-    </ng-container>
+      <ng-container matColumnDef="updatedBy">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Updated By</th>
+        <td mat-cell *matCellDef="let row">{{ row.updatedBy }}</td>
+      </ng-container>
 
-    <ng-container matColumnDef="updatedBy">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>Updated By</th>
-      <td mat-cell *matCellDef="let row">{{ row.updatedBy }}</td>
-    </ng-container>
+      <ng-container matColumnDef="updatedDate">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Updated Date</th>
+        <td mat-cell *matCellDef="let row" class="departure-column">{{ row.updatedDate | date:'short' }}</td>
+      </ng-container>
 
-    <ng-container matColumnDef="updatedDate">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>Updated Date</th>
-      <td mat-cell *matCellDef="let row">{{ row.updatedDate | date:'short' }}</td>
-    </ng-container>
+      <ng-container matColumnDef="active">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Active</th>
+        <td mat-cell *matCellDef="let row">{{ row.active ? 'Yes' : 'No' }}</td>
+      </ng-container>
 
-    <ng-container matColumnDef="active">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>Active</th>
-      <td mat-cell *matCellDef="let row">{{ row.active ? 'Yes' : 'No' }}</td>
-    </ng-container>
-
-    <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef>Actions</th>
-      <td mat-cell *matCellDef="let row">
-        <button mat-icon-button color="primary" (click)="editTrip(row)">
-          <mat-icon>edit</mat-icon>
-        </button>
-      </td>
-    </ng-container>
-
-    <tr mat-header-row *matHeaderRowDef="['departureDateTime', 'arrivalDateTime', 'price', 'notes', 'createdBy', 'createdDate', 'updatedBy', 'updatedDate', 'active', 'actions']"></tr>
-    <tr mat-row *matRowDef="let row; columns: ['departureDateTime', 'arrivalDateTime', 'price', 'notes', 'createdBy', 'createdDate', 'updatedBy', 'updatedDate', 'active', 'actions'];"></tr>
-  </table>
-  <mat-paginator [pageSizeOptions]="[10, 25, 50]" showFirstLastButtons></mat-paginator>
-
-
-
+      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+  </div>
 
   <!-- Create/Edit Trip Button -->
   <button mat-raised-button color="primary" (click)="showCreateTripForm = !showCreateTripForm">

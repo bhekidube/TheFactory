@@ -13,7 +13,18 @@ import { environment } from '../../environments/environment';
 export class OperatorRouteTripComponent implements OnInit, OnChanges {
   @Input() route: any;
 
-  displayedColumns: string[] = ['tripId', 'departureDateTime', 'arrivalDateTime', 'price', 'active'];
+  displayedColumns: string[] = [
+    'actions',
+    'active',
+    'departureDateTime',
+    'notes',   
+    'price',
+    'arrivalDateTime',
+    'createdBy',
+    'createdDate',
+    'updatedBy',
+    'updatedDate'
+  ];
   dataSource = new MatTableDataSource<any>();
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -149,5 +160,10 @@ export class OperatorRouteTripComponent implements OnInit, OnChanges {
           this.createTripMessage = err.error?.error || 'Failed to update trip.';
         }
       });
+  }
+
+  deleteTrip(element: any): void {
+    // TODO: Implement delete logic here
+    console.log('Delete trip:', element);
   }
 }

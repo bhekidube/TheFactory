@@ -1,0 +1,86 @@
+/* Container scrolls horizontally on small screens */
+.responsive-table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Keep table wide so it can scroll */
+table.mat-table {
+  min-width: 800px;
+  width: 100%;
+}
+
+/* Sticky header (optional but nice) */
+.mat-header-row {
+  position: sticky;
+  top: 0;
+  background: #0a1085;
+  z-index: 2;
+}
+
+/* Basic cell styling */
+.mat-header-cell, .mat-cell {
+  padding: 12px 8px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+  white-space: nowrap; /* 👈 keeps text in one line */
+}
+
+/* Actions column specific styles */
+th.mat-header-cell.actions-column,
+td.mat-cell.actions-column {
+  width: 140px;
+  min-width: 140px;
+  max-width: 150px;
+  text-align: center;
+  padding-left: 0;
+  padding-right: 0;
+  white-space: nowrap; /* Prevents wrapping */
+}
+
+/* Ensure buttons have spacing */
+td.mat-cell.actions-column button.mat-icon-button {
+  margin: 0;
+}
+
+/* Flexbox for action buttons */
+td.mat-cell.actions-column {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px; /* Space between buttons */
+}
+
+/* Departure column specific styles */
+.departure-column {
+  background-color: #e3f2fd !important; /* Light blue */
+  color: #1565c0 !important;            /* Dark blue text */
+  font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  th.mat-header-cell.actions-column,
+  td.mat-cell.actions-column {
+    width: 110px;
+    min-width: 110px;
+    max-width: 120px;
+  }
+  .mat-header-cell, .mat-cell {
+    padding: 4px 2px;
+  }
+  .mat-icon-button {
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+  }
+  .mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+
+
