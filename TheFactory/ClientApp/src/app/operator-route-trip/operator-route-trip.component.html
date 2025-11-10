@@ -71,7 +71,10 @@
   </button>
 
   <!-- Create/Edit Trip Form -->
-  <form *ngIf="showCreateTripForm" (ngSubmit)="editMode ? updateTrip() : createTrip()" #tripForm="ngForm" style="margin-bottom: 1em; margin-top: 1em;">
+  <form *ngIf="showCreateTripForm"
+        (ngSubmit)="editMode ? updateTrip() : createTrip()"
+        #tripForm="ngForm"
+        style="margin-bottom: 1em; margin-top: 1em; background-color: #e3f2fd; padding: 1em; border-radius: 8px;">
     <mat-form-field>
       <mat-label>Departure DateTime</mat-label>
       <input matInput [(ngModel)]="newTrip.departureDateTime" name="departureDateTime" type="datetime-local" required placeholder="Select departure date and time">
