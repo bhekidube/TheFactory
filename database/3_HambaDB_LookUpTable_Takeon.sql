@@ -666,6 +666,9 @@ IF NOT EXISTS (SELECT 1 FROM Town WHERE Name = 'Groblersdal' AND RegionId = (SEL
     INSERT INTO Town (Name, RegionId) VALUES ('Groblersdal', (SELECT RegionId FROM Region WHERE Name = 'Limpopo' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'South Africa')));
 IF NOT EXISTS (SELECT 1 FROM Town WHERE Name = 'Tzaneen' AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Limpopo' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'South Africa')))
     INSERT INTO Town (Name, RegionId) VALUES ('Tzaneen', (SELECT RegionId FROM Region WHERE Name = 'Limpopo' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'South Africa')));
+IF NOT EXISTS (SELECT 1 FROM Town WHERE Name = 'Musina' AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Limpopo' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'South Africa')))
+    INSERT INTO Town (Name, RegionId) VALUES ('Musina', (SELECT RegionId FROM Region WHERE Name = 'Limpopo' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'South Africa')));
+
 
 -- Mpumalanga
 IF NOT EXISTS (SELECT 1 FROM Town WHERE Name = 'Mbombela (Nelspruit)' AND RegionId = (SELECT RegionId FROM Region WHERE Name = 'Mpumalanga' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'South Africa')))
@@ -733,6 +736,21 @@ IF NOT EXISTS (
         'Powerhouse',
         (SELECT TownId FROM Town WHERE Name = 'Johannesburg'),
         (SELECT RegionId FROM Region WHERE Name = 'Gauteng' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'South Africa')),
+        (SELECT CountryId FROM Country WHERE Name = 'South Africa'),
+        (SELECT LocationTypeId FROM LocationType WHERE Name = 'Bus station')
+    );
+
+-- Insert locations in Musina only if they do not already exist
+IF NOT EXISTS (
+    SELECT 1 FROM Location 
+    WHERE Name = 'Musina - Bus stop'
+      AND TownId = (SELECT TownId FROM Town WHERE Name = 'Musina')
+)
+    INSERT INTO Location (Name, TownId, RegionId, CountryId, LocationTypeId)
+    VALUES (
+        'Musina - Bus stop',
+        (SELECT TownId FROM Town WHERE Name = 'Musina'),
+        (SELECT RegionId FROM Region WHERE Name = 'Limpopo' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'South Africa')),
         (SELECT CountryId FROM Country WHERE Name = 'South Africa'),
         (SELECT LocationTypeId FROM LocationType WHERE Name = 'Bus station')
     );

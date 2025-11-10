@@ -11,7 +11,7 @@ export class BusSearchComponent implements OnInit {
   showZimraForm = false;
   showForm = false;
   messages = [
-    "EKUSENI...............🚌REVIVAL(POWER HOUSE to BYO) LEAVING 10:30...............🚌BRAVO(BYO) LEAVING 13:00 (+27 82 715 6380)...............🚌 REVIVAL(BYO) LEAVING 09:30 (+27 61 843 2404)",
+    "EKUSENI...............🚌REVIVAL(POWER HOUSE to BYO) LEAVING 10:30...............🚌BRAVO(BYO) LEAVING 11:30 (+27 82 715 6380)...............🚌 REVIVAL(BYO) LEAVING 09:30 (+27 61 843 2404)",
     "🚌 SWISS(BYO) LEAVING POWER HOUSE  14:00 - +27 64 475 8301",
     "🚌 MZANSI(BYO) LEAVING POWER HOUSE  14:00 +27 11 057 8418",
     "🚌 MZANSI(BYO) LEAVING POWER HOUSE  17:00 +27 11 057 8418",
