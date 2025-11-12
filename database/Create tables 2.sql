@@ -49,3 +49,60 @@ BEGIN
     CREATE INDEX [IX_OperatorUser_UserId] ON [dbo].[OperatorUser]([UserId])
 END
 GO
+
+-- Create OperatorUserRole table if it does not exist
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = 'OperatorUserRole')
+BEGIN
+    CREATE TABLE [dbo].[OperatorUserRole] (
+        [OperatorUserRoleId] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        [UserRoleId] INT NOT NULL,
+        [OperatorUserId] INT NOT NULL
+    );
+END
+GO
+
+-- Add foreign key constraint for UserRoleId if it does not exist
+IF NOT EXISTS (
+    SELECT * FROM sys.foreign_keys fk
+    JOIN sys.tables t ON fk.parent_object_id = t.object_id
+    WHERE fk.[name] = 'FK_OperatorUserRole_UserRoleId' AND t.[name] = 'OperatorUserRole'
+)
+BEGIN
+    ALTER TABLE [dbo].[OperatorUserRole] WITH CHECK ADD CONSTRAINT [FK_OperatorUserRole_UserRoleId] FOREIGN KEY([UserRoleId])
+    REFERENCES [dbo].[UserRole] ([UserRoleId]);
+END
+GO
+
+-- Add foreign key constraint for OperatorUserId if it does not exist
+IF NOT EXISTS (
+    SELECT * FROM sys.foreign_keys fk
+    JOIN sys.tables t ON fk.parent_object_id = t.object_id
+    WHERE fk.[name] = 'FK_OperatorUserRole_OperatorUserId' AND t.[name] = 'OperatorUserRole'
+)
+BEGIN
+    ALTER TABLE [dbo].[OperatorUserRole] WITH CHECK ADD CONSTRAINT [FK_OperatorUserRole_OperatorUserId] FOREIGN KEY([OperatorUserId])
+    REFERENCES [dbo].[OperatorUser] ([OperatorUserId]);
+END
+GO
+
+-- Add index on UserRoleId for performance if not exists
+IF NOT EXISTS (
+    SELECT * FROM sys.indexes idx
+    JOIN sys.tables t ON idx.object_id = t.object_id
+    WHERE idx.[name] = 'IX_OperatorUserRole_UserRoleId' AND t.[name] = 'OperatorUserRole'
+)
+BEGIN
+    CREATE INDEX [IX_OperatorUserRole_UserRoleId] ON [dbo].[OperatorUserRole]([UserRoleId])
+END
+GO
+
+-- Add index on OperatorUserId for performance if not exists
+IF NOT EXISTS (
+    SELECT * FROM sys.indexes idx
+    JOIN sys.tables t ON idx.object_id = t.object_id
+    WHERE idx.[name] = 'IX_OperatorUserRole_OperatorUserId' AND t.[name] = 'OperatorUserRole'
+)
+BEGIN
+    CREATE INDEX [IX_OperatorUserRole_OperatorUserId] ON [dbo].[OperatorUserRole]([OperatorUserId])
+END
+GO
