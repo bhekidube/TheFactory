@@ -40,4 +40,27 @@ public class LookupController : ControllerBase
         }
         return Ok(locations);
     }
+
+    [HttpGet("GetAllOperators")]
+    public async Task<IActionResult> GetAllOperators()
+    {
+        var operators = new List<object>();
+        using (var conn = await _sqlService.GetSqlConnectionAsync())
+        using (var cmd = new SqlCommand(@"
+            SELECT OperatorId, Name
+            FROM [Operator]
+            ORDER BY Name
+        ", conn))
+        using (var reader = await cmd.ExecuteReaderAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                operators.Add(new {
+                    OperatorId = reader.GetInt32(0),
+                    Name = reader.GetString(1)
+                });
+            }
+        }
+        return Ok(operators);
+    }
 }

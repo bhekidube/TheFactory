@@ -22,6 +22,14 @@
       <div *ngIf="registerEmail.invalid && registerEmail.touched" class="error">Valid email is required.</div>
       <input type="text" [(ngModel)]="registerModel.cellPhoneNo" name="registerCellPhoneNo" placeholder="Cell Phone" />
       <input type="text" [(ngModel)]="registerModel.alternateCellPhoneNo" name="registerAlternateCellPhoneNo" placeholder="Alternate Cell Phone" />
+
+      <!-- Operator Dropdown -->
+      <select [(ngModel)]="registerModel.operatorId" name="registerOperatorId" required #registerOperatorId="ngModel">
+        <option value="" disabled selected>Select Operator</option>
+        <option *ngFor="let operator of operators" [value]="operator.operatorId">{{ operator.name }}</option>
+      </select>
+      <div *ngIf="registerOperatorId.invalid && registerOperatorId.touched" class="error">Operator is required.</div>
+
       <input type="password" [(ngModel)]="registerModel.password" name="registerPassword" placeholder="Password" required minlength="6" #registerPassword="ngModel" />
       <div *ngIf="registerPassword.invalid && registerPassword.touched" class="error">Password is required (min 6 chars).</div>
       <button type="submit" [disabled]="registerForm.invalid">Register</button>

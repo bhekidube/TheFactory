@@ -32,7 +32,8 @@ builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
     {
         policy.WithOrigins(
-            "https://localhost:44411",           // local dev
+            "https://localhost:44411",// local dev
+            "http://localhost:44411",           // local dev        
             "https://www.hambaonline.com",       // production frontend
             "https://hambaonline.com"            // (optional, non-www)
         )
@@ -56,19 +57,15 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseCors(); // <-- Move here
 app.UseAuthorization();
-app.UseCors();
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-else
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// Optionally remove Swagger from production if not needed
 
 app.MapControllerRoute(
     name: "default",

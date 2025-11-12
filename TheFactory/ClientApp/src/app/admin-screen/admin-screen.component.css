@@ -10,3 +10,40 @@
   color: #b71c1c;
   text-decoration: underline;
 }
+
+.operator-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.operator-list li {
+  margin: 0;
+}
+
+.modern-link {
+  display: inline-block;
+  padding: 8px 18px;
+  border-radius: 24px;
+  background: linear-gradient(90deg, #1976d2 0%, #42a5f5 100%);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+  border: none;
+  outline: none;
+  cursor: pointer;
+}
+
+.modern-link:hover,
+.modern-link:focus {
+  background: linear-gradient(90deg, #1565c0 0%, #1976d2 100%);
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.16);
+  transform: translateY(-2px) scale(1.04);
+  color: #fff;
+  text-decoration: none;
+}
