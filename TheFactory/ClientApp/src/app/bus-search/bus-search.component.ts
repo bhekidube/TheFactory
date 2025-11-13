@@ -38,6 +38,7 @@ export class BusSearchComponent implements OnInit {
   index = 0;
   fromInput: string = '';
   toInput: string = '';
+  toTownInput: string = '';
   fromSuggestions: any[] = [];
   toSuggestions: any[] = [];
   selectedFrom: any = null;
@@ -71,6 +72,8 @@ export class BusSearchComponent implements OnInit {
       if (defaultTo) {
         this.toInput = defaultTo.location;
         this.selectedTo = defaultTo;
+        this.toTownInput = defaultTo.town;
+
       }
       // Only search after defaults are set
       this.onSearch();
@@ -110,12 +113,15 @@ export class BusSearchComponent implements OnInit {
     this.fromInput = loc.location;
     this.selectedFrom = loc;
     this.fromSuggestions = [];
+    this.onSearch(); // Automatically search after selecting "from"
   }
 
   selectToSuggestion(loc: any) {
     this.toInput = loc.location;
     this.selectedTo = loc;
     this.toSuggestions = [];
+    this.toTownInput = loc.town;
+    this.onSearch(); // Automatically search after selecting "to"
   }
 
   onSearch() {
