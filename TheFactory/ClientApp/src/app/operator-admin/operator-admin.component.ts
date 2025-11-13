@@ -11,6 +11,7 @@ import { environment } from '../../environments/environment';
 export class OperatorAdminComponent {
   @Input() operatorName: string = '';
   @Input() summary: any;
+   showForm = false;
 
   constructor(private route: ActivatedRoute, private http: HttpClient) {}
 
@@ -28,6 +29,45 @@ export class OperatorAdminComponent {
         next: data => this.locations = data,
         error: err => console.error('Failed to load locations', err)
       });
+
+
+
+
+
+
+    const now = new Date();
+    let dateToUse = new Date();
+    if (now.getHours() >= 18) {
+      dateToUse.setDate(now.getDate() + 1);
+    }
+    const yyyy = dateToUse.getFullYear();
+    const mm = String(dateToUse.getMonth() + 1).padStart(2, '0');
+    const dd = String(dateToUse.getDate()).padStart(2, '0');
+    this.dateInput = `${yyyy}-${mm}-${dd}`;
+
+    // Fetch locations and set default fromInput to location with ID 1 and toInput to location with ID 4
+    this.http.get<any[]>(`${environment.apiBaseUrl}/api/Lookup/Locations`).subscribe(locations => {
+      const defaultFrom = locations.find(l => l.locationID === 1);
+      if (defaultFrom) {
+        this.fromInput = defaultFrom.location;
+        this.selectedFrom = defaultFrom;
+      }
+      const defaultTo = locations.find(l => l.locationID === 4);
+      if (defaultTo) {
+        this.toInput = defaultTo.location;
+        this.selectedTo = defaultTo;
+        this.toTownInput = defaultTo.town;
+
+      }
+      // Only search after defaults are set
+      this.onSearch();
+    });
+
+
+
+
+
+
   }
   
   userRole: string = localStorage.getItem('userRole') || 'Public';
@@ -77,4 +117,89 @@ export class OperatorAdminComponent {
         }
       });
   }
+
+
+
+
+  index = 0;
+  fromInput: string = '';
+  toInput: string = '';
+  toTownInput: string = '';
+  fromSuggestions: any[] = [];
+  toSuggestions: any[] = [];
+  selectedFrom: any = null;
+  selectedTo: any = null;
+  dateInput: string = '';
+  searchResults: any[] = [];
+
+
+
+
+  onFromInputChange() {
+    if (!this.fromInput || this.fromInput.length < 2) {
+      this.fromSuggestions = [];
+      return;
+    }
+    this.http.get<any[]>(`${environment.apiBaseUrl}/api/Lookup/Locations`).subscribe(locations => {
+      this.fromSuggestions = locations.filter(l =>
+        l.location.toLowerCase().includes(this.fromInput.toLowerCase())
+      );
+    });
+  }
+
+  onToInputChange() {
+    if (!this.toInput || this.toInput.length < 2) {
+      this.toSuggestions = [];
+      return;
+    }
+    this.http.get<any[]>(`${environment.apiBaseUrl}/api/Lookup/Locations`).subscribe(locations => {
+      this.toSuggestions = locations.filter(l =>
+        l.location.toLowerCase().includes(this.toInput.toLowerCase())
+      );
+    });
+  }
+
+  selectFromSuggestion(loc: any) {
+    this.fromInput = loc.location;
+    this.selectedFrom = loc;
+    this.fromSuggestions = [];
+    this.onSearch(); // Automatically search after selecting "from"
+  }
+
+  selectToSuggestion(loc: any) {
+    this.toInput = loc.location;
+    this.selectedTo = loc;
+    this.toSuggestions = [];
+    this.toTownInput = loc.town;
+    this.onSearch(); // Automatically search after selecting "to"
+  }
+
+  onSearch() {
+    if (!this.selectedFrom || !this.selectedTo) {
+      // Optionally show error to user
+      return;
+    }
+    const departureDate = this.dateInput;
+    const operatorId = this.summary?.operatorId || 0;
+
+    this.http.get<any[]>(`${environment.apiBaseUrl}/api/BusTrips/GetRouteTripsByOperatorId`, {
+      params: {
+        operatorId,
+        departureDate,
+        fromId: this.selectedFrom.locationID,
+        toId: this.selectedTo.locationID
+      }
+    }).subscribe(results => {
+      this.searchResults = results;
+    }, error => {
+      this.searchResults = [];
+      // Optionally handle error
+    });
+  }
+
+
+
+
+
+
 }

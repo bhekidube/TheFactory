@@ -410,6 +410,94 @@ public class BusTripsController : ControllerBase
             return StatusCode(500, new { error = "An unexpected error occurred.", details = ex.Message });
         }
     }
+
+    [HttpGet("GetRouteTripsByOperatorId")]
+    public async Task<IActionResult> GetRouteTripsByOperatorId([FromQuery] int operatorId, [FromQuery] DateTime departureDate, [FromQuery] int fromId, [FromQuery] int toId)
+    {
+        try
+        {
+            var trips = new List<object>();
+            using (var conn = await GetSqlConnection())
+            using (var command = new SqlCommand(@"
+                SELECT 
+                    FORMAT(GETDATE(), 'MMM d, yyyy') AS FormattedDate,
+                    RT.TripId,
+                    RT.RouteId,
+                    CASE WHEN RT.Notes LIKE '%Daily%' THEN DATEADD(SECOND, DATEDIFF(SECOND, 0, CAST(RT.DepartureDateTime AS time)), CAST(@DepartureDate AS datetime)) ELSE RT.DepartureDateTime END AS DepartureDateTime,
+                    RT.ArrivalDateTime,
+                    RT.Price,
+                    RT.CreatedBy,
+                    RT.CreatedDate,
+                    RT.UpdatedBy,
+                    RT.UpdatedDate,
+                    RT.Notes,
+                    RT.Active,
+                    R.RouteId AS Route_RouteId,
+                    O.OperatorId AS Operator_OperatorId,
+                    O.Name AS OperatorName,
+                    t.Name AS DestinationTown,
+                    toL.Name AS DestinationBusStation,
+                    frT.Name AS FromTown,
+                    toL.Name AS FromBusStation
+                FROM [dbo].[RouteTrip] RT
+                INNER JOIN [ROUTE] R ON RT.RouteId = R.RouteId
+                INNER JOIN Operator O ON O.OperatorId = R.OperatorId
+                INNER JOIN [Location] toL on r.ToId = toL.LocationId
+                INNER JOIN [Location] fromL on r.FromId = fromL.LocationId
+                INNER JOIN [Town] T ON T.TownId = toL.TownId
+                INNER JOIN [Town] frT ON frT.TownId = fromL.TownId
+                WHERE 
+                    O.OperatorId = @OperatorId
+                    AND (CAST(RT.DepartureDateTime AS DATE) = CAST(@DepartureDate AS DATE) OR RT.Notes LIKE '%Daily%')
+                    AND rt.Active = 1
+                    AND fromL.TownId IN (SELECT TownId FROM LOCATION WHERE LocationId = @FromId) 
+                    AND toL.TownId IN (SELECT TownId FROM LOCATION WHERE LocationId = @ToId)
+                ORDER BY DATEADD(SECOND, DATEDIFF(SECOND, 0, CAST(RT.DepartureDateTime AS time)), CAST(@DepartureDate AS datetime)) ASC
+            ", conn))
+            {
+                command.Parameters.AddWithValue("@OperatorId", operatorId);
+                command.Parameters.AddWithValue("@DepartureDate", departureDate.Date);
+                command.Parameters.AddWithValue("@FromId", fromId);
+                command.Parameters.AddWithValue("@ToId", toId);
+
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        trips.Add(new
+                        {
+                            FormattedDate = reader.GetString(0),
+                            TripId = reader.GetInt32(1),
+                            RouteId = reader.GetInt32(2),
+                            DepartureDateTime = reader.GetDateTime(3),
+                            ArrivalDateTime = reader.GetDateTime(4),
+                            Price = reader.GetDecimal(5),
+                            CreatedBy = reader.GetInt32(6),
+                            CreatedDate = reader.GetDateTime(7),
+                            UpdatedBy = reader.IsDBNull(8) ? (int?)null : reader.GetInt32(8),
+                            UpdatedDate = reader.IsDBNull(9) ? (DateTime?)null : reader.GetDateTime(9),
+                            Notes = reader.IsDBNull(10) ? null : reader.GetString(10),
+                            Active = reader.GetBoolean(11),
+                            Route_RouteId = reader.GetInt32(12),
+                            Operator_OperatorId = reader.GetInt32(13),
+                            OperatorName = reader.GetString(14),
+                            DestinationTown = reader.GetString(15),
+                            DestinationBusStation = reader.GetString(16)
+                        });
+                    }
+                }
+            }
+            return Ok(trips);
+        }
+        catch (SqlException ex)
+        {
+            return StatusCode(500, new { error = "A database error occurred.", details = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "An unexpected error occurred.", details = ex.Message });
+        }
+    }
 }
 
 // Place this model in the same file or in a shared models file

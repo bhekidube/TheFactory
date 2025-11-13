@@ -3,6 +3,84 @@
   <h2>{{ operatorName }} - Operator admin Dashboard</h2>
 
 
+
+
+  Search Results
+  <div *ngIf="searchResults && searchResults.length" class="search-results screenshot-table-container"> 
+    <h3>{{ fromInput || '...' }} to {{ toTownInput || '...' }}</h3> 
+    <table class="screenshot-table">
+      <thead>
+        <tr>
+          <th>Bus</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Price</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+        <tr *ngFor="let row of searchResults; let i = index" [class.alt-row]="i % 2 === 1"> 
+          <td>{{ row.operatorName }}</td>
+          <td>{{ row.departureDateTime | date:'MMM d, y' }}</td>
+          <td>{{ row.departureDateTime | date:'HH:mm' }}</td> 
+          <td>{{ row.price | currency:'R' }}</td> 
+        </tr>
+      </tbody>
+    </table>
+    <div class="screenshot-tip"></div>
+  </div> 
+
+<!-- <section class="search-section">
+  <h2></h2>
+  <button type="button" (click)="showForm = true" *ngIf="!showForm" class="search-btn">
+    <span class="icon-magnifier" aria-hidden="true"></span> 
+  </button>
+  <form *ngIf="showForm" (ngSubmit)="onSearch()" #busForm="ngForm">
+    <div style="position:relative;">
+      <input type="text" [(ngModel)]="fromInput" name="fromInput" placeholder="From (e.g. Bulawayo)" autocomplete="off" required (input)="onFromInputChange()" />
+      <ul *ngIf="fromSuggestions.length">
+        <li *ngFor="let city of fromSuggestions" (mousedown)="selectFromSuggestion(city)">
+          {{ city.location }}
+        </li>
+      </ul>
+    </div>
+    <div style="position:relative;">
+      <input type="text" [(ngModel)]="toInput" name="toInput" placeholder="To (e.g. Harare)" autocomplete="off" required (input)="onToInputChange()" />
+      <ul *ngIf="toSuggestions.length">
+        <li *ngFor="let city of toSuggestions" (mousedown)="selectToSuggestion(city)">
+          {{ city.location }}
+        </li>
+      </ul>
+    </div>
+    <input type="date" [(ngModel)]="dateInput" name="dateInput" required />
+    <button type="submit">Search Buses</button>
+  </form>-->
+
+  <!-- Search Results -->
+  <!-- <div *ngIf="searchResults && searchResults.length" class="search-results screenshot-table-container">
+    <h3>{{ fromInput || '...' }} to {{ toTownInput || '...' }}</h3>
+    <table class="screenshot-table">
+      <thead>
+        <tr>
+          <th>Bus</th>
+          <th>Date</th>
+          <th>Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of searchResults; let i = index" [class.alt-row]="i % 2 === 1">
+          <td>{{ row.operatorName }}</td>
+          <td>{{ row.departureDateTime | date:'MMM d, y' }}</td>
+          <td>{{ row.departureDateTime | date:'HH:mm' }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="screenshot-tip"></div>
+  </div>  -->
+<!-- </section>  -->
+
+  
+
 <p><strong>My Routes</strong></p>
   <ul *ngIf="summary?.routes?.length">
     <li *ngFor="let route of summary.routes">
