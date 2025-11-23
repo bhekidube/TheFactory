@@ -880,6 +880,49 @@ IF NOT EXISTS (
         (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'),
         (SELECT LocationTypeId FROM LocationType WHERE Name = 'Bus station')
     );    
+-- Insert "6th Ave, G Silundika" location in Bulawayo only if it does not already exist
+IF NOT EXISTS (
+    SELECT 1 FROM Location 
+    WHERE Name = '5th Ave, 5 Street'
+      AND TownId = (SELECT TownId FROM Town WHERE Name = 'Bulawayo')
+)
+    INSERT INTO Location (Name, TownId, RegionId, CountryId, LocationTypeId)
+    VALUES (
+        '5th Ave, 5 Street',
+        (SELECT TownId FROM Town WHERE Name = 'Bulawayo'),
+        (SELECT RegionId FROM Region WHERE Name = 'Matabeleland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')),
+        (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'),
+        (SELECT LocationTypeId FROM LocationType WHERE Name = 'Bus station')
+    );  
+-- Insert "6th Ave, G Silundika" location in Bulawayo only if it does not already exist
+IF NOT EXISTS (
+    SELECT 1 FROM Location 
+    WHERE Name = 'Jason Ave, 5 Street'
+      AND TownId = (SELECT TownId FROM Town WHERE Name = 'Bulawayo')
+)
+    INSERT INTO Location (Name, TownId, RegionId, CountryId, LocationTypeId)
+    VALUES (
+        'Jason Ave, 5 Street',
+        (SELECT TownId FROM Town WHERE Name = 'Bulawayo'),
+        (SELECT RegionId FROM Region WHERE Name = 'Matabeleland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')),
+        (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'),
+        (SELECT LocationTypeId FROM LocationType WHERE Name = 'Bus station')
+    ); 
+
+ -- Insert "6th Ave, G Silundika" location in Bulawayo only if it does not already exist
+IF NOT EXISTS (
+    SELECT 1 FROM Location 
+    WHERE Name = '10th Ave, 5 Street'
+      AND TownId = (SELECT TownId FROM Town WHERE Name = 'Bulawayo')
+)
+    INSERT INTO Location (Name, TownId, RegionId, CountryId, LocationTypeId)
+    VALUES (
+        '10th Ave, 5 Street',
+        (SELECT TownId FROM Town WHERE Name = 'Bulawayo'),
+        (SELECT RegionId FROM Region WHERE Name = 'Matabeleland North' AND CountryId = (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe')),
+        (SELECT CountryId FROM Country WHERE Name = 'Zimbabwe'),
+        (SELECT LocationTypeId FROM LocationType WHERE Name = 'Bus station')
+    );    
 
 -- Insert "4th & 5th Ave, G Silundika" location in Bulawayo only if it does not already exist
 IF NOT EXISTS (
@@ -932,3 +975,9 @@ IF NOT EXISTS (SELECT 1 FROM Operator WHERE Name = 'Godzilla')
 
 IF NOT EXISTS (SELECT 1 FROM Operator WHERE Name = 'Sebatha Luxury Coaches')
     INSERT INTO Operator (Name, OperatorTypeId) VALUES ('Sebatha Luxury Coaches', 1);
+
+IF NOT EXISTS (SELECT 1 FROM Operator WHERE Name = 'Genesis')
+    INSERT INTO Operator (Name, OperatorTypeId) VALUES ('Genesis', 1);
+
+IF NOT EXISTS (SELECT 1 FROM Operator WHERE Name = 'Inter City')
+    INSERT INTO Operator (Name, OperatorTypeId) VALUES ('Inter City', 1);
