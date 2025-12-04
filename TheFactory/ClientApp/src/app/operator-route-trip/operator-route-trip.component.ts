@@ -198,7 +198,7 @@ export class OperatorRouteTripComponent implements OnInit, OnChanges {
           this.ticketPriceMessages[row.id] = '';
         }, 1500);
       },
-      error: (err: any) => {
+      error: err => {
         this.ticketPriceMessages[row.id] = 'Error: ' + (err.error?.message || 'Could not save');
       }
     });
