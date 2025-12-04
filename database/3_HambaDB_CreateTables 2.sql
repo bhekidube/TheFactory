@@ -223,3 +223,47 @@ BEGIN
     CREATE INDEX [IX_SystemUserRole_UserRoleId] ON [dbo].[SystemUserRole]([UserRoleId])
 END
 GO
+
+-- Create RouteTripTicketPrice table if it does not exist
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = 'RouteTripTicketPrice')
+BEGIN
+    CREATE TABLE [dbo].[RouteTripTicketPrice] (
+        [RouteTripTicketPriceId] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        [OperatorId] INT NOT NULL,
+        [RouteTripId] INT NOT NULL,
+        [Price] DECIMAL(10,2) NOT NULL,
+        [Currency] NVARCHAR(10) NOT NULL DEFAULT 'ZAR',
+        [EffectiveDate] DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+        [Active] BIT NOT NULL DEFAULT 1
+    );
+END
+GO
+
+-- Add foreign key constraint for OperatorId if it does not exist
+IF NOT EXISTS (
+    SELECT * FROM sys.foreign_keys WHERE name = 'FK_RouteTripTicketPrice_OperatorId'
+)
+BEGIN
+    ALTER TABLE [dbo].[RouteTripTicketPrice] WITH CHECK ADD CONSTRAINT [FK_RouteTripTicketPrice_OperatorId] FOREIGN KEY([OperatorId])
+    REFERENCES [dbo].[Operator] ([OperatorId]);
+END
+GO
+
+-- Add foreign key constraint for RouteTripId if it does not exist
+IF NOT EXISTS (
+    SELECT * FROM sys.foreign_keys WHERE name = 'FK_RouteTripTicketPrice_RouteTripId'
+)
+BEGIN
+    ALTER TABLE [dbo].[RouteTripTicketPrice] WITH CHECK ADD CONSTRAINT [FK_RouteTripTicketPrice_RouteTripId] FOREIGN KEY([RouteTripId])
+    REFERENCES [dbo].[RouteTrip] ([TripId]);
+END
+GO
+
+-- Add index for OperatorId and RouteTripId for performance if not exists
+IF NOT EXISTS (
+    SELECT * FROM sys.indexes WHERE name = 'IX_RouteTripTicketPrice_OperatorId_RouteTripId'
+)
+BEGIN
+    CREATE INDEX [IX_RouteTripTicketPrice_OperatorId_RouteTripId] ON [dbo].[RouteTripTicketPrice]([OperatorId], [RouteTripId]);
+END
+GO
