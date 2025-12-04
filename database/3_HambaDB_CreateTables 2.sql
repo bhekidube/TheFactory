@@ -267,3 +267,48 @@ BEGIN
     CREATE INDEX [IX_RouteTripTicketPrice_OperatorId_RouteTripId] ON [dbo].[RouteTripTicketPrice]([OperatorId], [RouteTripId]);
 END
 GO
+
+-- Drop old unique index if it exists
+IF EXISTS (
+    SELECT * FROM sys.indexes WHERE name = 'UQ_RouteTripTicketPrice_OperatorId_RouteTripId'
+)
+    DROP INDEX [UQ_RouteTripTicketPrice_OperatorId_RouteTripId] ON [dbo].[RouteTripTicketPrice];
+GO
+
+-- Add a unique constraint to allow multiple currencies per operator/trip, but only one price per currency
+IF NOT EXISTS (
+    SELECT * FROM sys.indexes WHERE name = 'UQ_RouteTripTicketPrice_OperatorId_RouteTripId_Currency'
+)
+BEGIN
+    ALTER TABLE [dbo].[RouteTripTicketPrice]
+    ADD CONSTRAINT [UQ_RouteTripTicketPrice_OperatorId_RouteTripId_Currency]
+    UNIQUE ([OperatorId], [RouteTripId], [Currency]);
+END
+GO
+
+-- Add StartDate and EndDate columns if they do not exist
+IF COL_LENGTH('dbo.RouteTripTicketPrice', 'StartDate') IS NULL
+    ALTER TABLE [dbo].[RouteTripTicketPrice] ADD [StartDate] DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME();
+GO
+
+IF COL_LENGTH('dbo.RouteTripTicketPrice', 'EndDate') IS NULL
+    ALTER TABLE [dbo].[RouteTripTicketPrice] ADD [EndDate] DATETIME2 NULL;
+GO
+
+-- Drop old unique constraint if it exists
+IF EXISTS (
+    SELECT * FROM sys.indexes WHERE name = 'UQ_RouteTripTicketPrice_OperatorId_RouteTripId_Currency'
+)
+    ALTER TABLE [dbo].[RouteTripTicketPrice] DROP CONSTRAINT [UQ_RouteTripTicketPrice_OperatorId_RouteTripId_Currency];
+GO
+
+-- Add new unique constraint to prevent duplicate price for same operator/trip/currency/startdate
+IF NOT EXISTS (
+    SELECT * FROM sys.indexes WHERE name = 'UQ_RouteTripTicketPrice_OperatorId_RouteTripId_Currency_StartDate'
+)
+BEGIN
+    ALTER TABLE [dbo].[RouteTripTicketPrice]
+    ADD CONSTRAINT [UQ_RouteTripTicketPrice_OperatorId_RouteTripId_Currency_StartDate]
+    UNIQUE ([OperatorId], [RouteTripId], [Currency], [StartDate]);
+END
+GO
