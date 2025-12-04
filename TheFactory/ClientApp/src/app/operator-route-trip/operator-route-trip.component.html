@@ -12,6 +12,10 @@
           <button mat-icon-button (click)="deleteTrip(row)">
             <mat-icon>delete</mat-icon>
           </button>
+          <!-- Add Ticket Price Button -->
+          <button mat-icon-button (click)="toggleTicketPriceForm(row)">
+            <mat-icon>attach_money</mat-icon>
+          </button>
         </td>
       </ng-container>
 
@@ -62,6 +66,42 @@
 
       <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
       <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+      <!-- Ticket Price Form Row (expands under the trip row) -->
+      <tr *ngFor="let row of dataSource.data">
+        <td [attr.colspan]="displayedColumns.length" *ngIf="showTicketPriceFormFor[row.id]">
+          <form (ngSubmit)="saveTicketPrice(row)" #ticketPriceForm="ngForm"
+                style="margin:1em 0; background:#f1f8e9; padding:1em; border-radius:8px;">
+            <div style="display:flex; flex-wrap:wrap; gap:1em;">
+              <mat-form-field>
+                <mat-label>Price</mat-label>
+                <input matInput [(ngModel)]="ticketPriceModels[row.id].price" name="price{{row.id}}" type="number" required>
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>Currency</mat-label>
+                <input matInput [(ngModel)]="ticketPriceModels[row.id].currency" name="currency{{row.id}}" required>
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>Start Date</mat-label>
+                <input matInput [(ngModel)]="ticketPriceModels[row.id].startDate" name="startDate{{row.id}}" type="date" required>
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>End Date</mat-label>
+                <input matInput [(ngModel)]="ticketPriceModels[row.id].endDate" name="endDate{{row.id}}" type="date">
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>Notes</mat-label>
+                <input matInput [(ngModel)]="ticketPriceModels[row.id].notes" name="notes{{row.id}}">
+              </mat-form-field>
+              <button mat-raised-button color="accent" type="submit" [disabled]="ticketPriceForm.invalid">Save</button>
+              <button mat-button type="button" (click)="toggleTicketPriceForm(row)">Cancel</button>
+            </div>
+            <div *ngIf="ticketPriceMessages[row.id]" style="color:green; margin-top:0.5em;">
+              {{ ticketPriceMessages[row.id] }}
+            </div>
+          </form>
+        </td>
+      </tr>
     </table>
   </div>
 

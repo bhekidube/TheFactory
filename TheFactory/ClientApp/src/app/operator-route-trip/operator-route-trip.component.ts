@@ -4,6 +4,7 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
+import { TicketPriceService } from '../services/ticket-price.service';
 
 @Component({
   selector: 'app-operator-route-trip',
@@ -46,7 +47,11 @@ export class OperatorRouteTripComponent implements OnInit, OnChanges {
   editMode = false;
   editingTripId: number | null = null;
 
-  constructor(private http: HttpClient) {}
+  showTicketPriceFormFor: { [tripId: number]: boolean } = {};
+  ticketPriceModels: { [tripId: number]: any } = {};
+  ticketPriceMessages: { [tripId: number]: string } = {};
+
+  constructor(private http: HttpClient, private ticketPriceService: TicketPriceService) {}
 
   ngOnInit() {
     this.loadTrips();
@@ -165,5 +170,37 @@ export class OperatorRouteTripComponent implements OnInit, OnChanges {
   deleteTrip(element: any): void {
     // TODO: Implement delete logic here
     console.log('Delete trip:', element);
+  }
+
+  toggleTicketPriceForm(row: any) {
+    this.showTicketPriceFormFor[row.id] = !this.showTicketPriceFormFor[row.id];
+    if (this.showTicketPriceFormFor[row.id] && !this.ticketPriceModels[row.id]) {
+      this.ticketPriceModels[row.id] = {
+        price: row.price, // default from trip
+        currency: row.currency || 'USD', // or your default
+        startDate: '',
+        endDate: '',
+        notes: ''
+      };
+    }
+  }
+
+  saveTicketPrice(row: any) {
+    const model = {
+      operatorRouteTripId: row.id,
+      ...this.ticketPriceModels[row.id]
+    };
+    this.ticketPriceService.insertTicketPrice(model).subscribe({
+      next: () => {
+        this.ticketPriceMessages[row.id] = 'Ticket price saved!';
+        setTimeout(() => {
+          this.showTicketPriceFormFor[row.id] = false;
+          this.ticketPriceMessages[row.id] = '';
+        }, 1500);
+      },
+      error: (err: any) => {
+        this.ticketPriceMessages[row.id] = 'Error: ' + (err.error?.message || 'Could not save');
+      }
+    });
   }
 }
