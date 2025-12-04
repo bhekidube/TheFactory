@@ -498,6 +498,63 @@ public class BusTripsController : ControllerBase
             return StatusCode(500, new { error = "An unexpected error occurred.", details = ex.Message });
         }
     }
+
+    [HttpPost("InsertRouteTripTicketPrice")]
+    public async Task<IActionResult> InsertRouteTripTicketPrice([FromBody] RouteTripTicketPriceInsertModel model)
+    {
+        try
+        {
+            using (var conn = await GetSqlConnection())
+            using (var command = new SqlCommand(@"
+                INSERT INTO [dbo].[RouteTripTicketPrice] (
+                    OperatorId,
+                    RouteTripId,
+                    Price,
+                    Currency,
+                    StartDate,
+                    EndDate,
+                    EffectiveDate,
+                    Active
+                )
+                VALUES (
+                    @OperatorId,
+                    @RouteTripId,
+                    @Price,
+                    @Currency,
+                    @StartDate,
+                    @EndDate,
+                    SYSUTCDATETIME(),
+                    @Active
+                );
+                SELECT SCOPE_IDENTITY();
+            ", conn))
+            {
+                command.Parameters.AddWithValue("@OperatorId", model.OperatorId);
+                command.Parameters.AddWithValue("@RouteTripId", model.RouteTripId);
+                command.Parameters.AddWithValue("@Price", model.Price);
+                command.Parameters.AddWithValue("@Currency", model.Currency);
+                command.Parameters.AddWithValue("@StartDate", model.StartDate);
+                command.Parameters.AddWithValue("@EndDate", (object?)model.EndDate ?? DBNull.Value);
+                command.Parameters.AddWithValue("@Active", model.Active);
+
+                var insertedId = Convert.ToInt32(await command.ExecuteScalarAsync());
+                return Ok(new { RouteTripTicketPriceId = insertedId });
+            }
+        }
+        catch (SqlException ex)
+        {
+            // Unique constraint violation (duplicate for same OperatorId, RouteTripId, Currency, StartDate)
+            if (ex.Number == 2627 || ex.Number == 2601)
+            {
+                return BadRequest(new { error = "A ticket price for this operator, trip, currency, and start date already exists." });
+            }
+            return StatusCode(500, new { error = "A database error occurred.", details = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "An unexpected error occurred.", details = ex.Message });
+        }
+    }
 }
 
 // Place this model in the same file or in a shared models file
@@ -540,4 +597,16 @@ public class RouteTripUpdateModel
     public string? Notes { get; set; }
     public bool Active { get; set; }
     public int UpdatedBy { get; set; }
+}
+
+// Place this model in the same file or in a shared models file
+public class RouteTripTicketPriceInsertModel
+{
+    public int OperatorId { get; set; }
+    public int RouteTripId { get; set; }
+    public decimal Price { get; set; }
+    public string Currency { get; set; } = "ZAR";
+    public DateTime StartDate { get; set; }
+    public DateTime? EndDate { get; set; }
+    public bool Active { get; set; } = true;
 }

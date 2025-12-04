@@ -197,6 +197,34 @@ export class OperatorAdminComponent {
     });
   }
 
+  newTicketPrice: number = 0;
+  newTicketCurrency: string = 'USD';
+  newTicketStartDate: string = '';
+  newTicketEndDate: string = '';
+
+  insertRouteTripTicketPrice() {
+    const payload = {
+      operatorId: Number(this.summary?.operatorId) || 0,
+      routeTripId: this.selectedRoute?.tripId || 0,
+      price: this.newTicketPrice,
+      currency: this.newTicketCurrency,
+      startDate: this.newTicketStartDate,
+      endDate: this.newTicketEndDate || null,
+      active: true
+    };
+
+    this.http.post<any>(`${environment.apiBaseUrl}/api/BusTrips/InsertRouteTripTicketPrice`, payload)
+      .subscribe({
+        next: res => {
+          alert('Ticket price added successfully!');
+          // Optionally refresh data or clear form
+        },
+        error: err => {
+          alert(err.error?.error || err.message || 'Failed to add ticket price.');
+        }
+      });
+  }
+
 
 
 

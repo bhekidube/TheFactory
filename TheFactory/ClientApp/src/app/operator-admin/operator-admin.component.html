@@ -99,4 +99,31 @@
     <span *ngIf="createRouteMessage">{{ createRouteMessage }}</span>
   </form>
 
+  <div>
+    <h3>Create New Ticket</h3>
+    <form (ngSubmit)="insertRouteTripTicketPrice()" style="margin-top: 1em;">
+      <label>
+        Price:
+        <input type="number" [(ngModel)]="newTicketPrice" name="newTicketPrice" required />
+      </label>
+      <label>
+        Currency:
+        <select [(ngModel)]="newTicketCurrency" name="newTicketCurrency" required>
+          <option value="ZAR">ZAR</option>
+          <option value="USD">USD</option>
+          <!-- Add more currencies if needed -->
+        </select>
+      </label>
+      <label>
+        Start Date:
+        <input type="date" [(ngModel)]="newTicketStartDate" name="newTicketStartDate" required />
+      </label>
+      <label>
+        End Date:
+        <input type="date" [(ngModel)]="newTicketEndDate" name="newTicketEndDate" />
+      </label>
+      <button type="submit">Add Ticket Price</button>
+    </form>
+  </div>
+
 

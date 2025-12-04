@@ -3,14 +3,18 @@ INSERT INTO [dbo].[RouteTripTicketPrice] (
     RouteTripId,
     Price,
     Currency,
+    StartDate,
+    EndDate,
     EffectiveDate,
     Active
 )
 SELECT 
     O.OperatorId,
     RT.TripId,
-    100.00 AS Price,  -- Set your default price here
-    'ZAR' AS Currency, -- Use a single currency for all
+    100.00 AS Price,
+    'ZAR' AS Currency,
+    CAST('2024-01-01' AS DATETIME2) AS StartDate,   -- Set your desired start date
+    CAST('2024-12-31' AS DATETIME2) AS EndDate,     -- Set your desired end date (or NULL for open-ended)
     SYSUTCDATETIME() AS EffectiveDate,
     1 AS Active
 FROM [dbo].[Operator] O
@@ -21,4 +25,5 @@ WHERE NOT EXISTS (
     WHERE RTP.OperatorId = O.OperatorId 
       AND RTP.RouteTripId = RT.TripId
       AND RTP.Currency = 'ZAR'
+      AND RTP.StartDate = CAST('2024-01-01' AS DATETIME2)
 );
