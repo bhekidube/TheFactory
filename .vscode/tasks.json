@@ -11,5 +11,23 @@
             ],
             "problemMatcher": "$msCompile"
         }
+        },
+        {
+            "label": "serve-original-app",
+            "type": "shell",
+            "command": "cd TheFactory/ClientApp && ng serve --port 4200",
+            "problemMatcher": []
+        },
+        {
+            "label": "serve-newdomain-app",
+            "type": "shell",
+            "command": "cd newdomain && ng serve --port 4201",
+            "problemMatcher": []
+        },
+        {
+            "label": "serve-both-apps",
+            "dependsOn": ["serve-original-app", "serve-newdomain-app"],
+            "dependsOrder": "parallel"
+        }
     ]
 }

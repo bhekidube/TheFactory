@@ -173,34 +173,39 @@ export class OperatorRouteTripComponent implements OnInit, OnChanges {
   }
 
   toggleTicketPriceForm(row: any) {
-    this.showTicketPriceFormFor[row.id] = !this.showTicketPriceFormFor[row.id];
-    if (this.showTicketPriceFormFor[row.id] && !this.ticketPriceModels[row.id]) {
-      this.ticketPriceModels[row.id] = {
-        price: row.price, // default from trip
-        currency: row.currency || 'USD', // or your default
+    alert('Toggle for tripId:'+  row.tripId +' - '+ row);
+    console.log('Toggle for tripId:' + row.tripId , row);
+    this.showTicketPriceFormFor[row.tripId] = !this.showTicketPriceFormFor[row.tripId];
+    if (this.showTicketPriceFormFor[row.tripId] && !this.ticketPriceModels[row.tripId]) {
+      this.ticketPriceModels[row.tripId] = {
+        price: row.price,
+        currency: row.currency || 'USD',
         startDate: '',
         endDate: '',
         notes: ''
       };
-    }
+    }console.log('showTicketPriceFormFor', this.showTicketPriceFormFor[row.tripId]);
+    console.log('isTicketPriceFormRow', this.isTicketPriceFormRow);
   }
 
   saveTicketPrice(row: any) {
     const model = {
-      operatorRouteTripId: row.id,
-      ...this.ticketPriceModels[row.id]
+      operatorRouteTripId: row.tripId,
+      ...this.ticketPriceModels[row.tripId]
     };
     this.ticketPriceService.insertTicketPrice(model).subscribe({
       next: () => {
-        this.ticketPriceMessages[row.id] = 'Ticket price saved!';
+        this.ticketPriceMessages[row.tripId] = 'Ticket price saved!';
         setTimeout(() => {
-          this.showTicketPriceFormFor[row.id] = false;
-          this.ticketPriceMessages[row.id] = '';
+          this.showTicketPriceFormFor[row.tripId] = false;
+          this.ticketPriceMessages[row.tripId] = '';
         }, 1500);
       },
       error: err => {
-        this.ticketPriceMessages[row.id] = 'Error: ' + (err.error?.message || 'Could not save');
+        this.ticketPriceMessages[row.tripId] = 'Error: ' + (err.error?.message || 'Could not save');
       }
     });
   }
+
+  isTicketPriceFormRow = (index: number, row: any) => this.showTicketPriceFormFor[row.tripId];
 }
