@@ -19,7 +19,9 @@ jobs:
         with:
           submodules: true
           lfs: false
-      - uses: actions/setup-node@v4
+      # Ensure Node.js 20.19.0 is used for Angular 21 compatibility
+      - name: Set up Node.js 20.19.0
+        uses: actions/setup-node@v4
         with:
           node-version: '20.19.0'
       - name: Build And Deploy
@@ -47,3 +49,4 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_LIVELY_SEA_0BC525403 }}
           action: "close"
+          app_location: "newdomain"
