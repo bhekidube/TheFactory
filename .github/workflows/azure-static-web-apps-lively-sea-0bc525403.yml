@@ -32,7 +32,7 @@ jobs:
 
       - name: Build Angular App
         working-directory: ./newdomain
-        run: npm run build -- --prod --output-path=dist/newdomain/browser
+        run: npm run build
 
       - name: Deploy to Azure Static Web App
         uses: Azure/static-web-apps-deploy@v1
