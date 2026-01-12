@@ -21,10 +21,10 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.19.0'
+          node-version: '20.19.6'
 
       - name: Force Oryx Node Version
-        run: echo "NODE_VERSION=20.19.0" >> $GITHUB_ENV
+        run: echo "NODE_VERSION=20.19.6" >> $GITHUB_ENV
 
       - name: Install dependencies
         working-directory: ./newdomain
@@ -43,4 +43,4 @@ jobs:
           app_location: "newdomain"
           output_location: "dist/newdomain/browser"
         env:
-          node_version: "20.19.0"
+          node_version: "20.19.6"
