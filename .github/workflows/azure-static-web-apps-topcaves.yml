@@ -42,5 +42,6 @@ jobs:
           action: "upload"
           app_location: "topcaves"
           output_location: "topcaves/dist/topcaves/browser"
+          app_artifact_location: "topcaves/dist/topcaves/browser"
         env:
           node_version: "20.19.6"
