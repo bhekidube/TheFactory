@@ -41,6 +41,6 @@ jobs:
           repo_token: ${{ secrets.TOPCAVES_DEP_SECRET}}
           action: "upload"
           app_location: "topcaves"
-          output_location: "dist/topcaves/browser"
+          output_location: "topcaves/dist/topcaves/browser"
         env:
           node_version: "20.19.6"
