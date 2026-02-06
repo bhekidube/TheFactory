@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import html2canvas from 'html2canvas';
 import { HttpClient } from '@angular/common/http';
+import { Component, OnInit } from '@angular/core';
 import { environment } from '../../environments/environment'; // adjust path if needed
 
 @Component({
@@ -142,5 +143,24 @@ export class BusSearchComponent implements OnInit {
       this.searchResults = [];
       // Optionally handle error
     });
+  }
+
+  async postToFacebook() {
+    const tableElement = document.querySelector('.screenshot-table-container') as HTMLElement;
+    if (!tableElement) {
+      alert('Could not find the bus schedule table.');
+      return;
+    }
+    try {
+      const canvas = await html2canvas(tableElement);
+      const imageData = canvas.toDataURL('image/png');
+      // Send image to backend API
+      this.http.post('/api/facebook/post', { image: imageData }).subscribe({
+        next: () => alert('Posted to Facebook successfully!'),
+        error: () => alert('Failed to post to Facebook.')
+      });
+    } catch (err) {
+      alert('Error capturing table image.');
+    }
   }
 }
