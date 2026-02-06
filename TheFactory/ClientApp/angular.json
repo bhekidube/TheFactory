@@ -21,6 +21,7 @@
             "outputPath": "dist",
             "index": "src/index.html",
             "main": "src/main.ts",
+            "server": "src/main.server.ts",
             "polyfills": "src/polyfills.ts",
             "tsConfig": "tsconfig.app.json",
             "assets": [
@@ -34,6 +35,9 @@
             "scripts": []
           },
           "configurations": {
+            "ssr": {
+              "entry": "src/server.ts"
+            },
             "production": {
               "budgets": [
                 {

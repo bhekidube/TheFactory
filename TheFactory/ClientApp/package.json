@@ -8,7 +8,8 @@
     "start:windows": "ng serve --port 44411 --ssl --ssl-cert %APPDATA%\\ASP.NET\\https\\%npm_package_name%.pem --ssl-key %APPDATA%\\ASP.NET\\https\\%npm_package_name%.key",
     "start:default": "ng serve --port 44411 --ssl --ssl-cert $HOME/.aspnet/https/${npm_package_name}.pem --ssl-key $HOME/.aspnet/https/${npm_package_name}.key",
     "build": "ng build",
-    "build:ssr": "ng run TheFactory:server:dev",
+    "build:ssr": "ng build --configuration=production && ng run TheFactory:server:production",
+    "serve:ssr": "node dist/server.js",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
@@ -25,6 +26,7 @@
     "@angular/platform-browser-dynamic": "~13.3.5",
     "@angular/platform-server": "~13.3.5",
     "@angular/router": "~13.3.5",
+    "@nguniversal/express-engine": "^13.1.0",
     "bootstrap": "^5.1.3",
     "html2canvas": "^1.4.1",
     "jquery": "^3.6.0",
