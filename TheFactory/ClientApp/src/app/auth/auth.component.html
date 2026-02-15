@@ -1,5 +1,5 @@
 <div class="auth-container">
-  <h2>Login</h2>
+  <h2>Member login</h2>
   <form #loginForm="ngForm" (ngSubmit)="login()" novalidate>
     <input type="email" [(ngModel)]="loginModel.email" name="loginEmail" placeholder="Email" required #loginEmail="ngModel" />
     <div *ngIf="loginEmail.invalid && loginEmail.touched" class="error">Valid email is required.</div>
@@ -32,7 +32,7 @@
 
       <input type="password" [(ngModel)]="registerModel.password" name="registerPassword" placeholder="Password" required minlength="6" #registerPassword="ngModel" />
       <div *ngIf="registerPassword.invalid && registerPassword.touched" class="error">Password is required (min 6 chars).</div>
-      <button type="submit" [disabled]="registerForm.invalid">Register</button>
+      <button type="submit" [disabled]="registerForm.invalid">Join Hamba</button>
     </form>
   </div>
 
