@@ -78,7 +78,8 @@
   Open ZIMRA Declaration Form
 </button>
 
-<!-- Show the form as a modal or inline when button is clicked -->
+<!-- Show the duty calculator above the ZIMRA form when visible -->
+<app-dutycalculator *ngIf="showZimraForm"></app-dutycalculator>
 <app-zimra-declaration *ngIf="showZimraForm" (close)="showZimraForm = false"></app-zimra-declaration>
 <footer>
   &copy; 2025 hambaonline. All rights reserved.
