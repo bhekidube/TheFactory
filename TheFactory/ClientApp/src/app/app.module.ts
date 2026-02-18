@@ -1,5 +1,10 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
+import { LottieModule } from 'ngx-lottie';
+import player from 'lottie-web';
+export function playerFactory() {
+  return player;
+}
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
@@ -13,12 +18,16 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 
 import { AppComponent } from './app.component';
+import { MascotAvatarComponent } from './bus-search/mascot-avatar.component';
 import { NavMenuComponent } from './nav-menu/nav-menu.component';
 import { HomeComponent } from './home/home.component';
 import { CounterComponent } from './counter/counter.component';
 import { FetchDataComponent } from './fetch-data/fetch-data.component';
 import { BusSearchComponent } from './bus-search/bus-search.component';
 import { ZimraDeclarationComponent } from './zimra-declaration/zimra-declaration.component';
+import { ZimraComponent } from './zimra/zimra.component';
+import { FaresComponent } from './fares/fares.component';
+import { DutyCalculatorComponent } from './dutycalculator/dutycalculator.component';
 import { OperatorRouteComponent } from './operator-route/operator-route.component';
 import { AdminScreenComponent } from './admin-screen/admin-screen.component';
 import { AuthComponent } from './auth/auth.component';
@@ -36,13 +45,17 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     CounterComponent,
     FetchDataComponent,
     BusSearchComponent,
+    MascotAvatarComponent,
     ZimraDeclarationComponent,
     OperatorRouteComponent,
     AdminScreenComponent,
     AuthComponent,
     OperatorAdminComponent,
     LogoutLinkComponent,
-    OperatorRouteTripComponent
+    OperatorRouteTripComponent,
+    ZimraComponent,
+    FaresComponent,
+    DutyCalculatorComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
@@ -62,7 +75,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     MatFormFieldModule,
     MatInputModule,
     MatCheckboxModule,
-    MatIconModule
+    MatIconModule,
+    LottieModule.forRoot({ player: playerFactory })
   ],
   providers: [],
   bootstrap: [AppComponent]
