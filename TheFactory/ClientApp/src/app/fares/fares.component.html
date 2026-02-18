@@ -1,0 +1,50 @@
+<div class="container mt-4">
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-body bg-primary text-white text-center rounded">
+      <h2 class="fw-bold">JHB to Bulawayo Bus Fares</h2>
+      <p class="mb-0">Updated: February 2026</p>
+    </div>
+  </div>
+
+  <div class="d-block d-md-none">
+    <div *ngFor="let bus of busData" class="card mb-3 border-start border-primary border-4 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold mb-1 text-primary">{{bus.operator}}</h5>
+          <span class="badge bg-success fs-6">R {{bus.priceRange}}</span>
+        </div>
+        <p class="small text-muted mb-2"><i class="bi bi-clock"></i> Departs: {{bus.time}} | {{bus.pickup}}</p>
+        <div class="d-grid">
+          <button class="btn btn-outline-primary btn-sm">View Drop-off Points</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-none d-md-block table-responsive card shadow-sm">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Operator</th>
+          <th>Departure Time</th>
+          <th>Rank / Pickup</th>
+          <th>Est. Price</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let bus of busData">
+          <td><strong>{{bus.operator}}</strong></td>
+          <td>{{bus.time}}</td>
+          <td>{{bus.pickup}}</td>
+          <td><span class="text-success fw-bold">R {{bus.priceRange}}</span></td>
+          <td><span class="badge rounded-pill bg-info text-dark">Daily</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="alert alert-warning mt-4 small">
+    <strong>Note:</strong> Luggage fees are usually R150 - R350 depending on weight. Prices may increase on weekends.
+  </div>
+</div>
