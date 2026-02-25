@@ -30,16 +30,16 @@
             "dependsOrder": "parallel"
         },
         {
-            "label": "build-TemplateAngularSite",
+            "label": "build-WhiteLabelAngularSite",
             "type": "shell",
-            "command": "cd sites/TemplateAngularSite && npm run build",
+            "command": "cd sites/WhiteLabelAngularSite && npm run build",
             "group": "build",
             "problemMatcher": []
         },
         {
-            "label": "serve-TemplateAngularSite",
+            "label": "serve-WhiteLabelAngularSite",
             "type": "shell",
-            "command": "cd sites/TemplateAngularSite && npm start",
+            "command": "cd sites/WhiteLabelAngularSite && npm start",
             "group": "test",
             "problemMatcher": []
         },

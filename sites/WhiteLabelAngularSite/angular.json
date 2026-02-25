@@ -2,11 +2,12 @@
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
   "cli": {
-    "packageManager": "npm"
+    "packageManager": "npm",
+    "analytics": "12a92ae9-2805-47c5-b68d-46f179b61aa7"
   },
   "newProjectRoot": "projects",
   "projects": {
-    "TemplateAngularSite": {
+    "WhiteLabelAngularSite": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -56,10 +57,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "TemplateAngularSite:build:production"
+              "buildTarget": "WhiteLabelAngularSite:build:production"
             },
             "development": {
-              "buildTarget": "TemplateAngularSite:build:development"
+              "buildTarget": "WhiteLabelAngularSite:build:development"
             }
           },
           "defaultConfiguration": "development"
