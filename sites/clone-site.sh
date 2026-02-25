@@ -1,5 +1,6 @@
 #!/bin/bash
-# Clone TemplateAngularSite to a new site
+
+# Clone WhiteLabelAngularSite to a new site
 # Usage: ./clone-site.sh <new-site-name>
 
 if [ "$#" -ne 1 ]; then
@@ -8,9 +9,10 @@ if [ "$#" -ne 1 ]; then
 fi
 
 NEW_SITE="$1"
-cp -R TemplateAngularSite "$NEW_SITE"
+cp -R WhiteLabelAngularSite "$NEW_SITE"
 cd "$NEW_SITE"
-sed -i '' 's/TemplateAngularSite/'"$NEW_SITE"'/g' angular.json package.json README.md
+sed -i '' 's/WhiteLabelAngularSite/'"$NEW_SITE"'/g' angular.json package.json README.md
 npm install
 cd ..
 echo "Site '$NEW_SITE' created from TemplateAngularSite."
+echo "Site '$NEW_SITE' created from WhiteLabelAngularSite."

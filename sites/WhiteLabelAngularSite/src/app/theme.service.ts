@@ -13,6 +13,7 @@ export class ThemeService {
       .then((data: SiteConfig) => {
         this.config = data;
         document.documentElement.style.setProperty('--primary-color', data.primaryColor);
+        document.title = data.brandName;
       });
   }
 }
