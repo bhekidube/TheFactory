@@ -51,6 +51,10 @@ jobs:
           name: angular-app
           path: angular-app
 
+
+      - name: List files before deploy
+        run: ls -l angular-app
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
