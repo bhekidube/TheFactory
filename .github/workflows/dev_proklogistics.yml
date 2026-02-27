@@ -64,4 +64,4 @@ jobs:
         with:
           app-name: 'proklogistics'
           slot-name: 'Production'
-          package: angular-app
+          package: angular-app/dist/pro-klogistics.co.za
