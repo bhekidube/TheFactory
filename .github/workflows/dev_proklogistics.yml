@@ -26,11 +26,15 @@ jobs:
         run: npm run build
         working-directory: sites/pro-klogistics.co.za
 
+      - name: List files after build
+        run: ls -R
+        working-directory: sites/pro-klogistics.co.za
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: angular-app
-          path: sites/pro-klogistics.co.za/dist/pro-klogistics.co.za
+          path: dist/pro-klogistics.co.za
 
   deploy:
     runs-on: ubuntu-latest
@@ -60,4 +64,4 @@ jobs:
         with:
           app-name: 'proklogistics'
           slot-name: 'Production'
-          package: angular-app/sites/pro-klogistics.co.za/dist/pro-klogistics.co.za
+          package: angular-app/dist/pro-klogistics.co.za
