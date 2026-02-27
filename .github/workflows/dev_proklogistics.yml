@@ -34,7 +34,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: angular-app
-          path: dist/pro-klogistics.co.za
+          path: sites/pro-klogistics.co.za/dist/pro-klogistics.co.za
 
   deploy:
     runs-on: ubuntu-latest
