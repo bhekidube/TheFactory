@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { BannerComponent } from './banner.component';
 
@@ -6,7 +6,8 @@ import { BannerComponent } from './banner.component';
   selector: 'app-root',
   imports: [RouterOutlet, BannerComponent],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrl: './app.css',
+  schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class App {
   protected readonly title = signal('client1');
