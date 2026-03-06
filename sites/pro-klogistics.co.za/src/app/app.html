@@ -1,75 +1,91 @@
-<!-- <app-banner></app-banner>-->
-<!-- Add other components as needed -->
-<section
-    class="max-w-7xl mx-auto p-2 sm:p-4 md:p-10 bg-gradient-to-br from-[#18181B] via-[#232326] to-[#08090A] min-h-screen rounded-3xl shadow-2xl border border-[#E2E8F0]">
-    <div class="grid grid-cols-12 gap-4 sm:gap-6">
+<div class="relative min-h-screen flex flex-col justify-between bg-[#0B1020]">
+    <!-- Background Video -->
+    <video autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover z-0">
+        <source src="assets/LandingCargoPlane.mp4" type="video/mp4" />
+        <source src="assets/LandingCargoPlane.webm" type="video/webm" />
+        Your browser does not support the video tag.
+    </video>
+    <!-- Overlay -->
+    <div class="absolute inset-0 bg-[#0B1020] opacity-90 z-10"></div>
 
-        <div
-            class="col-span-12 lg:col-span-8 bg-[#08090A] rounded-[32px] p-4 sm:p-8 md:p-10 flex flex-col justify-between text-white relative overflow-hidden group">
-            <div
-                class="absolute inset-0 border-t-2 border-[#007749] group-hover:border-[#E03C31] transition-colors duration-500">
+    <!-- Header -->
+    <header class="relative z-20 flex items-center justify-between px-8 py-6">
+        <div class="text-2xl font-bold text-white tracking-tight">PRO&nbsp;&nbsp;K&nbsp;&nbsp;&nbsp;&nbsp;Logistics</div>
+        <nav class="flex gap-10 text-white text-lg">
+            <a href="#services" class="hover:text-[#22C55E] transition">Services</a>
+            <a href="#tracking" class="hover:text-[#22C55E] transition">Tracking</a>
+            <a href="#contact" class="hover:text-[#22C55E] transition">Contact</a>
+        </nav>
+        <a href="#quote" class="bg-[#22C55E] text-white font-semibold px-5 py-2 rounded-lg shadow hover:bg-[#16A34A] transition">Get Quote</a>
+    </header>
+
+    <!-- Main Content -->
+    <main class="relative z-20 flex flex-col items-start px-8 pt-24 pb-10 max-w-5xl mx-auto w-full">
+        <h1 class="text-white text-5xl sm:text-6xl font-extrabold mb-6">Move Cargo Across Africa</h1>
+        <p class="text-gray-300 text-lg mb-10 max-w-2xl">Efficiency meets delivery expectation.</p>
+
+        <div class="flex gap-4 mb-10">
+            <button class="bg-[#22C55E] text-white font-semibold px-8 py-4 rounded-lg text-lg shadow hover:bg-[#16A34A] transition">Track Shipment</button>
+            <button class="bg-transparent border border-white text-white font-semibold px-8 py-4 rounded-lg text-lg hover:bg-white hover:text-[#0B1020] transition">Get Quote</button>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-8 w-full">
+            <div class="bg-[#181F2A] rounded-2xl p-8 flex flex-col justify-center items-center w-full md:w-1/2">
+                <span class="text-white text-6xl font-bold mb-2">99%</span>
+                <span class="text-gray-300 text-lg">On-time delivery across SADC region</span>
             </div>
-
-            <div class="z-10 relative">
-                <video autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover z-0 rounded-[32px]">
-                    <source src="assets/LandingCargoPlane.mp4" type="video/mp4" />
-                    Your browser does not support the video tag.
-                </video>
-                <div class="relative z-10 rounded-[32px]">
-                    <div class="col-span-12 lg:col-span-4 bg-[#F2F3F5] rounded-[32px] overflow-hidden relative group">
-                        <img src="assets/logo.png" alt="RSA freight logistics services"
-                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90">
-                    </div>
-                                <div
-                class="mt-16 bg-white/5 backdrop-blur-md border border-white/10 p-2 rounded-2xl flex items-center max-w-lg z-10 relative">
-    <input type="text" id="waybill-ref" name="waybillRef" placeholder="Reference..."
-        class="bg-transparent border-none outline-none flex-grow px-5 text-white placeholder-gray-500 pr-32">
-  <button
-    class="absolute right-2 top-1/2 -translate-y-1/2 bg-[#007749] hover:bg-[#00663f] transition-all px-6 py-3 rounded-xl font-bold text-white flex gap-2 items-center">
-    <lucide-icon name="map-pin" class="w-6 h-6" aria-hidden="true"></lucide-icon> Track Shipment
-  </button>
-</div>
-                    <p class="text-6xl font-extrabold tracking-tighter mt-8 leading-tight">
-                      <span class="text-[#F2F3F5]">Efficiency meets delivery expectation.</span>
-                    </p>
+            <form class="flex flex-col w-full md:w-1/2 gap-2">
+                <label for="tracking-number" class="text-white text-lg font-medium mb-2">Reference Number</label>
+                <div class="flex w-full">
+                    <input type="text" id="tracking-number" name="trackingNumber" placeholder="Enter tracking number" class="flex-grow px-6 py-4 rounded-l-lg text-lg bg-white text-gray-700 outline-none" />
+                    <button type="submit" class="bg-[#22C55E] text-white font-semibold px-8 py-4 rounded-r-lg text-lg hover:bg-[#16A34A] transition">Track</button>
                 </div>
-            </div>
-
-
+            </form>
         </div>
 
-        <div
-            class="col-span-12 lg:col-span-4 bg-[#F2F3F5] border border-[#E2E8F0] rounded-[32px] p-4 sm:p-8 md:p-10 flex flex-col justify-center mt-4 lg:mt-0">
-            <div class="flex items-end gap-2">
-                <h3 class="text-6xl font-bold tracking-tighter text-[#08090A]">99%</h3>
-                <span class="w-3 h-3 bg-[#E03C31] rounded-full mb-2 animate-pulse"></span>
-            </div>
-            <p class="text-gray-600 mt-4 font-medium">On-time delivery across the <span
-                    class="font-semibold text-[#08090A]">SADC region.</span></p>
+        <!-- STATS -->
+ <!--        <section class="max-w-6xl mx-auto grid md:grid-cols-3 gap-8 px-6 py-10 text-center">
+        <div>
+        <p class="text-3xl font-bold">99%</p>
+        <p class="text-slate-400">On-time delivery</p>
+        </div>
+        <div>
+        <p class="text-3xl font-bold">24h</p>
+        <p class="text-slate-400">Customer support</p>
+        </div>
+        <div>
+        <p class="text-3xl font-bold">12+</p>
+        <p class="text-slate-400">SADC countries served</p>
+        </div>
+        </section> -->
+
+        <!-- SERVICES -->
+        <section class="max-w-7xl mx-auto px-6 py-20">
+        <h2 class="text-3xl font-bold mb-12">Our Services</h2>
+
+        <div class="grid md:grid-cols-3 gap-8">
+
+        <div class="bg-slate-900 p-8 rounded-2xl">
+        <div class="text-2xl mb-4">🚚</div>
+        <h3 class="font-semibold text-lg">Cross Border Road</h3>
+        <p class="text-slate-400 mt-3">Reliable trucking services across Southern Africa.</p>
         </div>
 
-
-
-        <div class="col-span-12 lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mt-4">
-            <div
-                class="bg-white border border-[#E2E8F0] rounded-[32px] p-8 hover:border-[#007749] transition-colors cursor-pointer flex flex-col gap-5">
-                <lucide-icon name="truck" class="text-[#007749]"></lucide-icon>
-                <h4 class="font-bold text-xl text-[#08090A]">Cross-Border Road</h4>
-            </div>
-            <div
-                class="bg-white border border-[#E2E8F0] rounded-[32px] p-8 hover:border-[#007749] transition-colors cursor-pointer flex flex-col gap-5">
-                <lucide-icon name="plane" class="text-[#007749]"></lucide-icon>
-                <h4 class="font-bold text-xl text-[#08090A]">Johannesburg Express</h4>
-            </div>
-            <div
-                class="bg-white border border-[#E2E8F0] rounded-[32px] p-8 hover:border-[#E03C31] transition-colors cursor-pointer flex flex-col gap-5 relative overflow-hidden">
-                <div
-                    class="absolute top-0 right-0 bg-[#E03C31] text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-widest">
-                    Expedited</div>
-                <lucide-icon name="ship" class="text-[#E03C31]"></lucide-icon>
-                <h4 class="font-bold text-xl text-[#08090A]">Durban Port Clear</h4>
-            </div>
+        <div class="bg-slate-900 p-8 rounded-2xl">
+        <div class="text-2xl mb-4">✈</div>
+        <h3 class="font-semibold text-lg">Johannesburg Express</h3>
+        <p class="text-slate-400 mt-3">Fast air cargo solutions for urgent shipments.</p>
         </div>
 
-    </div>
+        <div class="bg-slate-900 p-8 rounded-2xl">
+        <div class="text-2xl mb-4">⚓</div>
+        <h3 class="font-semibold text-lg">Durban Port Clearing</h3>
+        <p class="text-slate-400 mt-3">Expert customs clearing and port logistics.</p>
+        </div>
+
+</div>
 </section>
+
+
+    </main>
+</div>
