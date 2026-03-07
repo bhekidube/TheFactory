@@ -51,25 +51,25 @@
 
             <!-- SERVICES -->
             <section class="max-w-7xl mx-auto px-6 py-20">
-                <h2 class="text-3xl font-bold mb-12">Our Services</h2>
+                <h2 class="text-3xl font-bold mb-12 text-white">Our Services</h2>
 
                 <div class="grid md:grid-cols-3 gap-8">
 
                     <div class="bg-slate-900 p-8 rounded-2xl">
                         <div class="text-2xl mb-4">🚚</div>
-                        <h3 class="font-semibold text-lg">Cross Border Road</h3>
+                        <h3 class="font-semibold text-lg text-white">Cross Border Road</h3>
                         <p class="text-slate-400 mt-3">Reliable trucking services across Southern Africa.</p>
                     </div>
 
                     <div class="bg-slate-900 p-8 rounded-2xl">
-                        <div class="text-2xl mb-4">✈</div>
-                        <h3 class="font-semibold text-lg">Johannesburg Express</h3>
+                        <div class="text-2xl mb-4 text-[#AEEFFF]">✈</div>
+                        <h3 class="font-semibold text-lg text-white">Johannesburg Express</h3>
                         <p class="text-slate-400 mt-3">Fast air cargo solutions for urgent shipments.</p>
                     </div>
 
                     <div class="bg-slate-900 p-8 rounded-2xl">
                         <div class="text-2xl mb-4">⚓</div>
-                        <h3 class="font-semibold text-lg">Durban Port Clearing</h3>
+                        <h3 class="font-semibold text-lg text-white">Durban Port Clearing</h3>
                         <p class="text-slate-400 mt-3">Expert customs clearing and port logistics.</p>
                     </div>
 
@@ -77,7 +77,7 @@
             </section>
         </ng-container>
         <ng-container *ngIf="showContact">
-            <app-contact></app-contact>
+            <app-contact [close]="() => showContact = false"></app-contact>
         </ng-container>
     </main>
 </div>
