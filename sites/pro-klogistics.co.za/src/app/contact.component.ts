@@ -13,9 +13,9 @@ import { Component } from '@angular/core';
         <button type="submit" class="bg-[#22C55E] text-white font-semibold px-8 py-4 rounded-lg text-lg hover:bg-[#16A34A] transition">Send Message</button>
       </form>
       <div class="mt-10 text-gray-300 text-center">
-        <p>Email: <a href="mailto:info@pro-klogistics.co.za" class="text-[#22C55E] underline">info@pro-klogistics.co.za</a></p>
-        <p>Phone: <a href="tel:+27123456789" class="text-[#22C55E] underline">+27 12 345 6789</a></p>
-        <p>Address: 123 Logistics Ave, Johannesburg, South Africa</p>
+        <p>Email: <a href="mailto:accounts@pro-klogistics.co.za" class="text-[#22C55E] underline">accounts@pro-klogistics.co.za</a></p>
+        <p>Phone: <a href="tel:+27672005232" class="text-[#22C55E] underline">+27 67 200 5232</a></p>
+        <p>Address: 13 New Road, Grand Central Airport, Johannesburg, South Africa</p>
       </div>
     </div>
   `,
