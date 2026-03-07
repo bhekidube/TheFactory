@@ -1,22 +1,26 @@
-<div class="relative min-h-screen flex flex-col justify-between bg-[#0B1020]">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<div class="relative min-h-screen w-screen overflow-hidden flex flex-col justify-between bg-[#0B1020]">
     <!-- Background Video -->
-    <video autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover z-0">
+    <video autoplay loop muted playsinline class="absolute inset-0 w-screen h-screen object-cover z-0">
         <source src="assets/LandingCargoPlane.mp4" type="video/mp4" />
         <source src="assets/LandingCargoPlane.webm" type="video/webm" />
         Your browser does not support the video tag.
     </video>
     <!-- Overlay -->
-    <div class="absolute inset-0 bg-[#0B1020] opacity-90 z-10"></div>
+    <div class="absolute inset-0 w-screen h-screen bg-[#0B1020] opacity-90 z-10"></div>
 
     <!-- Header -->
-    <header class="relative z-20 flex items-center justify-between px-8 py-6">
-        <div class="text-2xl font-bold text-white tracking-tight">PRO&nbsp;&nbsp;K&nbsp;&nbsp;&nbsp;&nbsp;Logistics</div>
-        <nav class="flex gap-10 text-white text-lg">
+    <header class="relative z-20 flex flex-col sm:flex-row items-center justify-between px-4 sm:px-8 py-6 w-full">
+        <div class="text-2xl font-bold text-white tracking-tight mb-2 sm:mb-0">PRO&nbsp;&nbsp;K&nbsp;&nbsp;&nbsp;&nbsp;Logistics</div>
+        <nav class="flex flex-col sm:flex-row gap-4 sm:gap-10 text-white text-lg w-full sm:w-auto justify-center sm:justify-start">
             <a href="#services" class="hover:text-[#22C55E] transition">Services</a>
             <a href="#tracking" class="hover:text-[#22C55E] transition">Tracking</a>
             <a href="#contact" class="hover:text-[#22C55E] transition" (click)="showContact = true; $event.preventDefault()">Contact</a>
         </nav>
-        <a href="#quote" class="bg-[#22C55E] text-white font-semibold px-5 py-2 rounded-lg shadow hover:bg-[#16A34A] transition">Get Quote</a>
+        <a href="#quote" class="bg-[#22C55E] text-white font-semibold px-5 py-2 rounded-lg shadow hover:bg-[#16A34A] transition mt-2 sm:mt-0">Get Quote</a>
     </header>
 
     <!-- Main Content -->
@@ -26,9 +30,9 @@
             <div class="flex gap-4 mb-10">
                 <form class="flex flex-col w-full md:w-1/2 gap-2">
                     <label for="tracking-number" class="text-white text-lg font-medium mb-2">Reference Number</label>
-                    <div class="flex w-full">
-                        <input type="text" id="tracking-number" name="trackingNumber" placeholder="Enter tracking number" class="flex-grow px-6 py-4 rounded-l-lg text-lg bg-white text-gray-700 outline-none" />
-                        <button type="submit" class="bg-[#22C55E] text-white font-semibold px-8 py-4 rounded-r-lg text-lg hover:bg-[#16A34A] transition">Track</button>
+                    <div class="flex flex-col sm:flex-row w-full">
+                        <input type="text" id="tracking-number" name="trackingNumber" placeholder="Enter tracking number" class="flex-grow px-4 py-3 rounded-t-lg sm:rounded-l-lg sm:rounded-t-none text-lg bg-white text-gray-700 outline-none" />
+                        <button type="submit" class="bg-[#22C55E] text-white font-semibold px-6 py-3 sm:px-8 sm:py-4 rounded-b-lg sm:rounded-r-lg sm:rounded-b-none text-lg hover:bg-[#16A34A] transition w-full sm:w-auto">Track</button>
                     </div>
                 </form>
             </div>
