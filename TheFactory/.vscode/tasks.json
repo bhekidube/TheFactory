@@ -4,12 +4,18 @@
   "tasks": [
     {
       "label": "build",
-      "command": "dotnet",
+      "command": "/usr/local/share/dotnet/dotnet",
       "type": "process",
       "args": [
         "build",
         "${workspaceFolder}/TheFactory.csproj"
       ],
+      "options": {
+        "env": {
+          "DOTNET_ROOT": "/usr/local/share/dotnet",
+          "PATH": "${env:PATH}:/usr/local/share/dotnet"
+        }
+      },
       "problemMatcher": "$msCompile"
     }
   ]

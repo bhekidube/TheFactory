@@ -14,7 +14,7 @@ builder.Host.ConfigureAppConfiguration((context, config) =>
 {
     var builtConfig = config.Build();
     var keyVaultUrl = builtConfig["KeyVaultUrl"];
-    if (!string.IsNullOrEmpty(keyVaultUrl))
+    if (!string.IsNullOrEmpty(keyVaultUrl) && !context.HostingEnvironment.IsDevelopment())
     {
         config.AddAzureKeyVault(new Uri(keyVaultUrl), new DefaultAzureCredential());
     }
