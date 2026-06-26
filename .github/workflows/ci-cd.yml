@@ -1,7 +1,3 @@
-
-Run details
-Workflow file for this run
-.github/workflows/ci-cd.yml at 82483fd
 name: Factory workflow
 
 on: 
@@ -59,6 +55,9 @@ jobs:
     deploy:
         needs: build
         runs-on: ubuntu-latest
+        permissions:
+          id-token: write
+          contents: read
 
         steps:
         - name: Download Artifact
@@ -69,10 +68,12 @@ jobs:
         - name: Azure Login
           uses: azure/login@v2
           with:
-            creds: ${{ secrets.FACTORY_AUTH_SECRET }}
+            client-id: ${{ secrets.AZURE_CLIENT_ID }}
+            tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+            subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
         - name: Deploy To Azure
           uses: azure/webapps-deploy@v2
           with:
             app-name: AzureLinuxAppService          
-            package: TheFactory.zip   
+            package: TheFactory.zip
