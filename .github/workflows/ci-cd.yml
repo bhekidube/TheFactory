@@ -4,6 +4,10 @@ on:
   workflow_dispatch:
   push:
      branches: ['main', 'dev']
+
+permissions:
+  id-token: write
+  contents: read
  
 jobs:
   build: 
@@ -81,14 +85,17 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: dotnet-webapp
+        path: ./artifact
 
     - name: Azure Login
       uses: azure/login@v2
       with:
-        creds: ${{ secrets.FACTORY_AUTH_SECRET }}
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     - name: Deploy To Azure
       uses: azure/webapps-deploy@v2
       with:
         app-name: AzureLinuxAppService          
-        package: TheFactory.zip
+        package: ./artifact/TheFactory.zip
