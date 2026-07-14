@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "prestart": "node aspnetcore-https",
-    "start": "run-script-os",
+    "start": "node -e \"const { spawnSync } = require('node:child_process'); const script = process.platform === 'win32' ? 'start:windows' : 'start:default'; const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm'; const result = spawnSync(npmCmd, ['run', script], { stdio: 'inherit' }); process.exit(result.status ?? 1);\"",
     "start:windows": "ng serve --port 44411 --ssl --ssl-cert %APPDATA%\\ASP.NET\\https\\%npm_package_name%.pem --ssl-key %APPDATA%\\ASP.NET\\https\\%npm_package_name%.key",
     "start:default": "ng serve --port 44411 --ssl --ssl-cert $HOME/.aspnet/https/${npm_package_name}.pem --ssl-key $HOME/.aspnet/https/${npm_package_name}.key",
     "build": "ng build",
@@ -27,7 +27,6 @@
     "jquery": "^3.6.0",
     "oidc-client": "^1.11.5",
     "popper.js": "^1.16.0",
-    "run-script-os": "^1.1.6",
     "rxjs": "~7.5.5",
     "tslib": "^2.4.0",
     "zone.js": "~0.11.5"
@@ -46,6 +45,5 @@
     "karma-jasmine": "~5.0.0",
     "karma-jasmine-html-reporter": "^1.7.0",
     "typescript": "~4.6.3"
-  },
-  "optionalDependencies": {}
+  }
 }
