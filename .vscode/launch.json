@@ -3,12 +3,6 @@
   "configurations": [
     {
       "name": "C#: Launch Startup Project",
-      "type": "dotnet",
-      "request": "launch",
-      "projectPath": "${workspaceFolder}/TheFactory/TheFactory.csproj"
-    },
-    {
-      "name": "TheFactory (coreclr)",
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build TheFactory",
