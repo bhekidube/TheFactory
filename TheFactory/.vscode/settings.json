@@ -13,5 +13,7 @@
   ],
   "dotnet.server.path": "/usr/local/share/dotnet/dotnet",
   "omnisharp.dotnetPath": "/usr/local/share/dotnet/dotnet",
-  "csharp.suppressDotnetInstallWarning": true
+  "csharp.suppressDotnetInstallWarning": true,
+  "typescript.tsdk": "ClientApp/node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true
 }
