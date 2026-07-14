@@ -94,6 +94,12 @@ jobs:
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+    - name: Verify Azure context
+      run: |
+        az account show
+        az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+        az account show --query "{name:name,id:id,tenantId:tenantId}" -o table
+
     - name: Deploy To Azure
       uses: azure/webapps-deploy@v2
       with:
