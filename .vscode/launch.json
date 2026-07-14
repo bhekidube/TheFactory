@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C#: Launch Startup Project",
+      "type": "dotnet",
+      "request": "launch",
+      "projectPath": "${workspaceFolder}/TheFactory/TheFactory.csproj"
+    },
+    {
+      "name": "TheFactory (coreclr)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build TheFactory",
+      "program": "${workspaceFolder}/TheFactory/bin/Debug/net8.0/TheFactory.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/TheFactory",
+      "stopAtEntry": false,
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_HOSTINGSTARTUPASSEMBLIES": "Microsoft.AspNetCore.SpaProxy",
+        "PATH": "/usr/local/bin:/usr/local/share/dotnet:/opt/homebrew/bin:${env:PATH}"
+      },
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      }
+    }
+  ]
+}
