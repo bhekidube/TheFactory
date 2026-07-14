@@ -1,7 +1,3 @@
-
-Run details
-Workflow file for this run
-.github/workflows/ci-cd.yml at 82483fd
 name: Factory workflow
 
 on: 
@@ -14,72 +10,92 @@ permissions:
   contents: read
  
 jobs:
-    build: 
-        runs-on: ubuntu-latest
+  build: 
+    runs-on: ubuntu-latest
 
-        steps: 
-        - uses: actions/checkout@v4
+    steps: 
+    - uses: actions/checkout@v4
 
-        - name: Setup .NET
-          uses: actions/setup-dotnet@v4
-          with:
-                dotnet-version: 8.0.x
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18.x'
 
-        - name: Restore Dependencies
-          run: dotnet restore
+    - name: Install Angular dependencies
+      run: |
+        cd TheFactory/ClientApp
+        npm install
 
-        - id: build
-          name:  Build
-          run: dotnet build ./TheFactory/TheFactory.csproj --no-restore
+    - name: Build Angular app
+      run: |
+        cd TheFactory/ClientApp
+        npm run build -- --configuration production
 
-        #- id: test
-          #if: steps.build.outcome == 'success'
-          #name: Test
-          #run: dotnet test "TestTheFactory.csproj" --collect "XPlat Code Coverate"
+    - name: Copy Angular build to wwwroot
+      run: |
+        rm -rf TheFactory/wwwroot/*
+        cp -r TheFactory/ClientApp/dist/* TheFactory/wwwroot/
 
-        - id: publish
-          name: Publish
-          run: dotnet publish ./TheFactory/TheFactory.csproj -c Release -r linux-x64 --self-contained false -o ./publish
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
 
-        - name: Zip Artifact
-          run: cd publish && zip -r ../TheFactory.zip .
+    - name: Restore Dependencies
+      run: dotnet restore
 
-        - name: List zip contents
-          run: unzip -l TheFactory.zip
+    - id: build
+      name:  Build
+      run: dotnet build ./TheFactory/TheFactory.csproj --no-restore
+
+    #- id: test
+      #if: steps.build.outcome == 'success'
+      #name: Test
+      #run: dotnet test "TestTheFactory.csproj" --collect "XPlat Code Coverate"
+
+    - id: publish
+      name: Publish
+      run: dotnet publish ./TheFactory/TheFactory.csproj -c Release -r linux-x64 --self-contained false -o ./publish
+
+    - name: Zip Artifact
+      run: cd publish && zip -r ../TheFactory.zip .
+
+    - name: List zip contents
+      run: unzip -l TheFactory.zip
           
-        - id: upload
-          name: Upload Artifact
-          uses: actions/upload-artifact@v4
-          with:
-                name: dotnet-webapp 
-                path: TheFactory.zip  
+    - id: upload
+      name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: dotnet-webapp 
+        path: TheFactory.zip  
                 
-        - name: List files before deploy
-          run: ls -l
+    - name: List files before deploy
+      run: ls -l
 
-        - name: List zip contents
-          run: unzip -l TheFactory.zip
+    - name: List zip contents
+      run: unzip -l TheFactory.zip
   
-    deploy:
-        needs: build
-        runs-on: ubuntu-latest
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
 
-        steps:
-        - name: Download Artifact
-          uses: actions/download-artifact@v4
-          with:
-            name: dotnet-webapp
-            path: ./artifact
+    steps:
+    - name: Download Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: dotnet-webapp
+        path: ./artifact
 
-        - name: Azure Login
-          uses: azure/login@v2
-          with:
-            client-id: ${{ secrets.AZURE_CLIENT_ID }}
-            tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-            subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    - name: Azure Login
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-        - name: Deploy To Azure
-          uses: azure/webapps-deploy@v2
-          with:
-            app-name: AzureLinuxAppService          
-            package: ./artifact/TheFactory.zip   
+    - name: Deploy To Azure
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: AzureLinuxAppService          
+        package: ./artifact/TheFactory.zip

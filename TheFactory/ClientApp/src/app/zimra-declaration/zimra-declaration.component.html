@@ -1,0 +1,111 @@
+    <h2>ZIMBABWE REVENUE AUTHORITY CUSTOMS DECLARATION (Form 47)</h2>
+
+    <section id="section-a">
+        <h3>SECTION A: Personal Details</h3>
+        <label for="surname">1) Surname:</label>
+        <input type="text" id="surname" name="surname">
+
+        <label for="first-names">2) First Names:</label>
+        <input type="text" id="first-names" name="first-names">
+
+        <label for="passport-number">3) Passport Number:</label>
+        <input type="text" id="passport-number" name="passport-number">
+
+        <label for="date-of-birth">4) Date of Birth:</label>
+        <input type="date" id="date-of-birth" name="date-of-birth">
+
+        <label for="nationality">5) Nationality:</label>
+        <input type="text" id="nationality" name="nationality">
+
+        <label for="country-residence">6) Country of Residence:</label>
+        <input type="text" id="country-residence" name="country-residence">
+
+        <label for="flight-vehicle">7) Flight, Voyage, Vehicle Registration Number:</label>
+        <input type="text" id="flight-vehicle" name="flight-vehicle">
+
+        <label for="physical-address">8) Physical Address in Zimbabwe:</label>
+        <input type="text" id="physical-address" name="physical-address">
+    </section>
+
+    <section id="purpose-travel">
+        <h3>Purpose of Travel (Please mark with an X)</h3>
+        <div class="checkbox-group">
+            <label><input type="checkbox" name="purpose" value="Holiday"> Holiday</label>
+            <label><input type="checkbox" name="purpose" value="Study"> Study</label>
+            <label><input type="checkbox" name="purpose" value="Business"> Business</label>
+            <label><input type="checkbox" name="purpose" value="Crew"> Crew</label>
+            <label><input type="checkbox" name="purpose" value="Immigration"> Immigration</label>
+            <label><input type="checkbox" name="purpose" value="Diplomatic"> Diplomatic</label>
+            <label><input type="checkbox" name="purpose" value="Employment"> Employment</label>
+            <label>Other (Specify): <input type="text" name="purpose-other"></label>
+        </div>
+    </section>
+
+    <section id="section-b">
+        <h3>SECTION B: Are you in possession of (Please mark with an X)</h3>
+        <div class="checkbox-group">
+            <label><input type="checkbox" name="possession" value="Prohibited or restricted goods"> Prohibited or restricted goods e.g. arms, plant and animal</label>
+            <label><input type="checkbox" name="possession" value="Any goods obtained abroad worth more than USD500"> Any goods (new or used) obtained abroad worth more than USD500 in total</label>
+            <label><input type="checkbox" name="possession" value="Any alcoholic beverages in excess of 5 litres"> Any alcoholic beverages in excess of 5 litres</label>
+            <label><input type="checkbox" name="possession" value="More than 2 litres of spirits"> More than 2 litres of spirits (provided that the importer shall not be under the age of 18 years)</label>
+            <label><input type="checkbox" name="possession" value="Any goods for trading/commercial purpose"> Any goods for trading / commercial purpose</label>
+            <label><input type="checkbox" name="possession" value="Goods taken from Zimbabwe remodelled/repaired"> Goods taken from Zimbabwe that have been remodelled/repaired</label>
+            <label><input type="checkbox" name="possession" value="Goods taken from Zimbabwe exchanged"> Goods taken from Zimbabwe that have been exchanged</label>
+            <label><input type="checkbox" name="possession" value="Goods registered for re-importation"> Goods registered for re-importation</label>
+        </div>
+
+        <h4>a) ZWD (SI) Currency in your possession?</h4>
+        <label>If yes, how much? ZWD $ <input type="number" name="zwd-si"> / ZWD (P) $ <input type="number" name="zwd-p"></label>
+    </section>
+
+    <section id="goods-declaration">
+        <h3>Goods Declaration</h3>
+        <p>If you have any goods to declare or have answered "YES" to any question, complete the following:</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Description of Item</th>
+                    <th>Value in Foreign Currency (Specify type of currency)</th>
+                    <th>For Official Use</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><input type="text" name="item-desc-1"></td>
+                    <td><input type="text" name="item-value-1"></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><input type="text" name="item-desc-2"></td>
+                    <td><input type="text" name="item-value-2"></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><input type="text" name="item-desc-3"></td>
+                    <td><input type="text" name="item-value-3"></td>
+                    <td></td>
+                </tr>
+                <!-- Add more rows as needed -->
+            </tbody>
+        </table>
+    </section>
+
+    <section id="declaration">
+        <h3>Declaration by Traveller</h3>
+        <p>I have read instructions and declare that the foregoing is a true and complete statement of the goods and currency in my possession.</p>
+        <label for="signature">Signature:</label>
+        <input type="text" id="signature" name="signature">
+
+        <label for="date">Date:</label>
+        <input type="date" id="date" name="date">
+    </section>
+
+    <section id="custom-officer">
+        <h3>Custom Officer</h3>
+        <input type="text" name="officer-name" placeholder="Full Name">
+    </section>
+
+    <p><strong>Note:</strong> This is a digital HTML version of the form for filling out on a computer. For official use, download the PDF from the Zimbabwe Revenue Authority website.</p>
+    <p>Alternatively, a PDF version is available here: <a href="https://www.lawsociety.org.zw/wp-content/uploads/2021/09/FORM-47-CUSTOMS-DECLARATION.pdf">Download PDF</a>.</p>
+
+    <button (click)="closeForm()" style="float:right;">Close</button>

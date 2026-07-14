@@ -1,0 +1,88 @@
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<div class="relative min-h-screen w-screen overflow-hidden flex flex-col justify-between bg-[#0B1020]">
+    <!-- Background Video -->
+    <video autoplay loop muted playsinline class="absolute inset-0 w-screen h-screen object-cover z-0">
+        <source src="assets/LandingCargoPlane.mp4" type="video/mp4" />
+        <source src="assets/LandingCargoPlane.webm" type="video/webm" />
+        Your browser does not support the video tag.
+    </video>
+    <!-- Overlay -->
+    <div class="absolute inset-0 w-screen h-screen bg-[#0B1020] opacity-90 z-10"></div>
+
+    <!-- Header -->
+    <header class="relative z-20 flex flex-col sm:flex-row items-center justify-between px-4 sm:px-8 py-6 w-full">
+        <div class="text-2xl font-bold text-white tracking-tight mb-2 sm:mb-0">PRO&nbsp;&nbsp;K&nbsp;&nbsp;&nbsp;&nbsp;Logistics</div>
+        <nav class="flex flex-col sm:flex-row gap-4 sm:gap-10 text-white text-lg w-full sm:w-auto justify-center sm:justify-start">
+            <a href="#services" class="hover:text-[#22C55E] transition">Services</a>
+            <a href="#tracking" class="hover:text-[#22C55E] transition">Tracking</a>
+            <a href="#contact" class="hover:text-[#22C55E] transition" (click)="showContact = true; $event.preventDefault()">Contact</a>
+         <a href="#quote" class="bg-[#22C55E] text-white font-semibold px-5 py-2 rounded-lg shadow hover:bg-[#16A34A] transition mt-2 sm:mt-0">Get Quote</a>
+        </nav>
+       
+    </header>
+
+    <!-- Main Content -->
+    <main class="relative z-20 flex flex-col items-start px-8 pt-24 pb-10 max-w-5xl mx-auto w-full">
+        <ng-container *ngIf="!showContact">
+            <h1 class="text-white text-5xl sm:text-6xl font-extrabold mb-6">Efficiency meets delivery expectation.</h1>
+            <div class="flex gap-4 mb-10">
+                <form class="flex flex-col w-full md:w-1/2 gap-2">
+                    <label for="tracking-number" class="text-white text-lg font-medium mb-2">Reference Number</label>
+                    <div class="flex flex-col sm:flex-row w-full">
+                        <input type="text" id="tracking-number" name="trackingNumber" placeholder="Enter tracking number" class="flex-grow px-4 py-3 rounded-t-lg sm:rounded-l-lg sm:rounded-t-none text-lg bg-white text-gray-700 outline-none" />
+                        <button type="submit" class="bg-[#22C55E] text-white font-semibold px-6 py-3 sm:px-8 sm:py-4 rounded-b-lg sm:rounded-r-lg sm:rounded-b-none text-lg hover:bg-[#16A34A] transition w-full sm:w-auto">Track</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- STATS -->
+            <section class="max-w-6xl mx-auto grid md:grid-cols-3 gap-8 px-6 py-10 text-center">
+                <div>
+                    <p class="text-3xl font-bold">99%</p>
+                    <p class="text-slate-400">On-time delivery</p>
+                </div>
+                <div>
+                    <p class="text-3xl font-bold">24h</p>
+                    <p class="text-slate-400">Customer support</p>
+                </div>
+                <div>
+                    <p class="text-3xl font-bold">12+</p>
+                    <p class="text-slate-400">SADC countries served</p>
+                </div>
+            </section>
+
+            <!-- SERVICES -->
+            <section class="max-w-7xl mx-auto px-6 py-20">
+                <h2 class="text-3xl font-bold mb-12 text-white">Our Services</h2>
+
+                <div class="grid md:grid-cols-3 gap-8">
+
+                    <div class="bg-slate-900 p-8 rounded-2xl">
+                        <div class="text-2xl mb-4">🚚</div>
+                        <h3 class="font-semibold text-lg text-white">Cross Border Road</h3>
+                        <p class="text-slate-400 mt-3">Reliable trucking services across Southern Africa.</p>
+                    </div>
+
+                    <div class="bg-slate-900 p-8 rounded-2xl">
+                        <div class="text-2xl mb-4 text-[#AEEFFF]">✈</div>
+                        <h3 class="font-semibold text-lg text-white">Johannesburg Express</h3>
+                        <p class="text-slate-400 mt-3">Fast air cargo solutions for urgent shipments.</p>
+                    </div>
+
+                    <div class="bg-slate-900 p-8 rounded-2xl">
+                        <div class="text-2xl mb-4">⚓</div>
+                        <h3 class="font-semibold text-lg text-white">Durban Port Clearing</h3>
+                        <p class="text-slate-400 mt-3">Expert customs clearing and port logistics.</p>
+                    </div>
+
+                </div>
+            </section>
+        </ng-container>
+        <ng-container *ngIf="showContact">
+            <app-contact [close]="() => showContact = false"></app-contact>
+        </ng-container>
+    </main>
+</div>

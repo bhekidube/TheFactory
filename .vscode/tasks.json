@@ -1,16 +1,61 @@
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "build TheFactory",
-      "type": "process",
-      "command": "dotnet",
-      "args": [
-        "build",
-        "${workspaceFolder}/TheFactory/TheFactory.csproj"
-      ],
-      "problemMatcher": "$msCompile",
-      "group": "build"
-    }
-  ]
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/TheFactory/TheFactory.csproj"
+            ],
+            "problemMatcher": "$msCompile"
+        }
+        ,
+        {
+            "label": "serve-original-app",
+            "type": "shell",
+            "command": "cd TheFactory/ClientApp && ng serve --port 4200",
+            "problemMatcher": []
+        },
+        {
+            "label": "serve-newdomain-app",
+            "type": "shell",
+            "command": "cd newdomain && ng serve --port 4201",
+            "problemMatcher": []
+        },
+        {
+            "label": "serve-both-apps",
+            "dependsOn": ["serve-original-app", "serve-newdomain-app"],
+            "dependsOrder": "parallel"
+        },
+        {
+            "label": "build-WhiteLabelAngularSite",
+            "type": "shell",
+            "command": "cd sites/WhiteLabelAngularSite && npm run build",
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "serve-WhiteLabelAngularSite",
+            "type": "shell",
+            "command": "cd sites/WhiteLabelAngularSite && npm start",
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
+            "label": "build-all-sites",
+            "type": "shell",
+            "command": "for d in sites/*/ ; do cd \"$d\" && npm run build && cd ../.. ; done",
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "serve-all-sites",
+            "type": "shell",
+            "command": "for d in sites/*/ ; do cd \"$d\" && npm start & cd ../.. ; done",
+            "group": "test",
+            "problemMatcher": []
+        }
+    ]
 }

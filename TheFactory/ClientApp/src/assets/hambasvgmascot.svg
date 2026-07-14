@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- BUS BODY -->
+  <g id="bus">
+    <rect x="100" y="200" width="300" height="140" rx="30" fill="#FFD54F"/>
+  </g>
+
+  <!-- BUS WINDOWS -->
+  <g id="windows">
+    <rect x="130" y="220" width="180" height="60" rx="10" fill="#81D4FA"/>
+  </g>
+
+  <!-- BYO TEXT -->
+  <g id="text">
+    <text x="190" y="320" font-size="40" font-family="Arial" fill="#333">BYO</text>
+  </g>
+
+  <!-- LEFT WHEEL -->
+  <g id="wheel_left">
+    <circle cx="180" cy="360" r="30" fill="#333"/>
+  </g>
+
+  <!-- RIGHT WHEEL -->
+  <g id="wheel_right">
+    <circle cx="320" cy="360" r="30" fill="#333"/>
+  </g>
+
+  <!-- MASCOT BODY -->
+  <g id="body">
+    <rect x="210" y="120" width="100" height="100" rx="50" fill="#4CAF50"/>
+  </g>
+
+  <!-- HEAD -->
+  <g id="head">
+    <circle cx="260" cy="100" r="60" fill="#66BB6A"/>
+  </g>
+
+  <!-- LEFT EYE -->
+  <g id="eye_left">
+    <circle cx="235" cy="90" r="8" fill="#000"/>
+  </g>
+
+  <!-- RIGHT EYE -->
+  <g id="eye_right">
+    <circle cx="285" cy="90" r="8" fill="#000"/>
+  </g>
+
+  <!-- SMILE -->
+  <g id="mouth">
+    <path d="M235 115 Q260 135 285 115" stroke="#000" stroke-width="4" fill="none"/>
+  </g>
+
+  <!-- LEFT ARM -->
+  <g id="arm_left">
+    <rect x="180" y="140" width="60" height="15" rx="8" fill="#66BB6A"/>
+  </g>
+
+  <!-- RIGHT ARM -->
+  <g id="arm_right">
+    <rect x="280" y="140" width="60" height="15" rx="8" fill="#66BB6A"/>
+  </g>
+
+  <!-- LEFT LEG -->
+  <g id="leg_left">
+    <rect x="230" y="220" width="15" height="50" rx="8" fill="#388E3C"/>
+  </g>
+
+  <!-- RIGHT LEG -->
+  <g id="leg_right">
+    <rect x="265" y="220" width="15" height="50" rx="8" fill="#388E3C"/>
+  </g>
+
+</svg>

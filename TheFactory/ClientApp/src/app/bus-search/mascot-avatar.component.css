@@ -1,0 +1,86 @@
+.mascot-avatar {
+  position: fixed;
+  top: 90px;
+  left: 0;
+  z-index: 2000;
+  animation: mascot-move-right 18s linear infinite;
+  will-change: left, opacity;
+  pointer-events: none;
+  opacity: 1;
+}
+
+@keyframes mascot-move-right {
+  0% {
+    left: 0;
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  95% {
+    left: calc(100vw - 90px);
+    opacity: 0;
+  }
+  100% {
+    left: 0;
+    opacity: 0;
+  }
+}
+
+/* Flip mascot horizontally when moving right-to-left */
+.mascot-avatar .ng-lottie,
+.mascot-avatar .mascot-img {
+  transition: transform 0.3s;
+}
+.mascot-avatar.reverse .ng-lottie,
+.mascot-avatar.reverse .mascot-img {
+  transform: scaleX(-1);
+}
+
+@keyframes mascot-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+.mascot-img {
+  width: 80px;
+  height: 80px;
+  display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.12));
+  transform-origin: 60% 20%; /* Adjust as needed for arm/hand location */
+  animation: mascot-wave 2s ease-in-out infinite;
+}
+
+.mascot-blink {
+  position: absolute;
+  left: 28px; /* Adjust to eye position */
+  top: 32px;  /* Adjust to eye position */
+  width: 24px;
+  height: 10px;
+  background: rgba(0,0,0,0.18);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  animation: mascot-blink 4s infinite;
+  z-index: 10;
+}
+
+@keyframes mascot-wave {
+  0%, 100% { transform: rotate(0deg); }
+  10% { transform: rotate(-10deg); }
+  20% { transform: rotate(12deg); }
+  30% { transform: rotate(-8deg); }
+  40% { transform: rotate(8deg); }
+  50% { transform: rotate(0deg); }
+}
+
+@keyframes mascot-blink {
+  0%, 92%, 100% { opacity: 0; }
+  94%, 98% { opacity: 1; }
+}
+
+

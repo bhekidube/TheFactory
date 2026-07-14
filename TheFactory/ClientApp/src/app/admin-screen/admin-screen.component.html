@@ -1,0 +1,47 @@
+<div *ngIf="loading">Loading...</div>
+<div *ngIf="error">{{ error }}</div>
+<div *ngIf="!loading && isLoggedIn">
+  <p>
+    Logged in as <strong>{{ userName }}</strong>
+    ({{ userRole }}). <a class="logout-link" (click)="logout()">Log out</a>
+  </p>
+</div>
+<div *ngIf="!loading && !isLoggedIn">
+  <p>You must be logged in to view this screen.</p>
+</div>
+<div *ngIf="summary && isLoggedIn && isAdminRole(userRole)">
+  <h2>Admin Summary</h2>
+  <ul>
+      <li>My Operators: {{ summary.totalOperators }}</li>
+  </ul>
+  <ul class="operator-list">
+    <li *ngFor="let operator of summary.operatorNames">
+      <a href="#" class="modern-link" (click)="viewOperator(operator); $event.preventDefault()">{{ operator }}</a>
+    </li>
+  </ul>   
+</div>
+<div *ngIf="isLoggedIn && !isAdminRole(userRole) && userRole !== 'OperatorAdmin'">
+  <p>You do not have permission to view this screen.</p>
+  <button (click)="requestPermission()">Request Permission</button>
+</div>
+<div *ngIf="isLoggedIn && isAdminRole(userRole)">
+  <h3>Change User Role</h3>
+  <form (ngSubmit)="changeUserRole()">
+    <input type="email" [(ngModel)]="targetEmail" name="targetEmail" placeholder="User Email" required />
+    <select [(ngModel)]="newUserRoleId" name="newUserRoleId" required>
+      <option [value]="1">SystemAdmin</option>
+      <option [value]="2">Admin</option>
+      <option [value]="3">OperatorAdmin</option>
+      <option [value]="4">Operator</option>
+      <option [value]="5">Customer</option>
+      <option [value]="6">Public</option>
+    </select>
+    <button type="submit">Change Role</button>
+  </form>
+  <div *ngIf="roleChangeMessage">{{ roleChangeMessage }}</div>
+</div>
+<app-operator-admin
+  *ngIf="selectedOperator && operatorAdminSummary && isAdminRole(userRole)"
+  [operatorName]="selectedOperator"
+  [summary]="operatorAdminSummary">
+</app-operator-admin>

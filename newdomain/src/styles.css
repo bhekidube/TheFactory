@@ -1,0 +1,43 @@
+.landing-image {
+	display: block;
+	max-width: 98vw;
+	max-height: 70vh;
+	width: auto;
+	height: auto;
+	object-fit: contain;
+	border-radius: 16px;
+	background: #e0e0e0;
+}
+/* Landing page picture placeholder styles */
+.landing-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	min-height: 60vh;
+	padding: 2rem 1rem;
+}
+
+.picture-placeholder {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #e0e0e0;
+	border-radius: 16px;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+	margin-bottom: 2rem;
+	padding: 0;
+	width: fit-content;
+	height: fit-content;
+	max-width: 98vw;
+	max-height: 70vh;
+	overflow: auto;
+}
+
+@media (max-width: 600px) {
+	.picture-placeholder {
+		max-width: 98vw;
+		font-size: 1rem;
+	}
+}
+/* You can add global styles to this file, and also import other style files */

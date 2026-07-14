@@ -1,0 +1,9 @@
+{
+  "brandName": "Pro-K Logistics DEV!",
+  "logoUrl": "assets/logo.png",
+  "primaryColor": "#ff5722",
+  "features": {
+    "showBanner": true,
+    "enableChat": false
+  }
+}

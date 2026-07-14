@@ -1,0 +1,51 @@
+<div class="card shadow-sm border-0">
+  <div class="card-header bg-dark text-white fw-bold">
+    🧮 ZIMRA Duty Estimator (2026)
+  </div>
+  <div class="card-body">
+    <label class="small text-muted">Value of Goods (USD)</label>
+    <div class="input-group mb-3">
+      <span class="input-group-text">$</span>
+      <input type="number" class="form-control" [(ngModel)]="itemValue" placeholder="e.g. 350">
+    </div>
+
+    <div class="form-check form-switch mb-3">
+      <input class="form-check-input" type="checkbox" [(ngModel)]="isExcluded" id="excludedSwitch">
+      <label class="form-check-label small" for="excludedSwitch">
+        Is this a Stove, Fridge, or Blanket?
+      </label>
+        <div class="text-info" style="font-size: 0.75rem;">(These don't get the $200 discount)</div>
+    </div>
+
+    <button class="btn btn-primary w-100" (click)='calculateDuty()'>Calculate Estimate</button>
+
+    <div *ngIf="totalDuty !== null" class="mt-3 p-3 bg-light rounded border">
+      <div class="d-flex justify-content-between">
+        <span>Estimated Duty:</span>
+        <span class="fw-bold text-danger">${{ totalDuty | number:'1.2-2' }}</span>
+      </div>
+      <p class="text-muted extra-small mt-2 mb-0">
+        *Based on 40% Flat Rate + 15.5% VAT. Exact fees are determined by ZIMRA at the border.
+      </p>
+    </div>
+  </div>
+  <div class="mt-4">
+  <h5 class="fw-bold mb-3">Traveler's Knowledge Nuggets 💡</h5>
+  
+  <div class="alert alert-info border-0 shadow-sm d-flex align-items-center">
+    <i class="bi bi-info-circle-fill me-3 fs-4"></i>
+    <div>
+      <strong>The 2026 VAT Rule:</strong> 
+      Beitbridge officials now apply a 15.5% VAT. Most older calculators online still use 15%. Our tool is updated for the new 2026 budget requirements.
+    </div>
+  </div>
+
+  <div class="alert alert-light border shadow-sm d-flex align-items-center">
+    <i class="bi bi-currency-dollar me-3 fs-4 text-success"></i>
+    <div>
+      <strong>Declare your Cash:</strong> 
+      If you are carrying more than USD $2,000 into Zimbabwe, you MUST declare it. Without that receipt, you cannot legally take that cash back out of the country.
+    </div>
+  </div>
+</div>
+</div>

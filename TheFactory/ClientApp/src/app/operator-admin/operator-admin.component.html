@@ -1,0 +1,129 @@
+<div *ngIf="isLoggedIn && (userRole === 'Admin' || userRole === 'SystemAdmin' || userRole === 'OperatorAdmin')">
+  <app-logout-link></app-logout-link>
+  <h2>{{ operatorName }} - Operator admin Dashboard</h2>
+
+<!--<section class="search-section">-->
+
+  <button type="button" (click)="showForm = true" *ngIf="!showForm" class="search-btn">
+    <span class="icon-magnifier" aria-hidden="true"></span> 
+  </button>
+  <form *ngIf="showForm" (ngSubmit)="onSearch()" #busForm="ngForm">
+    <div style="position:relative;">
+      <input type="text" [(ngModel)]="fromInput" name="fromInput" placeholder="From (e.g. Bulawayo)" autocomplete="off" required (input)="onFromInputChange()" />
+      <ul *ngIf="fromSuggestions.length">
+        <li *ngFor="let city of fromSuggestions" (mousedown)="selectFromSuggestion(city)">
+          {{ city.location }}
+        </li>
+      </ul>
+    </div>
+    <div style="position:relative;">
+      <input type="text" [(ngModel)]="toInput" name="toInput" placeholder="To (e.g. Harare)" autocomplete="off" required (input)="onToInputChange()" />
+      <ul *ngIf="toSuggestions.length">
+        <li *ngFor="let city of toSuggestions" (mousedown)="selectToSuggestion(city)">
+          {{ city.location }}
+        </li>
+      </ul>
+    </div>
+    <input type="date" [(ngModel)]="dateInput" name="dateInput" required />
+    <button type="submit">Search Buses</button>
+  </form>
+
+<!--</section>  -->
+
+  <div *ngIf="searchResults && searchResults.length" class="search-results screenshot-table-container"> 
+    <h3>{{ fromInput || '...' }} to {{ toTownInput || '...' }}</h3> 
+    <table class="screenshot-table">
+      <thead>
+        <tr>
+          <th>Bus</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Price</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+        <tr *ngFor="let row of searchResults; let i = index" [class.alt-row]="i % 2 === 1"> 
+          <td>{{ row.operatorName }}</td>
+          <td>{{ row.departureDateTime | date:'MMM d, y' }}</td>
+          <td>{{ row.departureDateTime | date:'HH:mm' }}</td> 
+          <td>{{ row.price | currency:'R' }}</td> 
+        </tr>
+      </tbody>
+    </table>
+    <div class="screenshot-tip"></div>
+  </div> 
+
+
+
+  
+
+<p><strong>My Routes</strong></p>
+  <ul *ngIf="summary?.routes?.length">
+    <li *ngFor="let route of summary.routes">
+            <span [ngStyle]="{ color: route.active ? 'green' : 'red', 'font-weight': 'bold' }">
+  {{ route.active ? 'Active' : 'Not active' }}</span><strong> Route No.{{ route.routeId }}:</strong>
+      <a href="#" (click)="viewRoute(route); $event.preventDefault()">
+        {{ route.fromLocation }} → {{ route.toLocation }}
+      </a> |
+      Created by: {{ route.creator }} on {{ route.createdDate | date:'short' }}
+
+    <!-- Render the trip component below the clicked route -->
+    <div *ngIf="selectedRoute === route">
+      <app-operator-route-trip [route]="route"></app-operator-route-trip>
+    </div>
+    </li>
+  </ul>
+</div>
+<div *ngIf="!isLoggedIn || (userRole !== 'Admin' && userRole !== 'SystemAdmin' && userRole !== 'OperatorAdmin')">
+  <p>You do not have permission to view this operator's details.</p>
+</div>
+  <button (click)="showCreateRouteForm = !showCreateRouteForm">
+    {{ showCreateRouteForm ? 'Cancel' : 'Create New Route' }}
+  </button>
+
+  <form *ngIf="showCreateRouteForm" (ngSubmit)="insertRoute()" style="margin-top: 1em;">
+    <label>
+      From Location:
+      <select [(ngModel)]="newRoute.fromLocationId" name="fromLocationId" required>
+        <option *ngFor="let loc of locations" [value]="loc.locationID">{{ loc.location }} ({{ loc.town }})</option>
+      </select>
+    </label>
+    <label>
+      To Location:
+      <select [(ngModel)]="newRoute.toLocationId" name="toLocationId" required>
+        <option *ngFor="let loc of locations" [value]="loc.locationID">{{ loc.location }} ({{ loc.town }})</option>
+      </select>
+    </label>
+    <button type="submit">Create Route</button>
+    <span *ngIf="createRouteMessage">{{ createRouteMessage }}</span>
+  </form>
+
+  <div>
+    <h3>Create New Ticket</h3>
+    <form (ngSubmit)="insertRouteTripTicketPrice()" style="margin-top: 1em;">
+      <label>
+        Price:
+        <input type="number" [(ngModel)]="newTicketPrice" name="newTicketPrice" required />
+      </label>
+      <label>
+        Currency:
+        <select [(ngModel)]="newTicketCurrency" name="newTicketCurrency" required>
+          <option value="ZAR">ZAR</option>
+          <option value="USD">USD</option>
+          <!-- Add more currencies if needed -->
+        </select>
+      </label>
+      <label>
+        Start Date:
+        <input type="date" [(ngModel)]="newTicketStartDate" name="newTicketStartDate" required />
+      </label>
+      <label>
+        End Date:
+        <input type="date" [(ngModel)]="newTicketEndDate" name="newTicketEndDate" />
+      </label>
+      <button type="submit">Add Ticket Price</button>
+    </form>
+  </div>
+
+
