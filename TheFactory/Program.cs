@@ -1,10 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using Azure.Core;
 using Azure.Identity;
 using Azure.Extensions.AspNetCore.Configuration.Secrets;
 
 var builder = WebApplication.CreateBuilder(args);
+var azureCredential = CreateAzureCredential(builder.Environment.IsDevelopment());
 
 // Use builder.Configuration directly for config access
 var configuration = builder.Configuration;
@@ -14,9 +16,12 @@ builder.Host.ConfigureAppConfiguration((context, config) =>
 {
     var builtConfig = config.Build();
     var keyVaultUrl = builtConfig["KeyVaultUrl"];
-    if (!string.IsNullOrEmpty(keyVaultUrl) && !context.HostingEnvironment.IsDevelopment())
+    var loadKeyVaultInDevelopment = builtConfig.GetValue<bool>("LoadKeyVaultInDevelopment");
+    var shouldLoadKeyVault = !context.HostingEnvironment.IsDevelopment() || loadKeyVaultInDevelopment;
+
+    if (!string.IsNullOrEmpty(keyVaultUrl) && shouldLoadKeyVault)
     {
-        config.AddAzureKeyVault(new Uri(keyVaultUrl), new DefaultAzureCredential());
+        config.AddAzureKeyVault(new Uri(keyVaultUrl), azureCredential);
     }
 });
 
@@ -24,8 +29,10 @@ builder.Host.ConfigureAppConfiguration((context, config) =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("AzureSqlDb")));
+builder.Services.AddSingleton<TokenCredential>(azureCredential);
+builder.Services.AddScoped<SqlConnectionFactory>();
+builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
+    options.UseSqlServer(serviceProvider.GetRequiredService<SqlConnectionFactory>().CreateConnection()));
 builder.Services.AddScoped<SqlConnectionService>();
 builder.Services.AddCors(options =>
 {
@@ -77,5 +84,27 @@ app.MapControllerRoute(
 app.MapFallbackToFile("index.html");
 
 app.Run();
+
+static TokenCredential CreateAzureCredential(bool isDevelopment)
+{
+    var options = new DefaultAzureCredentialOptions();
+
+    if (OperatingSystem.IsMacOS())
+    {
+        options.ExcludeVisualStudioCredential = true;
+        options.ExcludeVisualStudioCodeCredential = true;
+    }
+
+    if (isDevelopment)
+    {
+        // Local dev should not depend on broken CLI/VS Code token providers.
+        return new InteractiveBrowserCredential(new InteractiveBrowserCredentialOptions
+        {
+            RedirectUri = new Uri("http://localhost")
+        });
+    }
+
+    return new DefaultAzureCredential(options);
+}
 
 

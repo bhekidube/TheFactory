@@ -10,11 +10,13 @@ public class BusTripsController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly IConfiguration _configuration;
+    private readonly SqlConnectionService _sqlService;
 
-    public BusTripsController(AppDbContext context, IConfiguration configuration)
+    public BusTripsController(AppDbContext context, IConfiguration configuration, SqlConnectionService sqlService)
     {
         _context = context;
         _configuration = configuration;
+        _sqlService = sqlService;
     }
 
     // [HttpGet]
@@ -86,11 +88,7 @@ public class BusTripsController : ControllerBase
 
     private async Task<SqlConnection> GetSqlConnection()
     {
-        //var accessToken = await GetAccessToken();
-        var connectionString = _configuration.GetConnectionString("AzureSqlDb");
-        var conn = new SqlConnection(connectionString);
-        await conn.OpenAsync();
-        return conn;
+        return await _sqlService.GetSqlConnectionAsync();
     }
     public static DataTable GetTableFromProcedure(string tableName, SqlConnection connection)
     {

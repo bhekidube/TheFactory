@@ -2,18 +2,15 @@ using Microsoft.Data.SqlClient;
 
 public class SqlConnectionService
 {
-    private readonly IConfiguration _configuration;
+    private readonly SqlConnectionFactory _connectionFactory;
 
-    public SqlConnectionService(IConfiguration configuration)
+    public SqlConnectionService(SqlConnectionFactory connectionFactory)
     {
-        _configuration = configuration;
+        _connectionFactory = connectionFactory;
     }
 
     public async Task<SqlConnection> GetSqlConnectionAsync()
     {
-        var connectionString = _configuration.GetConnectionString("AzureSqlDb");
-        var conn = new SqlConnection(connectionString);
-        await conn.OpenAsync();
-        return conn;
+        return await _connectionFactory.OpenConnectionAsync();
     }
 }

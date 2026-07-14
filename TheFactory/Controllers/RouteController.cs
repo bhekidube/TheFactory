@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -8,16 +7,15 @@ using System.Threading.Tasks;
 [Route("api/[controller]")]
 public class RouteController : ControllerBase
 {
-    private readonly IConfiguration _config;
-    public RouteController(IConfiguration config) { _config = config; }
+    private readonly SqlConnectionService _sqlService;
+    public RouteController(SqlConnectionService sqlService) { _sqlService = sqlService; }
 
     [HttpGet]
     public async Task<IActionResult> Routes([FromQuery] string from, [FromQuery] string to, [FromQuery] string date)
     {
         var results = new List<RouteResult>();
-        using (var conn = new SqlConnection(_config.GetConnectionString("AzureSqlDb")))
+        using (var conn = await _sqlService.GetSqlConnectionAsync())
         {
-            await conn.OpenAsync();
             var cmd = new SqlCommand(
                 "SELECT BusName, [From], [To], Date, DepartureTime, ArrivalTime, Price FROM Route WHERE [From]=@from AND [To]=@to AND Date=@date",
                 conn);
@@ -49,9 +47,8 @@ public class RouteController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateRoute([FromBody] RouteCreateDto dto)
     {
-        using (var conn = new SqlConnection(_config.GetConnectionString("AzureSqlDb")))
+        using (var conn = await _sqlService.GetSqlConnectionAsync())
         {
-            await conn.OpenAsync();
             var cmd = new SqlCommand(@"
                 INSERT INTO Route (OperatorId, FromId, ToId, Date, DepartureTime, ArrivalTime, Price, CreatedBy, CreatedDate)
                 VALUES (@OperatorId, @FromId, @ToId, @Date, @DepartureTime, @ArrivalTime, @Price, @CreatedBy, GETDATE());
@@ -75,9 +72,8 @@ public class RouteController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateRoute(int id, [FromBody] RouteUpdateDto dto)
     {
-        using (var conn = new SqlConnection(_config.GetConnectionString("AzureSqlDb")))
+        using (var conn = await _sqlService.GetSqlConnectionAsync())
         {
-            await conn.OpenAsync();
             var cmd = new SqlCommand(@"
                 UPDATE Route
                 SET OperatorId = @OperatorId,
