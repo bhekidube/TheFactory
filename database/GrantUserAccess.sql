@@ -1,0 +1,9 @@
+SELECT USER_ID(),USER_NAME(),SUSER_NAME()
+
+SELECT IS_SRVROLEMEMBER('sysadmin');
+
+BEGIN TRANSACTION
+
+    CREATE USER [AzureAngularAppService] FROM EXTERNAL PROVIDER;
+
+    GRANT EXECUTE ON OBJECT::dbo.InsertRoute TO [AzureAngularAppService];
