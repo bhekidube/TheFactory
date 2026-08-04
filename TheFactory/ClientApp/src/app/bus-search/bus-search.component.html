@@ -2,61 +2,81 @@
   <h1>HambaOnline</h1>
   <p>Plug yama bhasi</p>
 </header>
+<div class="search-float-spacer" [class.open]="showForm"></div>
 <section class="search-section">
 
-<app-mascot-avatar></app-mascot-avatar>
-  <h2></h2>
-  <button type="button" (click)="showForm = true" *ngIf="!showForm" class="search-btn">
-    <span class="icon-magnifier" aria-hidden="true"></span> 
-  </button>
-  <form *ngIf="showForm" (ngSubmit)="onSearch()" #busForm="ngForm">
-    <div style="position:relative;">
-      <input type="text" [(ngModel)]="fromInput" name="fromInput" placeholder="From (e.g. Bulawayo)" autocomplete="off" required (input)="onFromInputChange()" />
-      <ul *ngIf="fromSuggestions.length">
-        <li *ngFor="let city of fromSuggestions" (mousedown)="selectFromSuggestion(city)">
-          {{ city.location }}
-        </li>
-      </ul>
-    </div>
-    <div style="position:relative;">
-      <input type="text" [(ngModel)]="toInput" name="toInput" placeholder="To (e.g. Harare)" autocomplete="off" required (input)="onToInputChange()" />
-      <ul *ngIf="toSuggestions.length">
-        <li *ngFor="let city of toSuggestions" (mousedown)="selectToSuggestion(city)">
-          {{ city.location }}
-        </li>
-      </ul>
-    </div>
-    <input type="date" [(ngModel)]="dateInput" name="dateInput" required />
-    <button type="submit">Search Buses</button>
-  </form>
+<div class="search-float-shell">
+  <div class="search-toggle-row">
+    <button
+      type="button"
+      class="search-btn"
+      (click)="toggleForm()"
+      [attr.aria-expanded]="showForm"
+      aria-controls="searchDrawer">
+      <span class="icon-magnifier" aria-hidden="true"></span>
+      <span class="badge" *ngIf="activeFilterCount > 0">{{ activeFilterCount }}</span>
+    </button>
+  </div>
 
-  <!-- Search Results -->
-  <div *ngIf="searchResults && searchResults.length" class="search-results screenshot-table-container">
-    <!-- <h3>{{ fromInput || '...' }} to {{ toInput || '...' }}</h3> -->
-    <h3>{{ fromInput || '...' }} to {{ toTownInput || '...' }}</h3>
-    <table class="screenshot-table">
-      <thead>
-        <tr>
-          <th>Bus</th>
-          <th>Date</th>
-          <th>Time</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let row of searchResults; let i = index" [class.alt-row]="i % 2 === 1">
-          <td>{{ row.operatorName }}</td>
-          <td>{{ row.departureDateTime | date:'MMM d, y' }}</td>
-          <td>{{ row.departureDateTime | date:'HH:mm' }}</td>
-        </tr>
-      </tbody>
-    </table>
-    <div class="screenshot-tip"></div>
-      <div style="text-align: center; margin-top: 16px;">
-        <button (click)="postToFacebook()" style="background-color: #4267B2; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-size: 16px; cursor: pointer;">
-        Post to Facebook
-        </button>
+  <div
+    id="searchDrawer"
+    class="search-drawer"
+    [@slideToggle]="showForm ? 'open' : 'closed'"
+    [class.is-open]="showForm"
+    [attr.aria-hidden]="!showForm">
+
+    <form (ngSubmit)="onSearch()" #busForm="ngForm" class="search-form">
+      <div style="position:relative;">
+        <input type="text" [(ngModel)]="fromInput" name="fromInput" placeholder="From (e.g. Bulawayo)" autocomplete="off" required (input)="onFromInputChange()" />
+        <ul *ngIf="fromSuggestions.length">
+          <li *ngFor="let city of fromSuggestions" (mousedown)="selectFromSuggestion(city)">
+            {{ city.location }}
+          </li>
+        </ul>
       </div>
-  </div> 
+
+      <div style="position:relative;">
+        <input type="text" [(ngModel)]="toInput" name="toInput" placeholder="To (e.g. Harare)" autocomplete="off" required (input)="onToInputChange()" />
+        <ul *ngIf="toSuggestions.length">
+          <li *ngFor="let city of toSuggestions" (mousedown)="selectToSuggestion(city)">
+            {{ city.location }}
+          </li>
+        </ul>
+      </div>
+
+      <input type="date" [(ngModel)]="dateInput" name="dateInput" required />
+      <button type="submit">Search Buses</button>
+    </form>
+  </div>
+</div>
+
+<!-- Search Results -->
+<div *ngIf="searchResults && searchResults.length" class="search-results screenshot-table-container">
+  <!-- <h3>{{ fromInput || '...' }} to {{ toInput || '...' }}</h3> -->
+  <h3>{{ fromInput || '...' }} to {{ toTownInput || '...' }}</h3>
+  <table class="screenshot-table">
+    <thead>
+      <tr>
+        <th>Bus</th>
+        <th>Date</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let row of searchResults; let i = index" [class.alt-row]="i % 2 === 1">
+        <td>{{ row.operatorName }}</td>
+        <td>{{ row.departureDateTime | date:'MMM d, y' }}</td>
+        <td>{{ row.departureDateTime | date:'HH:mm' }}</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="screenshot-tip"></div>
+  <div style="text-align: center; margin-top: 16px;">
+    <button (click)="postToFacebook()" style="background-color: #4267B2; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-size: 16px; cursor: pointer;">
+      Post to Facebook
+    </button>
+  </div>
+</div> 
 </section>
 <section class="search-section"><div class="search-section"><router-outlet></router-outlet></div></section>
 <section class="features">

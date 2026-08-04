@@ -1,16 +1,35 @@
 import html2canvas from 'html2canvas';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
-import { environment } from '../../environments/environment'; // adjust path if needed
+import { animate, state, style, transition, trigger } from '@angular/animations';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-bus-search',
   templateUrl: './bus-search.component.html',
-  styleUrls: ['./bus-search.component.css']
+  styleUrls: ['./bus-search.component.css'],
+  animations: [
+    trigger('slideToggle', [
+      state('closed', style({
+        height: '0px',
+        opacity: 0,
+        transform: 'translateY(-8px)',
+        marginTop: '0px'
+      })),
+      state('open', style({
+        height: '*',
+        opacity: 1,
+        transform: 'translateY(0)',
+        marginTop: '*'
+      })),
+      transition('closed <=> open', animate('240ms cubic-bezier(0.4, 0, 0.2, 1)'))
+    ])
+  ]
 })
 export class BusSearchComponent implements OnInit {
   showZimraForm = false;
-  showForm = false;
+  showForm = true;
+
   messages = [
     "EKUSENI...............🚌REVIVAL(POWER HOUSE to BYO) LEAVING 10:30...............🚌BRAVO(BYO) LEAVING 11:30 (+27 82 715 6380)...............🚌 REVIVAL(BYO) LEAVING 09:30 (+27 61 843 2404)",
     "🚌 SWISS(BYO) LEAVING POWER HOUSE  14:00 - +27 64 475 8301",
@@ -25,29 +44,37 @@ export class BusSearchComponent implements OnInit {
     "🚌 REGIONAL(BYO) LEAVING POWER HOUSE  17:00 +27 78 047 5428",
     "🚌 MTHETHI(BYO) LEAVING POWER HOUSE  18:00 +263 71 625 7718",
   ];
-  cities = [
-    "Bulawayo", "Chegutu", "Kwekwe", "Kadoma", "Zvishavane", "Masvingo", "Durban", "East London", "Francistown", "Gaborone", "Harare", "Johannesburg", "Lilongwe", "Livingstone", "Lusaka", "Manzini", "Maputo", "Maseru", "Mbabane", "Mutare", "Polokwane", "Port Elizabeth", "Pretoria", "Walvis Bay", "Windhoek"
-  ];
-
-  cityCodes: { [key: string]: string } = {
-    "Bulawayo": "BYO",
-    "Johannesburg": "Johannesburg",
-    // ...add more as needed
-  };
-
   digitalText = this.messages[0];
   index = 0;
+
+  // If you already have operator chips/checkboxes, bind them to this array.
+  selectedOperatorFilters: string[] = [];
+
+  // Existing fields...
   fromInput: string = '';
   toInput: string = '';
-  toTownInput: string = '';
-  fromSuggestions: any[] = [];
-  toSuggestions: any[] = [];
+  dateInput: string = '';
   selectedFrom: any = null;
   selectedTo: any = null;
-  dateInput: string = '';
+  fromSuggestions: any[] = [];
+  toSuggestions: any[] = [];
+  toTownInput: string = '';
   searchResults: any[] = [];
 
   constructor(private http: HttpClient) {}
+
+  // Dynamic active filter badge count
+  get activeFilterCount(): number {
+    let count = 0;
+    if (this.fromInput?.trim()) count++;
+    if (this.toInput?.trim()) count++;
+    if (this.selectedOperatorFilters?.length) count++;
+    return count;
+  }
+
+  toggleForm(): void {
+    this.showForm = !this.showForm;
+  }
 
   ngOnInit() {
     setInterval(() => this.updateMessage(), 10000);
