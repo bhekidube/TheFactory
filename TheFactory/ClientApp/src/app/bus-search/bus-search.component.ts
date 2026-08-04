@@ -76,6 +76,25 @@ export class BusSearchComponent implements OnInit {
     this.showForm = !this.showForm;
   }
 
+  swapLocations(): void {
+    const fromInput = this.fromInput;
+    this.fromInput = this.toInput;
+    this.toInput = fromInput;
+
+    const fromSelection = this.selectedFrom;
+    this.selectedFrom = this.selectedTo;
+    this.selectedTo = fromSelection;
+
+    this.toTownInput = this.selectedTo?.town ?? '';
+
+    this.fromSuggestions = [];
+    this.toSuggestions = [];
+
+    if (this.selectedFrom && this.selectedTo) {
+      this.onSearch();
+    }
+  }
+
   ngOnInit() {
     setInterval(() => this.updateMessage(), 10000);
 

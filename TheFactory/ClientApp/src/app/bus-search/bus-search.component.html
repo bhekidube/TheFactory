@@ -12,9 +12,10 @@
       class="search-btn"
       (click)="toggleForm()"
       [attr.aria-expanded]="showForm"
-      aria-controls="searchDrawer">
+      aria-controls="searchDrawer"
+      aria-label="Open search filters">
       <span class="icon-magnifier" aria-hidden="true"></span>
-      <span class="badge" *ngIf="activeFilterCount > 0">{{ activeFilterCount }}</span>
+      <span class="badge" *ngIf="activeFilterCount > 0" aria-label="Active filters">{{ activeFilterCount }}</span>
     </button>
   </div>
 
@@ -25,28 +26,90 @@
     [class.is-open]="showForm"
     [attr.aria-hidden]="!showForm">
 
-    <form (ngSubmit)="onSearch()" #busForm="ngForm" class="search-form">
-      <div style="position:relative;">
-        <input type="text" [(ngModel)]="fromInput" name="fromInput" placeholder="From (e.g. Bulawayo)" autocomplete="off" required (input)="onFromInputChange()" />
-        <ul *ngIf="fromSuggestions.length">
-          <li *ngFor="let city of fromSuggestions" (mousedown)="selectFromSuggestion(city)">
+    <div class="search-card">
+      <h2 class="search-heading">Where are you travelling?</h2>
+
+      <form (ngSubmit)="onSearch()" #busForm="ngForm" class="search-form" aria-label="Bus search form">
+        <div class="field-group" style="position:relative;">
+          <label class="field-label" for="fromInputField">From</label>
+          <i class="bi bi-geo-alt field-icon" aria-hidden="true"></i>
+        <input
+          id="fromInputField"
+          type="text"
+          [(ngModel)]="fromInput"
+          name="fromInput"
+          placeholder="From (e.g. Bulawayo)"
+          autocomplete="off"
+          required
+          (input)="onFromInputChange()"
+          aria-label="From location"
+          aria-autocomplete="list"
+          aria-controls="fromSuggestionsList" />
+        <ul *ngIf="fromSuggestions.length" id="fromSuggestionsList" role="listbox" aria-label="From location suggestions" class="suggestions-list">
+          <li
+            *ngFor="let city of fromSuggestions"
+            (mousedown)="selectFromSuggestion(city)"
+            (keydown.enter)="selectFromSuggestion(city)"
+            (keydown.space)="selectFromSuggestion(city)"
+            tabindex="0"
+            role="option">
             {{ city.location }}
           </li>
         </ul>
-      </div>
+        </div>
 
-      <div style="position:relative;">
-        <input type="text" [(ngModel)]="toInput" name="toInput" placeholder="To (e.g. Harare)" autocomplete="off" required (input)="onToInputChange()" />
-        <ul *ngIf="toSuggestions.length">
-          <li *ngFor="let city of toSuggestions" (mousedown)="selectToSuggestion(city)">
+        <div class="swap-row">
+          <button type="button" class="swap-btn" (click)="swapLocations()" aria-label="Swap origin and destination">
+            <i class="bi bi-arrow-down-up" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div class="field-group" style="position:relative;">
+          <label class="field-label" for="toInputField">To</label>
+          <i class="bi bi-flag field-icon" aria-hidden="true"></i>
+        <input
+          id="toInputField"
+          type="text"
+          [(ngModel)]="toInput"
+          name="toInput"
+          placeholder="To (e.g. Harare)"
+          autocomplete="off"
+          required
+          (input)="onToInputChange()"
+          aria-label="To location"
+          aria-autocomplete="list"
+          aria-controls="toSuggestionsList" />
+        <ul *ngIf="toSuggestions.length" id="toSuggestionsList" role="listbox" aria-label="Destination suggestions" class="suggestions-list">
+          <li
+            *ngFor="let city of toSuggestions"
+            (mousedown)="selectToSuggestion(city)"
+            (keydown.enter)="selectToSuggestion(city)"
+            (keydown.space)="selectToSuggestion(city)"
+            tabindex="0"
+            role="option">
             {{ city.location }}
           </li>
         </ul>
-      </div>
+        </div>
 
-      <input type="date" [(ngModel)]="dateInput" name="dateInput" required />
-      <button type="submit">Search Buses</button>
-    </form>
+        <div class="field-group" style="position:relative;">
+          <label class="field-label" for="dateInputField">Departure Date</label>
+          <i class="bi bi-calendar3 field-icon" aria-hidden="true"></i>
+          <input
+            id="dateInputField"
+            type="date"
+            [(ngModel)]="dateInput"
+            name="dateInput"
+            required
+            aria-label="Departure date" />
+        </div>
+
+        <button type="submit" aria-label="Search buses" class="search-submit-btn">
+          <i class="bi bi-search" aria-hidden="true"></i>
+          <span>Find Buses</span>
+        </button>
+      </form>
+    </div>
   </div>
 </div>
 
@@ -57,9 +120,9 @@
   <table class="screenshot-table">
     <thead>
       <tr>
-        <th>Bus</th>
-        <th>Date</th>
-        <th>Time</th>
+        <th scope="col">Bus</th>
+        <th scope="col">Date</th>
+        <th scope="col">Time</th>
       </tr>
     </thead>
     <tbody>
@@ -72,7 +135,7 @@
   </table>
   <div class="screenshot-tip"></div>
   <div style="text-align: center; margin-top: 16px;">
-    <button (click)="postToFacebook()" style="background-color: #4267B2; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-size: 16px; cursor: pointer;">
+    <button type="button" (click)="postToFacebook()" style="background-color: #4267B2; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-size: 16px; cursor: pointer;">
       Post to Facebook
     </button>
   </div>
@@ -94,7 +157,7 @@
   </div>
 </section>
 
-<button class="btn btn-primary" (click)="showZimraForm = true">
+<button type="button" class="btn btn-primary" (click)="showZimraForm = true">
   Open ZIMRA Declaration Form
 </button>
 
