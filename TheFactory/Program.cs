@@ -4,6 +4,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 using Azure.Core;
 using Azure.Identity;
 using Azure.Extensions.AspNetCore.Configuration.Secrets;
+using TheFactory.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 var azureCredential = CreateAzureCredential(builder.Environment.IsDevelopment());
@@ -34,6 +35,9 @@ builder.Services.AddScoped<SqlConnectionFactory>();
 builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
     options.UseSqlServer(serviceProvider.GetRequiredService<SqlConnectionFactory>().CreateConnection()));
 builder.Services.AddScoped<SqlConnectionService>();
+builder.Services.AddScoped<ILearnerService, LearnerService>();
+builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IPdfGeneratorService, PdfGeneratorService>();
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
