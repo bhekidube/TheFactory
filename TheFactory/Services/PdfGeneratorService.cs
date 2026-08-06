@@ -11,27 +11,39 @@ public sealed class PdfGeneratorService : IPdfGeneratorService
         var escaped = content.Replace("\\", "\\\\").Replace("(", "\\(").Replace(")", "\\)");
 
         var stream = $"BT /F1 12 Tf 50 750 Td ({escaped}) Tj ET";
-        var pdf = $@"%PDF-1.4
-    1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
-    2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
-    3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj
-    4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj
-    5 0 obj << /Length {stream.Length} >> stream
-    {stream}
-    endstream endobj
-    xref
-    0 6
-    0000000000 65535 f 
-    0000000010 00000 n 
-    0000000060 00000 n 
-    0000000117 00000 n 
-    0000000243 00000 n 
-    0000000313 00000 n 
-    trailer << /Root 1 0 R /Size 6 >>
-    startxref
-    420
-    %%EOF";
+        var sb = new StringBuilder();
+        var offsets = new List<int>();
 
-        return Task.FromResult(Encoding.ASCII.GetBytes(pdf));
+        static void AppendObject(StringBuilder builder, List<int> objectOffsets, int objectId, string body)
+        {
+            objectOffsets.Add(builder.Length);
+            builder.Append(objectId).Append(" 0 obj\n");
+            builder.Append(body).Append("\n");
+            builder.Append("endobj\n");
+        }
+
+        sb.Append("%PDF-1.4\n");
+        AppendObject(sb, offsets, 1, "<< /Type /Catalog /Pages 2 0 R >>");
+        AppendObject(sb, offsets, 2, "<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
+        AppendObject(sb, offsets, 3, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> >>");
+        AppendObject(sb, offsets, 4, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+        AppendObject(sb, offsets, 5, $"<< /Length {stream.Length} >>\nstream\n{stream}\nendstream");
+
+        var xrefStart = sb.Length;
+        sb.Append("xref\n");
+        sb.Append("0 6\n");
+        sb.Append("0000000000 65535 f \n");
+
+        foreach (var offset in offsets)
+        {
+            sb.Append(offset.ToString("D10")).Append(" 00000 n \n");
+        }
+
+        sb.Append("trailer << /Root 1 0 R /Size 6 >>\n");
+        sb.Append("startxref\n");
+        sb.Append(xrefStart).Append("\n");
+        sb.Append("%%EOF");
+
+        return Task.FromResult(Encoding.ASCII.GetBytes(sb.ToString()));
     }
 }
