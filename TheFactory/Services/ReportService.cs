@@ -22,8 +22,12 @@ public sealed class ReportService : IReportService
 
         var subjects = new List<SubjectScoreDto>
         {
-            new() { Subject = "Mathematics", Score = 78 },
-            new() { Subject = "English", Score = 82 }
+            new() { Subject = "English", PossibleMark = 100, PupilMark = 82, Grade = "A", TeacherComments = "Good comprehension and writing." },
+            new() { Subject = "Ndebele", PossibleMark = 100, PupilMark = 76, Grade = "B", TeacherComments = "Participates well in class." },
+            new() { Subject = "Mathematics", PossibleMark = 100, PupilMark = 78, Grade = "B", TeacherComments = "Shows consistent progress." },
+            new() { Subject = "Agriculture / Science & Technology", PossibleMark = 100, PupilMark = 80, Grade = "B", TeacherComments = "Practical skills are developing." },
+            new() { Subject = "Social Science", PossibleMark = 100, PupilMark = 74, Grade = "C", TeacherComments = "Needs more revision on key topics." },
+            new() { Subject = "Physical Education & Arts", PossibleMark = 100, PupilMark = 88, Grade = "A", TeacherComments = "Excellent effort and creativity." }
         };
 
         return new LearnerReportDto
@@ -34,7 +38,7 @@ public sealed class ReportService : IReportService
             Surname = learner.Surname,
             Grade = learner.Grade,
             Subjects = subjects,
-            Average = Convert.ToDecimal(subjects.Average(s => s.Score))
+            Average = Convert.ToDecimal(subjects.Average(s => s.PupilMark))
         };
     }
 }

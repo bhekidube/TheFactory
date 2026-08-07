@@ -11,7 +11,17 @@ public sealed class LearnerDto
 public sealed class SubjectScoreDto
 {
     public string Subject { get; set; } = string.Empty;
-    public int Score { get; set; }
+    public int PossibleMark { get; set; } = 100;
+    public int PupilMark { get; set; }
+    public string Grade { get; set; } = string.Empty;
+    public string TeacherComments { get; set; } = string.Empty;
+
+    // Keep backward compatibility for existing consumers that still use Score.
+    public int Score
+    {
+        get => PupilMark;
+        set => PupilMark = value;
+    }
 }
 
 public sealed class LearnerReportDto

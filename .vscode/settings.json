@@ -1,4 +1,19 @@
 {
+  "dotnetAcquisitionExtension.sharedExistingDotnetPath": "/usr/local/share/dotnet/dotnet",
+  "dotnetAcquisitionExtension.allowInvalidPaths": true,
+  "dotnetAcquisitionExtension.existingDotnetPath": [
+    {
+      "extensionId": "ms-dotnettools.csharp",
+      "path": "/usr/local/share/dotnet/dotnet"
+    },
+    {
+      "extensionId": "ms-dotnettools.csdevkit",
+      "path": "/usr/local/share/dotnet/dotnet"
+    }
+  ],
+  "dotnet.server.path": "/usr/local/share/dotnet/dotnet",
+  "omnisharp.dotnetPath": "/usr/local/share/dotnet/dotnet",
+  "csharp.suppressDotnetInstallWarning": true,
   "typescript.tsdk": "TheFactory/ClientApp/node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true
 }

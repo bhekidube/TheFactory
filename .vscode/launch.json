@@ -20,7 +20,9 @@
                 "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
             },
             "env": {
-                "ASPNETCORE_ENVIRONMENT": "Development"
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "DOTNET_ROOT": "/usr/local/share/dotnet",
+                "PATH": "/usr/local/bin:/usr/local/share/dotnet:${env:PATH}"
             },
             "sourceFileMap": {
                 "/Views": "${workspaceFolder}/Views"
