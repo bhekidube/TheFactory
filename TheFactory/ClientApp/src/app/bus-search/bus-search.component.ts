@@ -29,6 +29,7 @@ import { environment } from '../../environments/environment';
 export class BusSearchComponent implements OnInit {
   showZimraForm = false;
   showForm = true;
+  hasSearched = false;
 
   messages = [
     "EKUSENI...............🚌REVIVAL(POWER HOUSE to BYO) LEAVING 10:30...............🚌BRAVO(BYO) LEAVING 11:30 (+27 82 715 6380)...............🚌 REVIVAL(BYO) LEAVING 09:30 (+27 61 843 2404)",
@@ -76,6 +77,10 @@ export class BusSearchComponent implements OnInit {
     this.showForm = !this.showForm;
   }
 
+  openSearchForm(): void {
+    this.showForm = true;
+  }
+
   swapLocations(): void {
     const fromInput = this.fromInput;
     this.fromInput = this.toInput;
@@ -91,7 +96,7 @@ export class BusSearchComponent implements OnInit {
     this.toSuggestions = [];
 
     if (this.selectedFrom && this.selectedTo) {
-      this.onSearch();
+      this.onSearch(false);
     }
   }
 
@@ -160,7 +165,7 @@ export class BusSearchComponent implements OnInit {
     this.fromInput = loc.location;
     this.selectedFrom = loc;
     this.fromSuggestions = [];
-    this.onSearch(); // Automatically search after selecting "from"
+    this.onSearch(false); // Keep form open while refining filters
   }
 
   selectToSuggestion(loc: any) {
@@ -168,13 +173,17 @@ export class BusSearchComponent implements OnInit {
     this.selectedTo = loc;
     this.toSuggestions = [];
     this.toTownInput = loc.town;
-    this.onSearch(); // Automatically search after selecting "to"
+    this.onSearch(false); // Keep form open while refining filters
   }
 
-  onSearch() {
+  onSearch(collapseToSummary = true) {
     if (!this.selectedFrom || !this.selectedTo) {
       // Optionally show error to user
       return;
+    }
+    this.hasSearched = true;
+    if (collapseToSummary) {
+      this.showForm = false;
     }
     const departureDate = this.dateInput;
     this.http.get<any[]>(`${environment.apiBaseUrl}/api/BusTrips/GetRouteTrips`, {

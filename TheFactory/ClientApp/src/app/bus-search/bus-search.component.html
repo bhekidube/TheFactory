@@ -1,33 +1,39 @@
-<header>
+<header class="header-banner">
   <h1>HambaOnline</h1>
   <p>Plug yama bhasi</p>
-</header>
-<div class="search-float-spacer" [class.open]="showForm"></div>
-<section class="search-section">
 
-<div class="search-float-shell">
-  <div class="search-toggle-row">
-    <button
-      type="button"
-      class="search-btn"
-      (click)="toggleForm()"
-      [attr.aria-expanded]="showForm"
-      aria-controls="searchDrawer"
-      aria-label="Open search filters">
-      <span class="icon-magnifier" aria-hidden="true"></span>
-      <span class="badge" *ngIf="activeFilterCount > 0" aria-label="Active filters">{{ activeFilterCount }}</span>
-    </button>
-  </div>
+  <section class="search-section header-search-section" [class.is-collapsed]="hasSearched && !showForm">
+    <div class="search-float-shell">
+      <div *ngIf="hasSearched && !showForm" class="search-summary-banner">
+        <div class="search-summary-context">
+          <span class="search-summary-label">Search</span>
+          <p class="search-summary-banner-text">
+            {{ fromInput || '...' }}
+            &rarr;
+            {{ toTownInput || toInput || '...' }}
+            <ng-container *ngIf="dateInput"> &middot; {{ dateInput | date:'d MMM' }}</ng-container>
+          </p>
+        </div>
+        <button
+          type="button"
+          class="change-search-btn"
+          (click)="openSearchForm()"
+          aria-controls="searchDrawer"
+          [attr.aria-expanded]="showForm"
+          aria-label="Change search filters">
+          Change search
+        </button>
+      </div>
 
-  <div
-    id="searchDrawer"
-    class="search-drawer"
-    [@slideToggle]="showForm ? 'open' : 'closed'"
-    [class.is-open]="showForm"
-    [attr.aria-hidden]="!showForm">
+      <div
+        id="searchDrawer"
+        class="search-drawer"
+        [@slideToggle]="showForm ? 'open' : 'closed'"
+        [class.is-open]="showForm"
+        [attr.aria-hidden]="!showForm">
 
-    <div class="search-card">
-      <h2 class="search-heading">Where are you travelling?</h2>
+        <div class="search-card">
+          <h2 class="search-heading">Where are you travelling?</h2>
 
       <form (ngSubmit)="onSearch()" #busForm="ngForm" class="search-form" aria-label="Bus search form">
         <div class="field-group" style="position:relative;">
@@ -108,28 +114,26 @@
           <i class="bi bi-search" aria-hidden="true"></i>
           <span>Find Buses</span>
         </button>
-      </form>
+          </form>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
+  </section>
+</header>
 
 <!-- Search Results -->
 <div *ngIf="searchResults && searchResults.length" class="search-results screenshot-table-container">
-  <!-- <h3>{{ fromInput || '...' }} to {{ toInput || '...' }}</h3> -->
-  <h3>{{ fromInput || '...' }} to {{ toTownInput || '...' }}</h3>
   <table class="screenshot-table">
     <thead>
       <tr>
-        <th scope="col">Bus</th>
-        <th scope="col">Date</th>
-        <th scope="col">Time</th>
+        <th scope="col" class="col-bus">BUS</th>
+        <th scope="col" class="col-time">TIME</th>
       </tr>
     </thead>
     <tbody>
       <tr *ngFor="let row of searchResults; let i = index" [class.alt-row]="i % 2 === 1">
-        <td>{{ row.operatorName }}</td>
-        <td>{{ row.departureDateTime | date:'MMM d, y' }}</td>
-        <td>{{ row.departureDateTime | date:'HH:mm' }}</td>
+        <td class="col-bus">{{ row.operatorName }}</td>
+        <td class="col-time">{{ row.departureDateTime | date:'HH:mm' }}</td>
       </tr>
     </tbody>
   </table>
@@ -140,7 +144,6 @@
     </button>
   </div>
 </div> 
-</section>
 <section class="search-section"><div class="search-section"><router-outlet></router-outlet></div></section>
 <section class="features">
   <div class="feature">
