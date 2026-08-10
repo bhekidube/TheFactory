@@ -11,6 +11,9 @@
 </div>
 <div *ngIf="summary && isLoggedIn && isAdminRole(userRole)">
   <h2>Admin Summary</h2>
+  <p>
+    <a class="modern-link" [routerLink]="['/school/admin/learners']">Open Learner Management</a>
+  </p>
   <ul>
       <li>My Operators: {{ summary.totalOperators }}</li>
   </ul>

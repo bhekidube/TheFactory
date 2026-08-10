@@ -1,0 +1,202 @@
+<div class="learner-admin-page">
+  <app-logout-link></app-logout-link>
+
+  <div class="page-header">
+    <div>
+      <h2>Learner Management</h2>
+      <p>School administration dashboard for active learner profiles and reports.</p>
+    </div>
+    <button type="button" class="primary-btn" (click)="openAddLearner()">+ Add Learner</button>
+  </div>
+
+  <div class="message error" *ngIf="errorMessage">{{ errorMessage }}</div>
+  <div class="message success" *ngIf="successMessage">{{ successMessage }}</div>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <span class="label">Active Learners</span>
+      <strong>{{ activeLearnersCount }}</strong>
+    </div>
+    <div class="summary-card">
+      <span class="label">Learners Loaded</span>
+      <strong>{{ filteredLearners.length }}</strong>
+    </div>
+    <div class="summary-card">
+      <span class="label">Current Report Average</span>
+      <strong>{{ overallAverage | number: '1.1-1' }}</strong>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <input
+      type="text"
+      [(ngModel)]="searchTerm"
+      (ngModelChange)="applySearch()"
+      placeholder="Search learners..."
+      aria-label="Search learners"
+    />
+    <button type="button" class="secondary-btn" (click)="loadLearners()" [disabled]="loadingLearners">
+      {{ loadingLearners ? 'Refreshing...' : 'Refresh' }}
+    </button>
+  </div>
+
+  <div *ngIf="loadingLearners" class="state-card">Loading learners...</div>
+
+  <div *ngIf="!loadingLearners && filteredLearners.length === 0" class="state-card empty">
+    <strong>No learners yet</strong>
+    <p>Add your first learner to begin managing school records and reports.</p>
+    <button type="button" class="primary-btn" (click)="openAddLearner()">Add Learner</button>
+  </div>
+
+  <div class="table-wrap" *ngIf="!loadingLearners && filteredLearners.length > 0">
+    <table>
+      <thead>
+        <tr>
+          <th>Learner ID</th>
+          <th>First Name</th>
+          <th>Surname</th>
+          <th>Grade</th>
+          <th class="actions-col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let learner of filteredLearners; trackBy: trackByLearnerId">
+          <td>{{ learner.id }}</td>
+          <td>{{ learner.firstName }}</td>
+          <td>{{ learner.surname }}</td>
+          <td>{{ learner.grade }}</td>
+          <td class="actions-col">
+            <button type="button" class="link-btn" (click)="viewReport(learner)">View Report</button>
+            <button type="button" class="link-btn" (click)="openEditLearner(learner)">Edit</button>
+            <button
+              type="button"
+              class="danger-link-btn"
+              [disabled]="archivingLearnerId === learner.id"
+              (click)="archiveLearner(learner)">
+              {{ archivingLearnerId === learner.id ? 'Archiving...' : 'Archive' }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="overlay" *ngIf="showLearnerForm">
+    <div class="panel">
+      <h3>{{ isEditMode ? 'Edit Learner' : 'Add Learner' }}</h3>
+      <div *ngIf="loadingLearnerDetail" class="state-card">Loading learner details...</div>
+
+      <form *ngIf="!loadingLearnerDetail" (ngSubmit)="saveLearner()">
+        <label>
+          First Name
+          <input type="text" name="firstName" [(ngModel)]="learnerForm.firstName" required />
+        </label>
+        <label>
+          Surname
+          <input type="text" name="surname" [(ngModel)]="learnerForm.surname" required />
+        </label>
+        <label>
+          Grade
+          <input type="text" name="grade" [(ngModel)]="learnerForm.grade" required />
+        </label>
+
+        <div class="panel-actions">
+          <button
+            type="submit"
+            class="primary-btn"
+            [disabled]="creatingLearner || updatingLearner">
+            {{ creatingLearner || updatingLearner ? 'Saving...' : (isEditMode ? 'Save Changes' : 'Create Learner') }}
+          </button>
+          <button
+            type="button"
+            class="secondary-btn"
+            [disabled]="creatingLearner || updatingLearner"
+            (click)="closeLearnerForm()">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="overlay" *ngIf="showReportPanel && selectedLearner">
+    <div class="panel report-panel">
+      <div class="report-header">
+        <h3>Learner Report</h3>
+        <button type="button" class="secondary-btn" (click)="closeReportPanel()">Close</button>
+      </div>
+
+      <div *ngIf="loadingReport" class="state-card">Loading report...</div>
+
+      <div *ngIf="!loadingReport && selectedReport">
+        <div class="report-meta">
+          <p><strong>School:</strong> {{ selectedReport.schoolName }}</p>
+          <p><strong>Learner:</strong> {{ selectedReport.learnerName }}</p>
+          <p><strong>Grade:</strong> {{ selectedReport.grade }}</p>
+          <p><strong>Average:</strong> {{ selectedReport.average | number: '1.1-2' }}</p>
+        </div>
+
+        <div class="table-wrap compact" *ngIf="selectedReport.subjects.length > 0">
+          <table>
+            <thead>
+              <tr>
+                <th>Subject</th>
+                <th>Possible Mark</th>
+                <th>Pupil Mark</th>
+                <th>Grade</th>
+                <th>Teacher Comments</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let subject of selectedReport.subjects">
+                <td>{{ subject.subject }}</td>
+                <td>{{ subject.possibleMark }}</td>
+                <td>{{ subject.pupilMark }}</td>
+                <td>{{ subject.grade }}</td>
+                <td>{{ subject.teacherComments }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="state-card" *ngIf="selectedReport.subjects.length === 0">No subjects found for this learner.</div>
+
+        <div class="report-actions">
+          <button type="button" class="secondary-btn" [disabled]="downloadingPdf" (click)="downloadReportPdf()">
+            {{ downloadingPdf ? 'Downloading...' : 'Download Report' }}
+          </button>
+        </div>
+
+        <h4>Manage Subject Score</h4>
+        <form (ngSubmit)="saveSubjectScore()" class="score-form">
+          <label>
+            Subject
+            <input type="text" name="subject" [(ngModel)]="scoreForm.subject" required />
+          </label>
+          <label>
+            Possible Mark
+            <input type="number" name="possibleMark" [(ngModel)]="scoreForm.possibleMark" min="1" required />
+          </label>
+          <label>
+            Pupil Mark
+            <input type="number" name="pupilMark" [(ngModel)]="scoreForm.pupilMark" min="0" required />
+          </label>
+          <label>
+            Grade
+            <input type="text" name="scoreGrade" [(ngModel)]="scoreForm.grade" />
+          </label>
+          <label>
+            Teacher Comments
+            <textarea name="teacherComments" [(ngModel)]="scoreForm.teacherComments" rows="3"></textarea>
+          </label>
+
+          <div class="panel-actions">
+            <button type="submit" class="primary-btn" [disabled]="savingSubjectScore">
+              {{ savingSubjectScore ? 'Saving...' : 'Save Score' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

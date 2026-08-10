@@ -36,6 +36,7 @@ import { OperatorAdminComponent } from './operator-admin/operator-admin.componen
 import { LogoutLinkComponent } from './logout-link/logout-link.component';
 import { OperatorRouteTripComponent } from './operator-route-trip/operator-route-trip.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { LearnerManagementComponent } from './learner-management/learner-management.component';
 
 @NgModule({
   declarations: [
@@ -56,6 +57,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     ZimraComponent,
     FaresComponent,
     DutyCalculatorComponent
+    ,LearnerManagementComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
