@@ -8,10 +8,14 @@
         <div class="search-summary-context">
           <span class="search-summary-label">Search</span>
           <p class="search-summary-banner-text">
-            {{ fromInput || '...' }}
-            &rarr;
-            {{ toTownInput || toInput || '...' }}
-            <ng-container *ngIf="dateInput"> &middot; {{ dateInput | date:'d MMM' }}</ng-container>
+            <span class="search-summary-route">
+              {{ fromInput || '...' }}
+              &rarr;
+              {{ toTownInput || toInput || '...' }}
+            </span>
+            <ng-container *ngIf="dateInput">
+              <span class="search-summary-date">&middot; {{ dateInput | date:'d MMM' }}</span>
+            </ng-container>
           </p>
         </div>
         <button
