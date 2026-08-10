@@ -303,15 +303,66 @@
 }
 
 .screenshot-table .col-bus {
-  width: 72%;
+  width: 38%;
   white-space: normal;
   word-break: break-word;
 }
 
-.screenshot-table .col-time {
-  width: 28%;
+.screenshot-table .col-departure {
+  width: 18%;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.screenshot-table .col-price {
+  width: 18%;
   text-align: right;
   white-space: nowrap;
+}
+
+.screenshot-table .col-action {
+  width: 26%;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.trip-action-btn {
+  border: 1px solid #0d68cb;
+  background: linear-gradient(180deg, #0d68cb, #0057b8);
+  color: #ffffff;
+  border-radius: 999px;
+  min-height: 36px;
+  padding: 0.42rem 0.78rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease, filter 150ms ease, background-color 150ms ease;
+}
+
+.trip-action-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.03);
+  box-shadow: 0 8px 16px rgba(0, 87, 184, 0.28);
+}
+
+.trip-action-btn:active:not(:disabled) {
+  transform: translateY(0);
+  filter: brightness(0.98);
+}
+
+.trip-action-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(13, 104, 203, 0.3);
+}
+
+.trip-action-btn.is-disabled,
+.trip-action-btn:disabled {
+  border-color: #b8c4d8;
+  background: #dbe2ee;
+  color: #6f7f9a;
+  box-shadow: none;
+  cursor: not-allowed;
 }
 
 .screenshot-table th,
@@ -426,17 +477,66 @@
     min-width: 0;
   }
 
+  .screenshot-table thead {
+    display: none;
+  }
+
+  .screenshot-table,
+  .screenshot-table tbody,
+  .screenshot-table tr,
+  .screenshot-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .screenshot-table tbody tr {
+    margin-bottom: 0.6rem;
+    border: 1px solid #d9e5f7;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #ffffff;
+  }
+
   .screenshot-table th,
   .screenshot-table td {
-    padding: 0.55rem 0.38rem;
+    padding: 0.52rem 0.62rem;
+    border-bottom: 1px solid #edf1f7;
+    text-align: left;
+    white-space: normal;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.45rem;
+  }
+
+  .screenshot-table td:last-child {
+    border-bottom: none;
+  }
+
+  .screenshot-table td::before {
+    content: attr(data-label);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #5f7290;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
   }
 
   .screenshot-table .col-bus {
-    width: 68%;
+    width: 100%;
   }
 
-  .screenshot-table .col-time {
-    width: 32%;
+  .screenshot-table .col-departure,
+  .screenshot-table .col-price,
+  .screenshot-table .col-action {
+    width: 100%;
+    text-align: left;
+  }
+
+  .trip-action-btn {
+    min-height: 34px;
+    font-size: 0.75rem;
+    padding: 0.38rem 0.65rem;
   }
 }
 

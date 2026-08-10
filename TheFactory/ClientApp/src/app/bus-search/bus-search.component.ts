@@ -200,6 +200,59 @@ export class BusSearchComponent implements OnInit {
     });
   }
 
+  isSoldOut(row: any): boolean {
+    return row?.isSoldOut === true || row?.soldOut === true || row?.availableSeats === 0;
+  }
+
+  isDeparted(row: any): boolean {
+    if (!row?.departureDateTime) {
+      return false;
+    }
+
+    const departureTime = new Date(row.departureDateTime);
+    if (Number.isNaN(departureTime.getTime())) {
+      return false;
+    }
+
+    return departureTime.getTime() < Date.now();
+  }
+
+  isTripUnavailable(row: any): boolean {
+    return this.isSoldOut(row) || this.isDeparted(row);
+  }
+
+  getActionLabel(row: any): string {
+    if (this.isSoldOut(row)) {
+      return 'Sold Out';
+    }
+
+    if (this.isDeparted(row)) {
+      return 'Departed';
+    }
+
+    return 'Select Seat';
+  }
+
+  getPriceDisplay(row: any): string {
+    const rawPrice = row?.price ?? row?.fare ?? row?.amount;
+    const parsedPrice = Number(rawPrice);
+
+    if (Number.isFinite(parsedPrice)) {
+      return `R ${parsedPrice.toFixed(2)}`;
+    }
+
+    return '--';
+  }
+
+  onSelectSeat(row: any): void {
+    if (this.isTripUnavailable(row)) {
+      return;
+    }
+
+    // Hook this to your booking flow endpoint/route when available.
+    alert(`Booking flow not connected yet for ${row?.operatorName ?? 'this bus'}.`);
+  }
+
   async postToFacebook() {
     const tableElement = document.querySelector('.screenshot-table-container') as HTMLElement;
     if (!tableElement) {
