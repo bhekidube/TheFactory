@@ -8,6 +8,27 @@
     <a [routerLink]="['/learning']">Back to Learning</a>
   </div>
 
+  <nav class="school-nav" *ngIf="!loading && schoolName" aria-label="School learning navigation">
+    <a
+      class="school-nav-link"
+      [routerLink]="['/learning/schools', schoolId, 'learners']"
+      [routerLinkActive]="['is-active']">
+      Learners
+    </a>
+    <a
+      class="school-nav-link"
+      [routerLink]="['/learning/schools', schoolId, 'reports']"
+      [routerLinkActive]="['is-active']">
+      Reports
+    </a>
+    <a
+      class="school-nav-link"
+      [routerLink]="['/school/admin/learners']"
+      [routerLinkActive]="['is-active']">
+      Full Learner Admin
+    </a>
+  </nav>
+
   <div class="state-card" *ngIf="loading">Loading school context...</div>
   <div class="message error" *ngIf="!loading && errorMessage">{{ errorMessage }}</div>
 
