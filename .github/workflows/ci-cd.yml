@@ -1,107 +1,99 @@
 name: Factory workflow
 
-on: 
+on:
   workflow_dispatch:
   push:
-     branches: ['main', 'dev']
+    branches: ['main', 'dev']
 
 permissions:
   id-token: write
   contents: read
- 
+
 jobs:
-  build: 
+  build:
     runs-on: ubuntu-latest
 
-    steps: 
-    - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18.x'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          cache: npm
+          cache-dependency-path: TheFactory/ClientApp/package-lock.json
 
-    - name: Install Angular dependencies
-      run: |
-        cd TheFactory/ClientApp
-        npm install
+      - name: Install Angular dependencies
+        working-directory: TheFactory/ClientApp
+        run: npm ci
 
-    - name: Build Angular app
-      run: |
-        cd TheFactory/ClientApp
-        npm run build -- --configuration production
+      - name: Build Angular app
+        working-directory: TheFactory/ClientApp
+        run: npm run build -- --configuration production
 
-    - name: Copy Angular build to wwwroot
-      run: |
-        rm -rf TheFactory/wwwroot/*
-        cp -r TheFactory/ClientApp/dist/* TheFactory/wwwroot/
+      - name: Copy Angular build to wwwroot
+        run: |
+          rm -rf TheFactory/wwwroot/*
+          cp -r TheFactory/ClientApp/dist/* TheFactory/wwwroot/
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.0.x
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
 
-    - name: Restore Dependencies
-      run: dotnet restore
+      - name: Restore Dependencies
+        run: dotnet restore
 
-    - id: build
-      name:  Build
-      run: dotnet build ./TheFactory/TheFactory.csproj --no-restore
+      - id: build
+        name: Build
+        run: dotnet build ./TheFactory/TheFactory.csproj --no-restore
 
-    #- id: test
-      #if: steps.build.outcome == 'success'
-      #name: Test
-      #run: dotnet test "TestTheFactory.csproj" --collect "XPlat Code Coverate"
+      - id: publish
+        name: Publish
+        run: dotnet publish ./TheFactory/TheFactory.csproj -c Release -r linux-x64 --self-contained false -o ./publish
 
-    - id: publish
-      name: Publish
-      run: dotnet publish ./TheFactory/TheFactory.csproj -c Release -r linux-x64 --self-contained false -o ./publish
+      - name: Zip Artifact
+        run: cd publish && zip -r ../TheFactory.zip .
 
-    - name: Zip Artifact
-      run: cd publish && zip -r ../TheFactory.zip .
+      - name: List zip contents
+        run: unzip -l TheFactory.zip
 
-    - name: List zip contents
-      run: unzip -l TheFactory.zip
-          
-    - id: upload
-      name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: dotnet-webapp 
-        path: TheFactory.zip  
-                
-    - name: List files before deploy
-      run: ls -l
+      - id: upload
+        name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-webapp
+          path: TheFactory.zip
 
-    - name: List zip contents
-      run: unzip -l TheFactory.zip
-  
+      - name: List files before deploy
+        run: ls -l
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
 
     steps:
-    - name: Download Artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: dotnet-webapp
-        path: ./artifact
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dotnet-webapp
+          path: ./artifact
 
-    - name: Azure Login
-      uses: azure/login@v2
-      with:
-        client-id: ${{ secrets.AZURE_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-    - name: Verify Azure context
-      run: |
-        az account show
-        az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
-        az account show --query "{name:name,id:id,tenantId:tenantId}" -o table
+      - name: Verify Azure context
+        run: |
+          az account show
+          az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+          az account show --query "{name:name,id:id,tenantId:tenantId}" -o table
 
-    - name: Deploy To Azure
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: AzureLinuxAppService          
-        package: ./artifact/TheFactory.zip
+      - name: Deploy To Azure
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: AzureLinuxAppService
+          package: ./artifact/TheFactory.zip
