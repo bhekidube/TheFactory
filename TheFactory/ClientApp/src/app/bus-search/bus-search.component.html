@@ -1,22 +1,3 @@
-<header class="header-banner">
-  <h1>HambaOnline</h1>
-  <p>Plug yama bhasi</p>
-  <nav class="hamba-nav" aria-label="HambaOnline navigation">
-    <a
-      class="hamba-nav-link"
-      [routerLink]="['/']"
-      [routerLinkActive]="['is-active']"
-      [routerLinkActiveOptions]="{ exact: true }">
-      Transport
-    </a>
-    <a
-      class="hamba-nav-link"
-      [routerLink]="['/learning']"
-      [routerLinkActive]="['is-active']">
-      Learning
-    </a>
-  </nav>
-
   <section class="search-section header-search-section" [class.is-collapsed]="hasSearched && !showForm">
     <div class="search-float-shell">
       <div *ngIf="hasSearched && !showForm" class="search-summary-banner">
@@ -134,8 +115,6 @@
       </div>
     </div>
   </section>
-</header>
-
 <!-- Search Results -->
 <div *ngIf="searchResults && searchResults.length" class="search-results screenshot-table-container">
   <table class="screenshot-table">
@@ -159,7 +138,10 @@
     </button>
   </div>
 </div> 
-<section class="search-section"><div class="search-section"><router-outlet></router-outlet></div></section>
+<section class="search-section">
+  <div class="search-section">
+    <app-auth></app-auth></div>
+</section>
 <section class="features">
   <div class="feature">
     <h3>Compare Routes</h3>
@@ -174,7 +156,6 @@
     <p>Reserve and pay for your seat in just a few clicks.</p>
   </div>
 </section>
-
 <button type="button" class="btn btn-primary" (click)="showZimraForm = true">
   Open ZIMRA Declaration Form
 </button>
@@ -182,6 +163,3 @@
 <!-- Show the duty calculator above the ZIMRA form when visible -->
 <app-dutycalculator *ngIf="showZimraForm"></app-dutycalculator>
 <app-zimra-declaration *ngIf="showZimraForm" (close)="showZimraForm = false"></app-zimra-declaration>
-<footer>
-  &copy; 2025 hambaonline. All rights reserved.
-</footer>

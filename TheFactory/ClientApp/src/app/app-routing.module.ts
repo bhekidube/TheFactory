@@ -8,9 +8,10 @@ import { FaresComponent } from './fares/fares.component';
 import { LearnerManagementComponent } from './learner-management/learner-management.component';
 import { LearningComponent } from './learning/learning.component';
 import { LearningSchoolComponent } from './learning/learning-school.component';
+import { BusSearchComponent } from './bus-search/bus-search.component';
 
 const routes: Routes = [
-  { path: '', component: AuthComponent, pathMatch: 'full' },
+  { path: '', component: BusSearchComponent, pathMatch: 'full' },
   { path: 'auth', component: AuthComponent },
   { path: 'learning', component: LearningComponent },
   { path: 'learning/schools/:schoolId', redirectTo: 'learning/schools/:schoolId/learners', pathMatch: 'full' },

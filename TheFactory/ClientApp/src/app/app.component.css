@@ -1,0 +1,46 @@
+.header-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.7rem;
+  padding: 1.2rem 0.85rem 0.85rem;
+  text-align: left;
+  background-color: #004aad;
+  color: #fff;
+}
+
+.header-banner h1 {
+  margin: 0;
+  font-size: clamp(1.7rem, 4.9vw, 2.3rem);
+  line-height: 1.06;
+}
+
+.header-banner p {
+  margin: 0;
+  opacity: 0.92;
+  font-size: clamp(0.94rem, 2.8vw, 1.06rem);
+}
+
+.hamba-nav {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
+}
+
+.hamba-nav-link {
+  display: inline-block;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.hamba-nav-link.is-active {
+  background: #fff;
+  color: #0f4ea2;
+  border-color: #fff;
+}

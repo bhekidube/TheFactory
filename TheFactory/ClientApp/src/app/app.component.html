@@ -1,6 +1,30 @@
-<app-bus-search></app-bus-search>
+<!-- <app-bus-search></app-bus-search> -->
 <!-- <button (click)="toggleOperatorRoute()">
   {{ showOperatorRoute ? 'Hide Operator Route' : '..' }}
 </button> -->
 <!-- <app-operator-route *ngIf="showOperatorRoute"></app-operator-route> -->
 
+<header class="header-banner">
+  <h1>HambaOnline</h1>
+  <p>Plug yama bhasi</p>
+  <nav class="hamba-nav" aria-label="HambaOnline navigation">
+    <a
+      class="hamba-nav-link"
+      [routerLink]="['/']"
+      [routerLinkActive]="['is-active']"
+      [routerLinkActiveOptions]="{ exact: true }">
+      Transport
+    </a>
+    <a
+      class="hamba-nav-link"
+      [routerLink]="['/learning']"
+      [routerLinkActive]="['is-active']">
+      Learning
+    </a>
+  </nav>
+</header>
+
+<router-outlet></router-outlet>
+<footer>
+  &copy; 2025 hambaonline. All rights reserved.
+</footer>
