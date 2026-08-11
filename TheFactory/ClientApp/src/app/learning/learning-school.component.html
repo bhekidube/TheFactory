@@ -1,0 +1,21 @@
+<section class="learning-page">
+  <app-logout-link></app-logout-link>
+
+  <div class="learning-header">
+    <h2>School</h2>
+    <p *ngIf="!loading && schoolName">{{ schoolName }}</p>
+    <p *ngIf="!loading && !schoolName && !errorMessage">No school selected.</p>
+    <a [routerLink]="['/learning']">Back to Learning</a>
+  </div>
+
+  <div class="state-card" *ngIf="loading">Loading school context...</div>
+  <div class="message error" *ngIf="!loading && errorMessage">{{ errorMessage }}</div>
+
+  <div class="state-card" *ngIf="!loading && schoolName">
+    <p><strong>Selected school:</strong> {{ schoolName }}</p>
+    <p><strong>Schools available:</strong> {{ schoolsCount }}</p>
+    <p><strong>Learner records available:</strong> {{ learnersCount }}</p>
+  </div>
+
+  <app-learner-management *ngIf="!loading && schoolName"></app-learner-management>
+</section>

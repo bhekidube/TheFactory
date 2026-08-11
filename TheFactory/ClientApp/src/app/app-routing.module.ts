@@ -7,11 +7,13 @@ import { ZimraComponent } from './zimra/zimra.component';
 import { FaresComponent } from './fares/fares.component';
 import { LearnerManagementComponent } from './learner-management/learner-management.component';
 import { LearningComponent } from './learning/learning.component';
+import { LearningSchoolComponent } from './learning/learning-school.component';
 
 const routes: Routes = [
   { path: '', component: AuthComponent, pathMatch: 'full' },
   { path: 'auth', component: AuthComponent },
   { path: 'learning', component: LearningComponent },
+  { path: 'learning/schools/:schoolId', component: LearningSchoolComponent },
   { path: 'admin-screen', component: AdminScreenComponent },
   { path: 'school/admin/learners', component: LearnerManagementComponent },
   { path: 'operator-admin/:operator', component: OperatorAdminComponent },

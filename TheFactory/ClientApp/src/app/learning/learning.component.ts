@@ -10,7 +10,7 @@ import { LearnerDto } from '../learner-management/learner-management.models';
   styleUrls: ['./learning.component.css']
 })
 export class LearningComponent implements OnInit {
-  schools: string[] = [];
+  schools: Array<{ id: string; name: string }> = [];
   learnersCount = 0;
   loading = false;
   errorMessage = '';
@@ -49,7 +49,12 @@ export class LearningComponent implements OnInit {
               }
             });
 
-            this.schools = Array.from(schoolSet).sort((a, b) => a.localeCompare(b));
+            this.schools = Array.from(schoolSet)
+              .sort((a, b) => a.localeCompare(b))
+              .map(name => ({
+                id: this.toSchoolId(name),
+                name
+              }));
             this.loading = false;
           },
           error: () => {
@@ -63,5 +68,13 @@ export class LearningComponent implements OnInit {
         this.errorMessage = 'Unable to load schools right now.';
       }
     });
+  }
+
+  private toSchoolId(name: string): string {
+    return name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
   }
 }
