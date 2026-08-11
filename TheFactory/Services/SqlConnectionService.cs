@@ -9,8 +9,8 @@ public class SqlConnectionService
         _connectionFactory = connectionFactory;
     }
 
-    public async Task<SqlConnection> GetSqlConnectionAsync()
+    public async Task<SqlConnection> GetSqlConnectionAsync(CancellationToken cancellationToken = default)
     {
-        return await _connectionFactory.OpenConnectionAsync();
+        return await _connectionFactory.OpenConnectionAsync(cancellationToken);
     }
 }

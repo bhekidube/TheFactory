@@ -1,9 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { of, forkJoin } from 'rxjs';
-import { catchError } from 'rxjs/operators';
 import { LearnerManagementService } from '../services/learner-management.service';
-import { LearnerDto } from '../learner-management/learner-management.models';
 
 @Component({
   selector: 'app-learning-school',
@@ -26,6 +23,10 @@ export class LearningSchoolComponent implements OnInit {
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
       this.schoolId = params.get('schoolId') || '';
+      const tenantId = Number(this.schoolId);
+      if (Number.isFinite(tenantId) && tenantId > 0) {
+        this.learnerService.setSelectedTenantId(tenantId);
+      }
       this.loadSchoolContext();
     });
   }
@@ -35,37 +36,22 @@ export class LearningSchoolComponent implements OnInit {
     this.errorMessage = '';
     this.schoolName = '';
 
-    this.learnerService.getLearners().subscribe({
-      next: (learners: LearnerDto[]) => {
-        this.learnersCount = learners.length;
+    this.learnerService.getSchools().subscribe({
+      next: schools => {
+        this.schoolsCount = schools.length;
 
-        if (!learners.length) {
+        const selectedSchool = schools.find(school => school.id.toString() === this.schoolId);
+        if (!selectedSchool) {
           this.loading = false;
-          this.errorMessage = 'No school records are available.';
+          this.errorMessage = 'Selected school was not found.';
           return;
         }
 
-        const reportRequests = learners.map(learner =>
-          this.learnerService.getReport(learner.id).pipe(catchError(() => of(null)))
-        );
+        this.schoolName = selectedSchool.name;
 
-        forkJoin(reportRequests).subscribe({
-          next: reports => {
-            const schoolNames = Array.from(new Set(
-              reports
-                .map(report => report?.schoolName?.trim())
-                .filter((name): name is string => !!name)
-            )).sort((a, b) => a.localeCompare(b));
-
-            this.schoolsCount = schoolNames.length;
-
-            const selected = schoolNames.find(name => this.toSchoolId(name) === this.schoolId);
-            if (!selected) {
-              this.errorMessage = 'Selected school was not found.';
-            } else {
-              this.schoolName = selected;
-            }
-
+        this.learnerService.getLearners().subscribe({
+          next: learners => {
+            this.learnersCount = learners.length;
             this.loading = false;
           },
           error: () => {
@@ -79,13 +65,5 @@ export class LearningSchoolComponent implements OnInit {
         this.errorMessage = 'Unable to load school context right now.';
       }
     });
-  }
-
-  private toSchoolId(name: string): string {
-    return name
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
   }
 }

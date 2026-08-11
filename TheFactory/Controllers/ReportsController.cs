@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using TheFactory.Contracts;
 using TheFactory.Services;
 
@@ -11,15 +12,44 @@ public class ReportsController : ControllerBase
     private readonly ILearnerService _learnerService;
     private readonly IReportService _reportService;
     private readonly IPdfGeneratorService _pdfGeneratorService;
+    private readonly SqlConnectionService _sqlConnectionService;
 
     public ReportsController(
         ILearnerService learnerService,
         IReportService reportService,
-        IPdfGeneratorService pdfGeneratorService)
+        IPdfGeneratorService pdfGeneratorService,
+        SqlConnectionService sqlConnectionService)
     {
         _learnerService = learnerService;
         _reportService = reportService;
         _pdfGeneratorService = pdfGeneratorService;
+        _sqlConnectionService = sqlConnectionService;
+    }
+
+    [HttpGet("schools")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult> GetSchools(CancellationToken cancellationToken)
+    {
+        var schools = new List<object>();
+
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        using var command = new SqlCommand(
+            @"SELECT Id, Name
+              FROM institution.Tenant
+              ORDER BY Name ASC;",
+            connection);
+
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            schools.Add(new
+            {
+                id = reader.GetInt32(0),
+                name = reader.IsDBNull(1) ? string.Empty : reader.GetString(1)
+            });
+        }
+
+        return Ok(schools);
     }
 
     /// <summary>

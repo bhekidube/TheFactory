@@ -30,6 +30,7 @@ builder.Host.ConfigureAppConfiguration((context, config) =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<TokenCredential>(azureCredential);
 builder.Services.AddScoped<SqlConnectionFactory>();
 builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>

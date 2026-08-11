@@ -16,7 +16,7 @@
   <div *ngIf="!loading && schools.length > 0" class="schools-grid">
     <article class="school-card" *ngFor="let school of schools">
       <h3>{{ school.name }}</h3>
-      <p>{{ learnersCount }} learner record(s) available.</p>
+      <p>Learner management available.</p>
       <a [routerLink]="['/learning/schools', school.id, 'learners']">Open School</a>
     </article>
   </div>

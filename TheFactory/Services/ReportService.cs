@@ -1,3 +1,4 @@
+using Microsoft.Data.SqlClient;
 using TheFactory.Contracts;
 
 namespace TheFactory.Services;
@@ -5,10 +6,12 @@ namespace TheFactory.Services;
 public sealed class ReportService : IReportService
 {
     private readonly ILearnerService _learnerService;
+    private readonly SqlConnectionService _sqlConnectionService;
 
-    public ReportService(ILearnerService learnerService)
+    public ReportService(ILearnerService learnerService, SqlConnectionService sqlConnectionService)
     {
         _learnerService = learnerService;
+        _sqlConnectionService = sqlConnectionService;
     }
 
     public async Task<LearnerReportDto?> GetLearnerReportAsync(int learnerId, CancellationToken cancellationToken = default)
@@ -20,24 +23,12 @@ public sealed class ReportService : IReportService
         }
 
         var subjects = await _learnerService.GetSubjectScoresAsync(learnerId, cancellationToken);
-        if (subjects.Count == 0)
-        {
-            subjects =
-            [
-                new() { Subject = "English", PossibleMark = 100, PupilMark = 82, Grade = "A", TeacherComments = "Good comprehension and writing." },
-                new() { Subject = "Ndebele", PossibleMark = 100, PupilMark = 76, Grade = "B", TeacherComments = "Participates well in class." },
-                new() { Subject = "Mathematics", PossibleMark = 100, PupilMark = 78, Grade = "B", TeacherComments = "Shows consistent progress." },
-                new() { Subject = "Agriculture / Science & Technology", PossibleMark = 100, PupilMark = 80, Grade = "B", TeacherComments = "Practical skills are developing." },
-                new() { Subject = "Social Science", PossibleMark = 100, PupilMark = 74, Grade = "C", TeacherComments = "Needs more revision on key topics." },
-                new() { Subject = "Physical Education & Arts", PossibleMark = 100, PupilMark = 88, Grade = "A", TeacherComments = "Excellent effort and creativity." }
-            ];
-        }
-
+        var schoolName = await GetSchoolNameAsync(learnerId, cancellationToken);
         var average = subjects.Count == 0 ? 0 : subjects.Average(s => s.PupilMark);
 
         return new LearnerReportDto
         {
-            SchoolName = "ABC Primary School",
+            SchoolName = schoolName,
             LearnerId = learner.Id,
             FirstName = learner.FirstName,
             Surname = learner.Surname,
@@ -45,5 +36,25 @@ public sealed class ReportService : IReportService
             Subjects = subjects,
             Average = Convert.ToDecimal(average)
         };
+    }
+
+    private async Task<string> GetSchoolNameAsync(int learnerId, CancellationToken cancellationToken)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        using var command = new SqlCommand(
+            @"SELECT TOP (1) t.Name
+              FROM institution.Learner l
+              INNER JOIN institution.Tenant t ON t.Id = l.TenantId
+              WHERE l.Id = @LearnerId;",
+            connection);
+        command.Parameters.AddWithValue("@LearnerId", learnerId);
+
+        var value = await command.ExecuteScalarAsync(cancellationToken);
+        if (value is null || value == DBNull.Value)
+        {
+            return string.Empty;
+        }
+
+        return Convert.ToString(value) ?? string.Empty;
     }
 }
