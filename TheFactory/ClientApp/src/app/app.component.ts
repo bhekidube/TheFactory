@@ -8,7 +8,7 @@ import { Component } from '@angular/core';
 export class AppComponent {
   title = 'app';
   showOperatorRoute = false;
-
+  currentYear = new Date().getFullYear();
   // Call this method when you want to show the operator route component
   toggleOperatorRoute() {
     this.showOperatorRoute = !this.showOperatorRoute;

@@ -78,11 +78,11 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.6rem;
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.32);
+  background: #004aad;
+  border: 1px solid #003d8d;
   border-radius: 14px;
   padding: 0.46rem 0.48rem 0.46rem 0.72rem;
-  backdrop-filter: blur(2px);
+  box-shadow: 0 6px 18px rgba(0, 45, 110, 0.24);
 }
 
 .search-summary-context {
@@ -91,7 +91,7 @@
 
 .search-summary-label {
   display: block;
-  color: rgba(255, 255, 255, 0.86);
+  color: rgba(255, 255, 255, 0.95);
   font-size: 0.67rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -102,6 +102,7 @@
 .search-summary-banner-text {
   margin: 0;
   color: #ffffff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.18);
   font-size: 0.85rem;
   font-weight: 700;
   line-height: 1.2;
@@ -123,10 +124,10 @@
 }
 
 .change-search-btn {
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  border: 1px solid #ffffff;
   border-radius: 999px;
   padding: 0.42rem 0.72rem;
-  background: rgba(255, 255, 255, 0.96);
+  background: #ffffff;
   color: #0e4ea3;
   font-size: 0.78rem;
   font-weight: 700;
