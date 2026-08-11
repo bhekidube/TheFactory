@@ -8,6 +8,21 @@ import {
   SubjectScoreDto
 } from '../learner-management/learner-management.models';
 
+export interface UserRoleDto {
+  userRoleId: number;
+  name: string;
+}
+
+export interface CreateSchoolRequest {
+  name: string;
+  logoUrl?: string;
+}
+
+export interface AssignUserRoleRequest {
+  email: string;
+  userRoleId: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -18,6 +33,18 @@ export class LearnerManagementService {
 
   getSchools(): Observable<Array<{ id: number; name: string }>> {
     return this.http.get<Array<{ id: number; name: string }>>(`${this.baseUrl}/schools`);
+  }
+
+  createSchool(payload: CreateSchoolRequest): Observable<{ id: number; name: string }> {
+    return this.http.post<{ id: number; name: string }>(`${this.baseUrl}/schools`, payload, this.getAdminRequestOptions());
+  }
+
+  getUserRoles(): Observable<UserRoleDto[]> {
+    return this.http.get<UserRoleDto[]>(`${this.baseUrl}/userroles`, this.getAdminRequestOptions());
+  }
+
+  assignUserRole(payload: AssignUserRoleRequest): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.baseUrl}/userroles/assign`, payload, this.getAdminRequestOptions());
   }
 
   setSelectedTenantId(tenantId: number): void {
@@ -66,6 +93,14 @@ export class LearnerManagementService {
 
   private getRequestOptions(): { headers: HttpHeaders } {
     return { headers: this.getHeaders() };
+  }
+
+  private getAdminRequestOptions(): { headers: HttpHeaders } {
+    const baseHeaders = this.getHeaders();
+    const userRole = localStorage.getItem('userRole') || '';
+    return {
+      headers: baseHeaders.set('X-User-Role', userRole)
+    };
   }
 
   private getHeaders(): HttpHeaders {

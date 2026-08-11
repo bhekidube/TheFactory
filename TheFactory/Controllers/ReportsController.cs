@@ -5,6 +5,18 @@ using TheFactory.Services;
 
 namespace TheFactory.Controllers;
 
+public sealed class CreateSchoolRequest
+{
+    public string Name { get; set; } = string.Empty;
+    public string? LogoUrl { get; set; }
+}
+
+public sealed class AssignUserRoleRequest
+{
+    public string Email { get; set; } = string.Empty;
+    public int UserRoleId { get; set; }
+}
+
 [ApiController]
 [Route("api")]
 public class ReportsController : ControllerBase
@@ -50,6 +62,229 @@ public class ReportsController : ControllerBase
         }
 
         return Ok(schools);
+    }
+
+    [HttpPost("schools")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult> CreateSchool([FromBody] CreateSchoolRequest request, CancellationToken cancellationToken)
+    {
+        if (!IsSystemAdminRequest())
+        {
+            return Forbid();
+        }
+
+        if (request is null || string.IsNullOrWhiteSpace(request.Name))
+        {
+            return BadRequest(new { error = "School name is required." });
+        }
+
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+
+        using var existsCommand = new SqlCommand(
+            @"SELECT COUNT(1)
+              FROM institution.Tenant
+              WHERE Name = @Name;",
+            connection);
+        existsCommand.Parameters.AddWithValue("@Name", request.Name.Trim());
+
+        var existingCount = Convert.ToInt32(await existsCommand.ExecuteScalarAsync(cancellationToken));
+        if (existingCount > 0)
+        {
+            return BadRequest(new { error = "A tenant with this name already exists." });
+        }
+
+        using var idCommand = new SqlCommand("SELECT ISNULL(MAX(Id), 0) + 1 FROM institution.Tenant;", connection);
+        var newId = Convert.ToInt32(await idCommand.ExecuteScalarAsync(cancellationToken));
+
+        using var insertCommand = new SqlCommand(
+            @"INSERT INTO institution.Tenant (Id, Name, LogoUrl)
+              VALUES (@Id, @Name, @LogoUrl);",
+            connection);
+        insertCommand.Parameters.AddWithValue("@Id", newId);
+        insertCommand.Parameters.AddWithValue("@Name", request.Name.Trim());
+        insertCommand.Parameters.AddWithValue("@LogoUrl", string.IsNullOrWhiteSpace(request.LogoUrl)
+            ? DBNull.Value
+            : request.LogoUrl.Trim());
+
+        await insertCommand.ExecuteNonQueryAsync(cancellationToken);
+
+        return Created($"/api/schools/{newId}", new
+        {
+            id = newId,
+            name = request.Name.Trim()
+        });
+    }
+
+    [HttpGet("userroles")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult> GetUserRoles(CancellationToken cancellationToken)
+    {
+        if (!IsSystemAdminRequest())
+        {
+            return Forbid();
+        }
+
+        var roles = new List<object>();
+
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        using var command = new SqlCommand(
+            @"SELECT UserRoleId, Name
+              FROM [UserRole]
+              ORDER BY Name ASC;",
+            connection);
+
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            roles.Add(new
+            {
+                userRoleId = reader.GetInt32(0),
+                name = reader.IsDBNull(1) ? string.Empty : reader.GetString(1)
+            });
+        }
+
+        return Ok(roles);
+    }
+
+    [HttpPost("userroles/assign")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> AssignUserRole([FromBody] AssignUserRoleRequest request, CancellationToken cancellationToken)
+    {
+        if (!IsSystemAdminRequest())
+        {
+            return Forbid();
+        }
+
+        if (request is null || string.IsNullOrWhiteSpace(request.Email) || request.UserRoleId <= 0)
+        {
+            return BadRequest(new { error = "Email and UserRoleId are required." });
+        }
+
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        using var transaction = connection.BeginTransaction();
+
+        try
+        {
+            var normalizedEmail = request.Email.Trim();
+
+            using var roleExistsCommand = new SqlCommand(
+                "SELECT COUNT(1) FROM [UserRole] WHERE UserRoleId = @UserRoleId;",
+                connection,
+                transaction);
+            roleExistsCommand.Parameters.AddWithValue("@UserRoleId", request.UserRoleId);
+            var roleCount = Convert.ToInt32(await roleExistsCommand.ExecuteScalarAsync(cancellationToken));
+            if (roleCount == 0)
+            {
+                transaction.Rollback();
+                return BadRequest(new { error = "Selected role does not exist." });
+            }
+
+            using var userCommand = new SqlCommand(
+                "SELECT TOP (1) UserId FROM [User] WHERE Email = @Email;",
+                connection,
+                transaction);
+            userCommand.Parameters.AddWithValue("@Email", normalizedEmail);
+            var userIdRaw = await userCommand.ExecuteScalarAsync(cancellationToken);
+            if (userIdRaw is null)
+            {
+                transaction.Rollback();
+                return NotFound(new { error = "User not found." });
+            }
+
+            var userId = Convert.ToInt32(userIdRaw);
+
+            using var updateUserRoleCommand = new SqlCommand(
+                "UPDATE [User] SET UserRoleId = @UserRoleId WHERE UserId = @UserId;",
+                connection,
+                transaction);
+            updateUserRoleCommand.Parameters.AddWithValue("@UserRoleId", request.UserRoleId);
+            updateUserRoleCommand.Parameters.AddWithValue("@UserId", userId);
+            await updateUserRoleCommand.ExecuteNonQueryAsync(cancellationToken);
+
+            using var operatorUserCommand = new SqlCommand(
+                "SELECT TOP (1) OperatorUserId FROM [OperatorUser] WHERE UserId = @UserId;",
+                connection,
+                transaction);
+            operatorUserCommand.Parameters.AddWithValue("@UserId", userId);
+            var operatorUserIdRaw = await operatorUserCommand.ExecuteScalarAsync(cancellationToken);
+
+            if (operatorUserIdRaw is not null)
+            {
+                var operatorUserId = Convert.ToInt32(operatorUserIdRaw);
+
+                using var operatorRoleCountCommand = new SqlCommand(
+                    "SELECT COUNT(1) FROM [OperatorUserRole] WHERE OperatorUserId = @OperatorUserId;",
+                    connection,
+                    transaction);
+                operatorRoleCountCommand.Parameters.AddWithValue("@OperatorUserId", operatorUserId);
+                var operatorRoleCount = Convert.ToInt32(await operatorRoleCountCommand.ExecuteScalarAsync(cancellationToken));
+
+                if (operatorRoleCount > 0)
+                {
+                    using var updateOperatorRoleCommand = new SqlCommand(
+                        "UPDATE [OperatorUserRole] SET UserRoleId = @UserRoleId WHERE OperatorUserId = @OperatorUserId;",
+                        connection,
+                        transaction);
+                    updateOperatorRoleCommand.Parameters.AddWithValue("@UserRoleId", request.UserRoleId);
+                    updateOperatorRoleCommand.Parameters.AddWithValue("@OperatorUserId", operatorUserId);
+                    await updateOperatorRoleCommand.ExecuteNonQueryAsync(cancellationToken);
+                }
+                else
+                {
+                    using var insertOperatorRoleCommand = new SqlCommand(
+                        "INSERT INTO [OperatorUserRole] (UserRoleId, OperatorUserId) VALUES (@UserRoleId, @OperatorUserId);",
+                        connection,
+                        transaction);
+                    insertOperatorRoleCommand.Parameters.AddWithValue("@UserRoleId", request.UserRoleId);
+                    insertOperatorRoleCommand.Parameters.AddWithValue("@OperatorUserId", operatorUserId);
+                    await insertOperatorRoleCommand.ExecuteNonQueryAsync(cancellationToken);
+                }
+            }
+            else
+            {
+                using var systemRoleCountCommand = new SqlCommand(
+                    "SELECT COUNT(1) FROM [SystemUserRole] WHERE UserId = @UserId;",
+                    connection,
+                    transaction);
+                systemRoleCountCommand.Parameters.AddWithValue("@UserId", userId);
+                var systemRoleCount = Convert.ToInt32(await systemRoleCountCommand.ExecuteScalarAsync(cancellationToken));
+
+                if (systemRoleCount > 0)
+                {
+                    using var updateSystemRoleCommand = new SqlCommand(
+                        "UPDATE [SystemUserRole] SET UserRoleId = @UserRoleId WHERE UserId = @UserId;",
+                        connection,
+                        transaction);
+                    updateSystemRoleCommand.Parameters.AddWithValue("@UserRoleId", request.UserRoleId);
+                    updateSystemRoleCommand.Parameters.AddWithValue("@UserId", userId);
+                    await updateSystemRoleCommand.ExecuteNonQueryAsync(cancellationToken);
+                }
+                else
+                {
+                    using var insertSystemRoleCommand = new SqlCommand(
+                        "INSERT INTO [SystemUserRole] (UserId, UserRoleId) VALUES (@UserId, @UserRoleId);",
+                        connection,
+                        transaction);
+                    insertSystemRoleCommand.Parameters.AddWithValue("@UserId", userId);
+                    insertSystemRoleCommand.Parameters.AddWithValue("@UserRoleId", request.UserRoleId);
+                    await insertSystemRoleCommand.ExecuteNonQueryAsync(cancellationToken);
+                }
+            }
+
+            transaction.Commit();
+            return Ok(new { message = "User role updated successfully." });
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
     }
 
     /// <summary>
@@ -262,6 +497,16 @@ public class ReportsController : ControllerBase
 
         error = string.Empty;
         return true;
+    }
+
+    private bool IsSystemAdminRequest()
+    {
+        if (!Request.Headers.TryGetValue("X-User-Role", out var roleHeader))
+        {
+            return false;
+        }
+
+        return string.Equals(roleHeader.FirstOrDefault(), "SystemAdmin", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool TryValidateSubjectScoreDto(SubjectScoreDto subjectScoreDto, out string error)

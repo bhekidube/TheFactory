@@ -6,6 +6,60 @@
     <p>Schools currently available to your account.</p>
   </div>
 
+  <section *ngIf="isSystemAdmin" class="admin-panel" aria-label="System administrator controls">
+    <h3>System Admin</h3>
+    <p>Create a tenant and allocate roles from dbo.UserRole.</p>
+
+    <div class="admin-grid">
+      <form class="admin-card" (ngSubmit)="createTenant()" #tenantForm="ngForm">
+        <h4>Create Tenant</h4>
+        <label for="tenantName">Tenant Name</label>
+        <input
+          id="tenantName"
+          name="tenantName"
+          type="text"
+          required
+          [(ngModel)]="createTenantModel.name"
+          placeholder="e.g. Bulawayo High School" />
+
+        <label for="tenantLogoUrl">Logo URL (optional)</label>
+        <input
+          id="tenantLogoUrl"
+          name="tenantLogoUrl"
+          type="url"
+          [(ngModel)]="createTenantModel.logoUrl"
+          placeholder="https://..." />
+
+        <button type="submit" [disabled]="adminLoading || tenantForm.invalid">Create Tenant</button>
+      </form>
+
+      <form class="admin-card" (ngSubmit)="allocateUserRole()" #roleForm="ngForm">
+        <h4>Allocate User Role</h4>
+        <label for="userEmail">User Email</label>
+        <input
+          id="userEmail"
+          name="userEmail"
+          type="email"
+          required
+          [(ngModel)]="roleAllocationModel.email"
+          placeholder="user@example.com" />
+
+        <label for="userRoleId">Role</label>
+        <select id="userRoleId" name="userRoleId" required [(ngModel)]="roleAllocationModel.userRoleId">
+          <option [ngValue]="0" disabled>Select role</option>
+          <option *ngFor="let role of userRoles" [ngValue]="role.userRoleId">
+            {{ role.name }} ({{ role.userRoleId }})
+          </option>
+        </select>
+
+        <button type="submit" [disabled]="adminLoading || roleForm.invalid">Allocate Role</button>
+      </form>
+    </div>
+
+    <div class="message success" *ngIf="adminSuccessMessage">{{ adminSuccessMessage }}</div>
+    <div class="message error" *ngIf="adminErrorMessage">{{ adminErrorMessage }}</div>
+  </section>
+
   <div class="state-card" *ngIf="loading">Loading schools...</div>
   <div class="message error" *ngIf="!loading && errorMessage">{{ errorMessage }}</div>
 
