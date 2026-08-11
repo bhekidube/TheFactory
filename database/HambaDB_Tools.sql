@@ -21,3 +21,10 @@ SELECT
     program_name
 FROM sys.dm_exec_sessions
 ORDER BY memory_usage DESC;
+
+SELECT U.EMAIL,R.NAME,O.NAME,* 
+FROM [dbo].[User] U 
+LEFT JOIN [dbo].[OperatorUser] OU ON OU.USERID = U.USERID
+LEFT JOIN [dbo].[Operator] O ON OU.OPERATORUSERID = O.OperatorId
+LEFT JOIN [dbo].[OperatorUserRole] OUR ON OU.OPERATORUSERID = OUR.OPERATORUSERID
+LEFT JOIN [dbo].[UserRole] R ON OUR.USERROLEID = R.USERROLEID

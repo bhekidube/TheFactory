@@ -21,6 +21,30 @@
   font-size: clamp(0.94rem, 2.8vw, 1.06rem);
 }
 
+.hamba-nav {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
+}
+
+.hamba-nav-link {
+  display: inline-block;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.hamba-nav-link.is-active {
+  background: #fff;
+  color: #0f4ea2;
+  border-color: #fff;
+}
+
 .header-search-section {
   display: flex;
   flex-direction: column;

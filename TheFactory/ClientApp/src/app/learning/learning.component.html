@@ -1,0 +1,23 @@
+<section class="learning-page">
+  <app-logout-link></app-logout-link>
+
+  <div class="learning-header">
+    <h2>Learning</h2>
+    <p>Schools currently available to your account.</p>
+  </div>
+
+  <div class="state-card" *ngIf="loading">Loading schools...</div>
+  <div class="message error" *ngIf="!loading && errorMessage">{{ errorMessage }}</div>
+
+  <div class="state-card" *ngIf="!loading && !errorMessage && schools.length === 0">
+    No schools found for the current account.
+  </div>
+
+  <div *ngIf="!loading && schools.length > 0" class="schools-grid">
+    <article class="school-card" *ngFor="let school of schools">
+      <h3>{{ school }}</h3>
+      <p>{{ learnersCount }} learner record(s) available.</p>
+      <a [routerLink]="['/school/admin/learners']">Open Schools</a>
+    </article>
+  </div>
+</section>

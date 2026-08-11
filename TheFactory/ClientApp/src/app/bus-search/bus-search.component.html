@@ -1,6 +1,21 @@
 <header class="header-banner">
   <h1>HambaOnline</h1>
   <p>Plug yama bhasi</p>
+  <nav class="hamba-nav" aria-label="HambaOnline navigation">
+    <a
+      class="hamba-nav-link"
+      [routerLink]="['/']"
+      [routerLinkActive]="['is-active']"
+      [routerLinkActiveOptions]="{ exact: true }">
+      Transport
+    </a>
+    <a
+      class="hamba-nav-link"
+      [routerLink]="['/learning']"
+      [routerLinkActive]="['is-active']">
+      Learning
+    </a>
+  </nav>
 
   <section class="search-section header-search-section" [class.is-collapsed]="hasSearched && !showForm">
     <div class="search-float-shell">
@@ -8,14 +23,10 @@
         <div class="search-summary-context">
           <span class="search-summary-label">Search</span>
           <p class="search-summary-banner-text">
-            <span class="search-summary-route">
-              {{ fromInput || '...' }}
-              &rarr;
-              {{ toTownInput || toInput || '...' }}
-            </span>
-            <ng-container *ngIf="dateInput">
-              <span class="search-summary-date">&middot; {{ dateInput | date:'d MMM' }}</span>
-            </ng-container>
+            {{ fromInput || '...' }}
+            &rarr;
+            {{ toTownInput || toInput || '...' }}
+            <ng-container *ngIf="dateInput"> &middot; {{ dateInput | date:'d MMM' }}</ng-container>
           </p>
         </div>
         <button
@@ -131,27 +142,13 @@
     <thead>
       <tr>
         <th scope="col" class="col-bus">BUS</th>
-        <th scope="col" class="col-departure">DEPARTURE</th>
-        <th scope="col" class="col-price">PRICE</th>
-        <th scope="col" class="col-action">ACTION</th>
+        <th scope="col" class="col-time">TIME</th>
       </tr>
     </thead>
     <tbody>
       <tr *ngFor="let row of searchResults; let i = index" [class.alt-row]="i % 2 === 1">
-        <td class="col-bus" data-label="Bus">{{ row.operatorName }}</td>
-        <td class="col-departure" data-label="Departure">{{ row.departureDateTime | date:'HH:mm' }}</td>
-        <td class="col-price" data-label="Price">{{ getPriceDisplay(row) }}</td>
-        <td class="col-action" data-label="Action">
-          <button
-            type="button"
-            class="trip-action-btn"
-            [class.is-disabled]="isTripUnavailable(row)"
-            [disabled]="isTripUnavailable(row)"
-            [attr.aria-label]="isTripUnavailable(row) ? getActionLabel(row) + ' for ' + row.operatorName : 'Select seat for ' + row.operatorName"
-            (click)="onSelectSeat(row)">
-            {{ getActionLabel(row) }}
-          </button>
-        </td>
+        <td class="col-bus">{{ row.operatorName }}</td>
+        <td class="col-time">{{ row.departureDateTime | date:'HH:mm' }}</td>
       </tr>
     </tbody>
   </table>
