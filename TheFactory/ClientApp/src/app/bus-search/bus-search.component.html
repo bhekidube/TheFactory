@@ -121,13 +121,26 @@
     <thead>
       <tr>
         <th scope="col" class="col-bus">BUS</th>
-        <th scope="col" class="col-time">TIME</th>
+        <th scope="col" class="col-departure">DEPARTURE</th>
+        <th scope="col" class="col-price">PRICE</th>
+        <th scope="col" class="col-action">ACTION</th>
       </tr>
     </thead>
     <tbody>
       <tr *ngFor="let row of searchResults; let i = index" [class.alt-row]="i % 2 === 1">
         <td class="col-bus">{{ row.operatorName }}</td>
-        <td class="col-time">{{ row.departureDateTime | date:'HH:mm' }}</td>
+        <td class="col-departure">{{ row.departureDateTime | date:'EEE, d MMM' }}<br>{{ row.departureDateTime | date:'HH:mm' }}</td>
+        <td class="col-price">{{ getPriceDisplay(row) }}</td>
+        <td class="col-action">
+          <button
+            type="button"
+            class="trip-action-btn"
+            [class.is-disabled]="isTripUnavailable(row)"
+            [disabled]="isTripUnavailable(row)"
+            (click)="onSelectSeat(row)">
+            {{ getActionLabel(row) }}
+          </button>
+        </td>
       </tr>
     </tbody>
   </table>

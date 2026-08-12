@@ -30,4 +30,20 @@ describe('BusSearchComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('should render a seat-selection CTA for each future search result', () => {
+    const futureDeparture = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+
+    component.searchResults = [{
+      operatorName: 'Bravo Coach',
+      departureDateTime: futureDeparture,
+      price: 120
+    }];
+
+    fixture.detectChanges();
+
+    const button = fixture.nativeElement.querySelector('.trip-action-btn') as HTMLButtonElement;
+    expect(button).not.toBeNull();
+    expect(button.textContent).toContain('Select Seat');
+  });
 });
