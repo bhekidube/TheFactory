@@ -200,6 +200,8 @@ public sealed class LearnerService : ILearnerService
             return null;
         }
 
+        var supportsTeacherComments = await HasColumnAsync(connection, "institution", "Mark", "TeacherComments", cancellationToken);
+
         using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
         var normalizedSubject = subjectScore.Subject.Trim();
         try
@@ -223,18 +225,27 @@ public sealed class LearnerService : ILearnerService
             }
 
             using var updateCommand = new SqlCommand(
-                @"UPDATE institution.Mark
-                  SET Score = @Score,
-                      TeacherComments = @TeacherComments
-                  WHERE LearnerId = @LearnerId
-                    AND TenantId = @TenantId
-                    AND Subject = @Subject;",
+                supportsTeacherComments
+                    ? @"UPDATE institution.Mark
+                          SET Score = @Score,
+                              TeacherComments = @TeacherComments
+                          WHERE LearnerId = @LearnerId
+                            AND TenantId = @TenantId
+                            AND Subject = @Subject;"
+                    : @"UPDATE institution.Mark
+                          SET Score = @Score
+                          WHERE LearnerId = @LearnerId
+                            AND TenantId = @TenantId
+                            AND Subject = @Subject;",
                 connection,
                 transaction);
             updateCommand.Parameters.AddWithValue("@Score", Convert.ToDecimal(subjectScore.PupilMark));
-            updateCommand.Parameters.AddWithValue("@TeacherComments", string.IsNullOrWhiteSpace(subjectScore.TeacherComments)
-                ? DBNull.Value
-                : subjectScore.TeacherComments.Trim());
+            if (supportsTeacherComments)
+            {
+                updateCommand.Parameters.AddWithValue("@TeacherComments", string.IsNullOrWhiteSpace(subjectScore.TeacherComments)
+                    ? DBNull.Value
+                    : subjectScore.TeacherComments.Trim());
+            }
             updateCommand.Parameters.AddWithValue("@LearnerId", learnerId);
             updateCommand.Parameters.AddWithValue("@TenantId", tenantId.Value);
             updateCommand.Parameters.AddWithValue("@Subject", normalizedSubject);
@@ -244,8 +255,11 @@ public sealed class LearnerService : ILearnerService
             {
                 var nextId = await GetNextIdAsync(connection, transaction, "institution.Mark", cancellationToken);
                 using var insertCommand = new SqlCommand(
-                    @"INSERT INTO institution.Mark (Id, TenantId, LearnerId, Subject, Score, TeacherComments)
-                      VALUES (@Id, @TenantId, @LearnerId, @Subject, @Score, @TeacherComments);",
+                    supportsTeacherComments
+                        ? @"INSERT INTO institution.Mark (Id, TenantId, LearnerId, Subject, Score, TeacherComments)
+                            VALUES (@Id, @TenantId, @LearnerId, @Subject, @Score, @TeacherComments);"
+                        : @"INSERT INTO institution.Mark (Id, TenantId, LearnerId, Subject, Score)
+                            VALUES (@Id, @TenantId, @LearnerId, @Subject, @Score);",
                     connection,
                     transaction);
                 insertCommand.Parameters.AddWithValue("@Id", nextId);
@@ -253,9 +267,12 @@ public sealed class LearnerService : ILearnerService
                 insertCommand.Parameters.AddWithValue("@LearnerId", learnerId);
                 insertCommand.Parameters.AddWithValue("@Subject", normalizedSubject);
                 insertCommand.Parameters.AddWithValue("@Score", Convert.ToDecimal(subjectScore.PupilMark));
-                insertCommand.Parameters.AddWithValue("@TeacherComments", string.IsNullOrWhiteSpace(subjectScore.TeacherComments)
-                    ? DBNull.Value
-                    : subjectScore.TeacherComments.Trim());
+                if (supportsTeacherComments)
+                {
+                    insertCommand.Parameters.AddWithValue("@TeacherComments", string.IsNullOrWhiteSpace(subjectScore.TeacherComments)
+                        ? DBNull.Value
+                        : subjectScore.TeacherComments.Trim());
+                }
 
                 await insertCommand.ExecuteNonQueryAsync(cancellationToken);
             }
@@ -288,12 +305,20 @@ public sealed class LearnerService : ILearnerService
             return Array.Empty<SubjectScoreDto>();
         }
 
+        var supportsTeacherComments = await HasColumnAsync(connection, "institution", "Mark", "TeacherComments", cancellationToken);
+
         using var command = new SqlCommand(
-            @"SELECT Subject, Score, TeacherComments
-              FROM institution.Mark
-              WHERE LearnerId = @LearnerId
-                AND TenantId = @TenantId
-              ORDER BY Subject ASC;",
+            supportsTeacherComments
+                ? @"SELECT Subject, Score, TeacherComments
+                    FROM institution.Mark
+                    WHERE LearnerId = @LearnerId
+                      AND TenantId = @TenantId
+                    ORDER BY Subject ASC;"
+                : @"SELECT Subject, Score, CAST(NULL AS NVARCHAR(MAX)) AS TeacherComments
+                    FROM institution.Mark
+                    WHERE LearnerId = @LearnerId
+                      AND TenantId = @TenantId
+                    ORDER BY Subject ASC;",
             connection);
         command.Parameters.AddWithValue("@LearnerId", learnerId);
         command.Parameters.AddWithValue("@TenantId", tenantId.Value);
@@ -312,11 +337,33 @@ public sealed class LearnerService : ILearnerService
                 PossibleMark = DefaultPossibleMark,
                 PupilMark = pupilMark,
                 Grade = grade,
-                TeacherComments = reader.IsDBNull(2) ? string.Empty : reader.GetString(2)
+                TeacherComments = supportsTeacherComments && !reader.IsDBNull(2) ? reader.GetString(2) : string.Empty
             });
         }
 
         return results;
+    }
+
+    private static async Task<bool> HasColumnAsync(SqlConnection connection, string schemaName, string tableName, string columnName, CancellationToken cancellationToken)
+    {
+        using var command = new SqlCommand(
+            @"SELECT CASE WHEN EXISTS (
+                    SELECT 1
+                    FROM sys.columns c
+                    INNER JOIN sys.tables t ON t.object_id = c.object_id
+                    INNER JOIN sys.schemas s ON s.schema_id = t.schema_id
+                    WHERE s.name = @SchemaName
+                      AND t.name = @TableName
+                      AND c.name = @ColumnName)
+                THEN 1 ELSE 0 END;",
+            connection);
+
+        command.Parameters.AddWithValue("@SchemaName", schemaName);
+        command.Parameters.AddWithValue("@TableName", tableName);
+        command.Parameters.AddWithValue("@ColumnName", columnName);
+
+        var value = await command.ExecuteScalarAsync(cancellationToken);
+        return value is int intValue ? intValue == 1 : Convert.ToInt32(value) == 1;
     }
 
     private static string ResolveGrade(int pupilMark, int possibleMark)

@@ -17,5 +17,6 @@ CREATE TABLE institution.Mark (
  TenantId INT,
  LearnerId INT,
  Subject NVARCHAR(100),
- Score INT
+ Score INT,
+ TeacherComments NVARCHAR(MAX)
 )
