@@ -1,9 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
+import { forkJoin } from 'rxjs';
 import {
   LearnerDto,
   LearnerReportResponseDto,
-  SubjectScoreDto
+  SubjectDto,
+  SubjectScoreDto,
+  SubjectScoreUpsertRequest
 } from './learner-management.models';
 import { LearnerManagementService } from '../services/learner-management.service';
 
@@ -20,6 +23,7 @@ export class LearnerManagementComponent implements OnInit {
   loadingLearners = false;
   loadingLearnerDetail = false;
   loadingReport = false;
+  loadingSubjects = false;
   creatingLearner = false;
   updatingLearner = false;
   archivingLearnerId: number | null = null;
@@ -28,6 +32,7 @@ export class LearnerManagementComponent implements OnInit {
 
   selectedLearner: LearnerDto | null = null;
   selectedReport: LearnerReportResponseDto | null = null;
+  subjects: SubjectDto[] = [];
 
   showLearnerForm = false;
   showReportPanel = false;
@@ -219,15 +224,22 @@ export class LearnerManagementComponent implements OnInit {
     this.selectedLearner = learner;
     this.showReportPanel = true;
     this.loadingReport = true;
+    this.loadingSubjects = true;
 
-    this.learnerService.getReport(learner.id).subscribe({
-      next: report => {
+    forkJoin({
+      report: this.learnerService.getReport(learner.id),
+      subjects: this.learnerService.getSubjects()
+    }).subscribe({
+      next: ({ report, subjects }) => {
         this.selectedReport = report;
+        this.subjects = subjects;
         this.scoreForm = this.getEmptyScore();
         this.loadingReport = false;
+        this.loadingSubjects = false;
       },
       error: err => {
         this.loadingReport = false;
+        this.loadingSubjects = false;
         this.errorMessage = this.mapHttpError(err, 'Failed to load learner report.');
       }
     });
@@ -241,6 +253,7 @@ export class LearnerManagementComponent implements OnInit {
     this.showReportPanel = false;
     this.selectedLearner = null;
     this.selectedReport = null;
+    this.subjects = [];
     this.scoreForm = this.getEmptyScore();
   }
 
@@ -295,11 +308,15 @@ export class LearnerManagementComponent implements OnInit {
     }
 
     this.savingSubjectScore = true;
+    const subjectId = Number(this.scoreForm.subjectId);
+    const selectedSubject = this.subjects.find(subject => subject.id === subjectId);
 
-    const payload: SubjectScoreDto = {
-      subject: this.scoreForm.subject.trim(),
+    const payload: SubjectScoreUpsertRequest = {
+      learnerId: this.selectedLearner.id,
+      subjectId,
       possibleMark: Number(this.scoreForm.possibleMark),
       pupilMark: Number(this.scoreForm.pupilMark),
+      score: Number(this.scoreForm.pupilMark),
       grade: this.scoreForm.grade.trim(),
       teacherComments: this.scoreForm.teacherComments.trim()
     };
@@ -316,6 +333,33 @@ export class LearnerManagementComponent implements OnInit {
         this.errorMessage = this.mapHttpError(err, 'Failed to save subject score.');
       }
     });
+  }
+
+  editSubjectScore(subject: SubjectScoreDto): void {
+    this.clearMessages();
+    this.scoreForm = {
+      learnerId: this.selectedLearner?.id,
+      subjectId: subject.subjectId,
+      subject: subject.subject,
+      possibleMark: subject.possibleMark,
+      pupilMark: subject.pupilMark,
+      grade: subject.grade,
+      teacherComments: subject.teacherComments,
+      score: subject.score ?? subject.pupilMark
+    };
+  }
+
+  clearSubjectScoreForm(): void {
+    this.scoreForm = this.getEmptyScore();
+  }
+
+  get hasSubjects(): boolean {
+    return this.subjects.length > 0;
+  }
+
+  get isEditingSubjectScore(): boolean {
+    return this.scoreForm.subjectId > 0
+      && this.selectedReport?.subjects.some(subject => subject.subjectId === this.scoreForm.subjectId) === true;
   }
 
   trackByLearnerId(_: number, learner: LearnerDto): number {
@@ -339,7 +383,8 @@ export class LearnerManagementComponent implements OnInit {
   }
 
   private validateScore(score: SubjectScoreDto): string {
-    if (!score.subject?.trim()) {
+    const subjectId = Number(score.subjectId);
+    if (!Number.isFinite(subjectId) || subjectId <= 0) {
       return 'Subject is required.';
     }
 
@@ -368,6 +413,8 @@ export class LearnerManagementComponent implements OnInit {
 
   private getEmptyScore(): SubjectScoreDto {
     return {
+      learnerId: this.selectedLearner?.id,
+      subjectId: 0,
       subject: '',
       possibleMark: 100,
       pupilMark: 0,

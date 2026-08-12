@@ -5,7 +5,9 @@ import { environment } from '../../environments/environment';
 import {
   LearnerDto,
   LearnerReportResponseDto,
-  SubjectScoreDto
+  SubjectDto,
+  SubjectScoreDto,
+  SubjectScoreUpsertRequest
 } from '../learner-management/learner-management.models';
 
 export interface UserRoleDto {
@@ -19,8 +21,14 @@ export interface CreateSchoolRequest {
 }
 
 export interface AssignUserRoleRequest {
-  email: string;
+  userId: number;
   userRoleId: number;
+}
+
+export interface UserLookupDto {
+  userId: number;
+  name: string;
+  email: string;
 }
 
 @Injectable({
@@ -41,6 +49,13 @@ export class LearnerManagementService {
 
   getUserRoles(): Observable<UserRoleDto[]> {
     return this.http.get<UserRoleDto[]>(`${this.baseUrl}/userroles`, this.getAdminRequestOptions());
+  }
+
+  searchUsers(query: string): Observable<UserLookupDto[]> {
+    return this.http.get<UserLookupDto[]>(
+      `${this.baseUrl}/userroles/users?query=${encodeURIComponent(query)}`,
+      this.getAdminRequestOptions()
+    );
   }
 
   assignUserRole(payload: AssignUserRoleRequest): Observable<{ message: string }> {
@@ -79,6 +94,10 @@ export class LearnerManagementService {
     return this.http.get<LearnerReportResponseDto>(`${this.baseUrl}/reports/${learnerId}`, this.getRequestOptions());
   }
 
+  getSubjects(): Observable<SubjectDto[]> {
+    return this.http.get<SubjectDto[]>(`${this.baseUrl}/Lookup/Subjects`, this.getRequestOptions());
+  }
+
   downloadReportPdf(learnerId: number): Observable<HttpResponse<Blob>> {
     return this.http.get(`${this.baseUrl}/reports/${learnerId}/pdf`, {
       observe: 'response',
@@ -87,7 +106,7 @@ export class LearnerManagementService {
     });
   }
 
-  upsertSubjectScore(learnerId: number, payload: SubjectScoreDto): Observable<SubjectScoreDto> {
+  upsertSubjectScore(learnerId: number, payload: SubjectScoreUpsertRequest): Observable<SubjectScoreDto> {
     return this.http.post<SubjectScoreDto>(`${this.baseUrl}/reports/${learnerId}/scores`, payload, this.getRequestOptions());
   }
 

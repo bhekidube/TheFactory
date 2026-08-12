@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {
   LearnerManagementService,
+  UserLookupDto,
   UserRoleDto
 } from '../services/learner-management.service';
 
@@ -12,8 +13,10 @@ import {
 export class LearningComponent implements OnInit {
   schools: Array<{ id: string; name: string }> = [];
   userRoles: UserRoleDto[] = [];
+  userSearchResults: UserLookupDto[] = [];
   loading = false;
   adminLoading = false;
+  userSearchLoading = false;
   errorMessage = '';
   adminErrorMessage = '';
   adminSuccessMessage = '';
@@ -26,9 +29,11 @@ export class LearningComponent implements OnInit {
   };
 
   roleAllocationModel = {
-    email: '',
     userRoleId: 0
   };
+
+  userSearchTerm = '';
+  selectedUser: UserLookupDto | null = null;
 
   constructor(private readonly learnerService: LearnerManagementService) {}
 
@@ -68,9 +73,9 @@ export class LearningComponent implements OnInit {
   }
 
   allocateUserRole(): void {
-    const email = this.roleAllocationModel.email.trim();
+    const userId = Number(this.selectedUser?.userId);
     const userRoleId = Number(this.roleAllocationModel.userRoleId);
-    if (!email || !userRoleId || !this.isSystemAdmin) {
+    if (!userId || !userRoleId || !this.isSystemAdmin) {
       return;
     }
 
@@ -79,19 +84,52 @@ export class LearningComponent implements OnInit {
     this.adminSuccessMessage = '';
 
     this.learnerService.assignUserRole({
-      email,
+      userId,
       userRoleId
     }).subscribe({
       next: response => {
         this.adminLoading = false;
         this.adminSuccessMessage = response.message || 'User role updated successfully.';
-        this.roleAllocationModel = { email: '', userRoleId: 0 };
+        this.roleAllocationModel = { userRoleId: 0 };
+        this.userSearchTerm = '';
+        this.selectedUser = null;
+        this.userSearchResults = [];
       },
       error: (errorResponse) => {
         this.adminLoading = false;
         this.adminErrorMessage = errorResponse?.error?.error || 'Unable to update user role.';
       }
     });
+  }
+
+  searchUsers(term: string): void {
+    this.userSearchTerm = term;
+    this.selectedUser = null;
+
+    const searchTerm = term.trim();
+    if (!searchTerm) {
+      this.userSearchResults = [];
+      return;
+    }
+
+    this.userSearchLoading = true;
+    this.learnerService.searchUsers(searchTerm).subscribe({
+      next: users => {
+        this.userSearchLoading = false;
+        this.userSearchResults = users;
+      },
+      error: () => {
+        this.userSearchLoading = false;
+        this.userSearchResults = [];
+        this.adminErrorMessage = 'Unable to search for users right now.';
+      }
+    });
+  }
+
+  selectUser(user: UserLookupDto): void {
+    this.selectedUser = user;
+    this.userSearchTerm = `${user.name} (${user.email})`;
+    this.userSearchResults = [];
   }
 
   private loadSchools(): void {

@@ -35,14 +35,33 @@
 
       <form class="admin-card" (ngSubmit)="allocateUserRole()" #roleForm="ngForm">
         <h4>Allocate User Role</h4>
-        <label for="userEmail">User Email</label>
+        <label for="userSearch">Search Existing User</label>
         <input
-          id="userEmail"
-          name="userEmail"
-          type="email"
+          id="userSearch"
+          name="userSearch"
+          type="text"
           required
-          [(ngModel)]="roleAllocationModel.email"
-          placeholder="user@example.com" />
+          autocomplete="off"
+          [(ngModel)]="userSearchTerm"
+          (ngModelChange)="searchUsers($event)"
+          placeholder="Start typing a name or email" />
+
+        <div class="user-search-status" *ngIf="userSearchLoading">Searching users...</div>
+
+        <div class="user-search-results" *ngIf="userSearchResults.length > 0">
+          <button
+            type="button"
+            class="user-result"
+            *ngFor="let user of userSearchResults"
+            (click)="selectUser(user)">
+            <strong>{{ user.name }}</strong>
+            <span>{{ user.email }}</span>
+          </button>
+        </div>
+
+        <div class="selected-user" *ngIf="selectedUser">
+          Selected user: <strong>{{ selectedUser.name }}</strong> ({{ selectedUser.email }})
+        </div>
 
         <label for="userRoleId">Role</label>
         <select id="userRoleId" name="userRoleId" required [(ngModel)]="roleAllocationModel.userRoleId">
@@ -52,7 +71,7 @@
           </option>
         </select>
 
-        <button type="submit" [disabled]="adminLoading || roleForm.invalid">Allocate Role</button>
+        <button type="submit" [disabled]="adminLoading || roleForm.invalid || !selectedUser">Allocate Role</button>
       </form>
     </div>
 

@@ -10,6 +10,7 @@ public sealed class LearnerDto
 
 public sealed class SubjectScoreDto
 {
+    public int SubjectId { get; set; }
     public string Subject { get; set; } = string.Empty;
     public int PossibleMark { get; set; } = 100;
     public int PupilMark { get; set; }
@@ -22,6 +23,14 @@ public sealed class SubjectScoreDto
         get => PupilMark;
         set => PupilMark = value;
     }
+}
+
+public sealed class SubjectDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
 }
 
 public sealed class LearnerReportDto

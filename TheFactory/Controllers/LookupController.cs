@@ -1,15 +1,19 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using TheFactory.Contracts;
+using TheFactory.Services;
 
 [ApiController]
 [Route("api/[controller]")]
 public class LookupController : ControllerBase
 {
     private readonly SqlConnectionService _sqlService;
+    private readonly ILearnerService _learnerService;
 
-    public LookupController(SqlConnectionService sqlService)
+    public LookupController(SqlConnectionService sqlService, ILearnerService learnerService)
     {
         _sqlService = sqlService;
+        _learnerService = learnerService;
     }
 
     [HttpGet("Locations")]
@@ -62,5 +66,16 @@ public class LookupController : ControllerBase
             }
         }
         return Ok(operators);
+    }
+
+    /// <summary>
+    /// Gets active subjects for the current tenant.
+    /// </summary>
+    [HttpGet("Subjects")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<SubjectDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<SubjectDto>>> GetSubjects(CancellationToken cancellationToken)
+    {
+        var subjects = await _learnerService.GetSubjectsForCurrentTenantAsync(cancellationToken);
+        return Ok(subjects);
     }
 }

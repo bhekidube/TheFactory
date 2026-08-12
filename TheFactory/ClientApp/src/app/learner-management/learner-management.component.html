@@ -133,33 +133,52 @@
           <p><strong>School:</strong> {{ selectedReport.schoolName }}</p>
           <p><strong>Learner:</strong> {{ selectedReport.learnerName }}</p>
           <p><strong>Grade:</strong> {{ selectedReport.grade }}</p>
-          <p><strong>Average:</strong> {{ selectedReport.average | number: '1.1-2' }}</p>
+          <p><strong>Average:</strong> {{ selectedReport.average | number: '1.1-2' }}%</p>
         </div>
 
-        <div class="table-wrap compact" *ngIf="selectedReport.subjects.length > 0">
-          <table>
-            <thead>
-              <tr>
-                <th>Subject</th>
-                <th>Possible Mark</th>
-                <th>Pupil Mark</th>
-                <th>Grade</th>
-                <th>Teacher Comments</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let subject of selectedReport.subjects">
-                <td>{{ subject.subject }}</td>
-                <td>{{ subject.possibleMark }}</td>
-                <td>{{ subject.pupilMark }}</td>
-                <td>{{ subject.grade }}</td>
-                <td>{{ subject.teacherComments }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <div class="report-section">
+          <div class="report-section-header">
+            <h4>Results</h4>
+            <span class="report-average-badge">Average: {{ selectedReport.average | number: '1.1-2' }}%</span>
+          </div>
 
-        <div class="state-card" *ngIf="selectedReport.subjects.length === 0">No subjects found for this learner.</div>
+          <div class="table-wrap compact" *ngIf="selectedReport.subjects.length > 0">
+            <table>
+              <thead>
+                <tr>
+                  <th>Subject</th>
+                  <th>Possible Mark</th>
+                  <th>Pupil Mark</th>
+                  <th>Percentage</th>
+                  <th>Grade</th>
+                  <th>Teacher Comments</th>
+                  <th class="actions-col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let subject of selectedReport.subjects">
+                  <td>{{ subject.subject }}</td>
+                  <td>{{ subject.possibleMark }}</td>
+                  <td>{{ subject.pupilMark }}</td>
+                  <td>{{ (subject.possibleMark ? (subject.pupilMark / subject.possibleMark) * 100 : 0) | number: '1.0-1' }}%</td>
+                  <td>{{ subject.grade }}</td>
+                  <td>{{ subject.teacherComments }}</td>
+                  <td class="actions-col">
+                    <button
+                      type="button"
+                      class="link-btn"
+                      [disabled]="subject.subjectId <= 0 || savingSubjectScore"
+                      (click)="editSubjectScore(subject)">
+                      Edit
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="state-card" *ngIf="selectedReport.subjects.length === 0">No subject results have been entered yet.</div>
+        </div>
 
         <div class="report-actions">
           <button type="button" class="secondary-btn" [disabled]="downloadingPdf" (click)="downloadReportPdf()">
@@ -167,11 +186,22 @@
           </button>
         </div>
 
-        <h4>Manage Subject Score</h4>
+        <h4>{{ isEditingSubjectScore ? 'Edit Subject Result' : 'Add Subject Result' }}</h4>
+        <div *ngIf="loadingSubjects" class="state-card">Loading subjects...</div>
+        <div *ngIf="!loadingSubjects && !hasSubjects" class="state-card empty">
+          No active subjects are available for this tenant. Add active subjects before saving a mark.
+        </div>
         <form (ngSubmit)="saveSubjectScore()" class="score-form">
           <label>
             Subject
-            <input type="text" name="subject" [(ngModel)]="scoreForm.subject" required />
+            <select
+              name="subjectId"
+              [(ngModel)]="scoreForm.subjectId"
+              [disabled]="!hasSubjects || savingSubjectScore"
+              required>
+              <option [ngValue]="0">Select a subject</option>
+              <option *ngFor="let subject of subjects" [ngValue]="subject.id">{{ subject.name }}</option>
+            </select>
           </label>
           <label>
             Possible Mark
@@ -180,6 +210,12 @@
           <label>
             Pupil Mark
             <input type="number" name="pupilMark" [(ngModel)]="scoreForm.pupilMark" min="0" required />
+          </label>
+          <label>
+            Percentage
+            <div class="readonly-field">
+              {{ (scoreForm.possibleMark ? (scoreForm.pupilMark / scoreForm.possibleMark) * 100 : 0) | number: '1.0-1' }}%
+            </div>
           </label>
           <label>
             Grade
@@ -191,8 +227,11 @@
           </label>
 
           <div class="panel-actions">
-            <button type="submit" class="primary-btn" [disabled]="savingSubjectScore">
-              {{ savingSubjectScore ? 'Saving...' : 'Save Score' }}
+            <button type="submit" class="primary-btn" [disabled]="savingSubjectScore || !hasSubjects || scoreForm.subjectId <= 0">
+              {{ savingSubjectScore ? 'Saving...' : (isEditingSubjectScore ? 'Save Changes' : 'Save Score') }}
+            </button>
+            <button type="button" class="secondary-btn" [disabled]="savingSubjectScore" (click)="clearSubjectScoreForm()">
+              Clear
             </button>
           </div>
         </form>

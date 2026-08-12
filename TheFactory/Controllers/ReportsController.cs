@@ -13,8 +13,15 @@ public sealed class CreateSchoolRequest
 
 public sealed class AssignUserRoleRequest
 {
-    public string Email { get; set; } = string.Empty;
+    public int UserId { get; set; }
     public int UserRoleId { get; set; }
+}
+
+public sealed class UserLookupResult
+{
+    public int UserId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
 }
 
 [ApiController]
@@ -149,6 +156,47 @@ public class ReportsController : ControllerBase
         return Ok(roles);
     }
 
+    [HttpGet("userroles/users")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult> SearchUsers([FromQuery] string query, CancellationToken cancellationToken)
+    {
+        if (!IsSystemAdminRequest())
+        {
+            return Forbid();
+        }
+
+        var searchTerm = query?.Trim();
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            return Ok(Array.Empty<UserLookupResult>());
+        }
+
+        var results = new List<UserLookupResult>();
+
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        using var command = new SqlCommand(
+            @"SELECT TOP (10) UserId, Name, Email
+              FROM [User]
+              WHERE Name LIKE @Search OR Email LIKE @Search
+              ORDER BY Name ASC, Email ASC;",
+            connection);
+        command.Parameters.AddWithValue("@Search", $"%{searchTerm}%");
+
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            results.Add(new UserLookupResult
+            {
+                UserId = reader.GetInt32(0),
+                Name = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                Email = reader.IsDBNull(2) ? string.Empty : reader.GetString(2)
+            });
+        }
+
+        return Ok(results);
+    }
+
     [HttpPost("userroles/assign")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -161,9 +209,9 @@ public class ReportsController : ControllerBase
             return Forbid();
         }
 
-        if (request is null || string.IsNullOrWhiteSpace(request.Email) || request.UserRoleId <= 0)
+        if (request is null || request.UserId <= 0 || request.UserRoleId <= 0)
         {
-            return BadRequest(new { error = "Email and UserRoleId are required." });
+            return BadRequest(new { error = "UserId and UserRoleId are required." });
         }
 
         using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
@@ -171,8 +219,6 @@ public class ReportsController : ControllerBase
 
         try
         {
-            var normalizedEmail = request.Email.Trim();
-
             using var roleExistsCommand = new SqlCommand(
                 "SELECT COUNT(1) FROM [UserRole] WHERE UserRoleId = @UserRoleId;",
                 connection,
@@ -186,10 +232,10 @@ public class ReportsController : ControllerBase
             }
 
             using var userCommand = new SqlCommand(
-                "SELECT TOP (1) UserId FROM [User] WHERE Email = @Email;",
+                "SELECT TOP (1) UserId FROM [User] WHERE UserId = @UserId;",
                 connection,
                 transaction);
-            userCommand.Parameters.AddWithValue("@Email", normalizedEmail);
+            userCommand.Parameters.AddWithValue("@UserId", request.UserId);
             var userIdRaw = await userCommand.ExecuteScalarAsync(cancellationToken);
             if (userIdRaw is null)
             {
@@ -517,9 +563,9 @@ public class ReportsController : ControllerBase
             return false;
         }
 
-        if (string.IsNullOrWhiteSpace(subjectScoreDto.Subject))
+        if (subjectScoreDto.SubjectId <= 0)
         {
-            error = "Subject is required.";
+            error = "SubjectId is required.";
             return false;
         }
 
