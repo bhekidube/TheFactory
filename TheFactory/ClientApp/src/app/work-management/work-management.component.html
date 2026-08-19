@@ -39,6 +39,7 @@
           <th>Work Type</th>
           <th>Class</th>
           <th>Due Date</th>
+          <th>Total Mark</th>
           <th class="actions-col">Actions</th>
         </tr>
       </thead>
@@ -49,6 +50,7 @@
           <td>{{ work.workType }}</td>
           <td>{{ work.className || ('Class #' + work.classId) }}</td>
           <td>{{ work.dueDate || '-' }}</td>
+          <td>{{ work.totalMark }}</td>
           <td class="actions-col">
             <button type="button" class="link-btn" (click)="openEditWork(work)">Edit</button>
             <button
@@ -89,9 +91,9 @@
 
         <label>
           Work Type
-          <select name="workType" [(ngModel)]="workForm.workType" required>
-            <option value="">Select work type</option>
-            <option *ngFor="let workType of workTypeOptions" [value]="workType">{{ workType }}</option>
+          <select name="workTypeId" [(ngModel)]="workForm.workTypeId" [disabled]="loadingWorkTypes" required>
+            <option [ngValue]="0">Select work type</option>
+            <option *ngFor="let workType of workTypes" [ngValue]="workType.id">{{ workType.name }}</option>
           </select>
         </label>
 
@@ -109,8 +111,8 @@
         </label>
 
         <label>
-          Max Score
-          <input type="number" name="maxScore" min="0" [(ngModel)]="workForm.maxScore" />
+          Total Mark
+          <input type="number" name="totalMark" min="1" [(ngModel)]="workForm.totalMark" />
         </label>
 
         <div class="panel-actions">

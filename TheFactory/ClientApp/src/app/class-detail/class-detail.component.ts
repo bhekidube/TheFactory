@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ClassAssignedSubjectDto, ClassDetailDto } from '../learner-management/learner-management.models';
+import { ClassAssignedSubjectDto, ClassDetailDto, WorkDto, WorkTypeLookupDto, WorkUpsertRequestDto } from '../learner-management/learner-management.models';
 import { LearnerManagementService } from '../services/learner-management.service';
 
 @Component({
@@ -13,13 +13,23 @@ export class ClassDetailComponent implements OnInit {
   classId = 0;
   classDetail: ClassDetailDto | null = null;
   loading = false;
+  loadingWork = false;
   assigningSubject = false;
   searchingSubjects = false;
+  creatingWork = false;
+  updatingWork = false;
+  archivingWorkId: number | null = null;
 
   showSubjectModal = false;
+  showWorkModal = false;
   subjectSearchTerm = '';
   subjectLookupResults: ClassAssignedSubjectDto[] = [];
   selectedSubject: ClassAssignedSubjectDto | null = null;
+  isEditWorkMode = false;
+  editingWorkId = 0;
+  workItems: WorkDto[] = [];
+  workTypes: WorkTypeLookupDto[] = [];
+  workForm: WorkUpsertRequestDto = this.getEmptyWorkForm();
 
   errorMessage = '';
   successMessage = '';
@@ -50,6 +60,8 @@ export class ClassDetailComponent implements OnInit {
       next: detail => {
         this.classDetail = detail;
         this.loading = false;
+        this.loadWorkTypes();
+        this.loadWorkItems();
       },
       error: err => {
         this.loading = false;
@@ -131,6 +143,169 @@ export class ClassDetailComponent implements OnInit {
         this.errorMessage = this.mapHttpError(err, 'Failed to assign subject.');
       }
     });
+  }
+
+  loadWorkItems(): void {
+    if (!this.classId || this.classId <= 0) {
+      return;
+    }
+
+    this.loadingWork = true;
+    this.learnerService.getClassWorkItems(this.classId).subscribe({
+      next: items => {
+        this.workItems = items;
+        this.loadingWork = false;
+      },
+      error: err => {
+        this.loadingWork = false;
+        this.errorMessage = this.mapHttpError(err, 'Failed to load class work items.');
+      }
+    });
+  }
+
+  loadWorkTypes(): void {
+    this.learnerService.getWorkTypes().subscribe({
+      next: workTypes => {
+        this.workTypes = workTypes;
+      },
+      error: err => {
+        this.errorMessage = this.mapHttpError(err, 'Failed to load work types.');
+      }
+    });
+  }
+
+  openAddWorkModal(): void {
+    this.clearMessages();
+    this.isEditWorkMode = false;
+    this.editingWorkId = 0;
+    this.workForm = this.getEmptyWorkForm();
+    this.showWorkModal = true;
+  }
+
+  openEditWorkModal(work: WorkDto): void {
+    this.clearMessages();
+    this.isEditWorkMode = true;
+    this.editingWorkId = work.id;
+    this.workForm = {
+      title: work.title,
+      subjectId: work.subjectId,
+      description: work.description,
+      workTypeId: work.workTypeId,
+      classId: this.classId,
+      dueDate: work.dueDate,
+      totalMark: work.totalMark
+    };
+    this.showWorkModal = true;
+  }
+
+  closeWorkModal(): void {
+    if (this.creatingWork || this.updatingWork) {
+      return;
+    }
+
+    this.showWorkModal = false;
+    this.workForm = this.getEmptyWorkForm();
+  }
+
+  saveWork(): void {
+    this.clearMessages();
+    const validationError = this.validateWorkForm();
+    if (validationError) {
+      this.errorMessage = validationError;
+      return;
+    }
+
+    if (!this.isEditWorkMode) {
+      this.creatingWork = true;
+      this.learnerService.createClassWorkItem(this.classId, this.workForm).subscribe({
+        next: () => {
+          this.creatingWork = false;
+          this.showWorkModal = false;
+          this.successMessage = 'Work item created successfully.';
+          this.loadWorkItems();
+        },
+        error: err => {
+          this.creatingWork = false;
+          this.errorMessage = this.mapHttpError(err, 'Failed to create class work item.');
+        }
+      });
+
+      return;
+    }
+
+    this.updatingWork = true;
+    this.learnerService.updateClassWorkItem(this.classId, this.editingWorkId, this.workForm).subscribe({
+      next: () => {
+        this.updatingWork = false;
+        this.showWorkModal = false;
+        this.successMessage = 'Work item updated successfully.';
+        this.loadWorkItems();
+      },
+      error: err => {
+        this.updatingWork = false;
+        this.errorMessage = this.mapHttpError(err, 'Failed to update class work item.');
+      }
+    });
+  }
+
+  archiveWork(work: WorkDto): void {
+    this.clearMessages();
+
+    const confirmed = confirm('Delete this work item?');
+    if (!confirmed) {
+      return;
+    }
+
+    this.archivingWorkId = work.id;
+    this.learnerService.archiveClassWorkItem(this.classId, work.id).subscribe({
+      next: () => {
+        this.archivingWorkId = null;
+        this.successMessage = 'Work item deleted successfully.';
+        this.loadWorkItems();
+      },
+      error: err => {
+        this.archivingWorkId = null;
+        this.errorMessage = this.mapHttpError(err, 'Failed to delete class work item.');
+      }
+    });
+  }
+
+  trackByWorkId(_: number, work: WorkDto): number {
+    return work.id;
+  }
+
+  private validateWorkForm(): string {
+    if (!this.workForm.title?.trim()) {
+      return 'Title is required.';
+    }
+
+    const validWorkTypeIds = new Set(this.workTypes.map(workType => workType.id));
+    if (!Number.isFinite(this.workForm.workTypeId) || !validWorkTypeIds.has(this.workForm.workTypeId)) {
+      return 'A valid work type is required.';
+    }
+
+    const validSubjectIds = new Set((this.classDetail?.subjects || []).map(subject => subject.subjectId));
+    if (!Number.isFinite(this.workForm.subjectId) || !validSubjectIds.has(this.workForm.subjectId)) {
+      return 'A valid class subject is required.';
+    }
+
+    if (!Number.isFinite(this.workForm.totalMark) || this.workForm.totalMark <= 0) {
+      return 'Total mark must be greater than zero.';
+    }
+
+    return '';
+  }
+
+  private getEmptyWorkForm(): WorkUpsertRequestDto {
+    return {
+      title: '',
+      subjectId: 0,
+      description: '',
+      workTypeId: 0,
+      classId: this.classId,
+      dueDate: '',
+      totalMark: 100
+    };
   }
 
   private mapHttpError(error: unknown, fallback: string): string {

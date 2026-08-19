@@ -120,11 +120,12 @@ export interface WorkDto {
   subjectId: number;
   subjectName: string;
   description: string;
+  workTypeId: number;
   workType: string;
   classId: number;
   className: string;
   dueDate: string;
-  maxScore: number;
+  totalMark: number;
   isArchived: boolean;
 }
 
@@ -132,8 +133,13 @@ export interface WorkUpsertRequestDto {
   title: string;
   subjectId: number;
   description: string;
-  workType: string;
+  workTypeId: number;
   classId: number;
   dueDate: string;
-  maxScore: number;
+  totalMark: number;
+}
+
+export interface WorkTypeLookupDto {
+  id: number;
+  name: string;
 }

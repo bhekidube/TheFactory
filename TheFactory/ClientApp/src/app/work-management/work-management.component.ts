@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
-import { ClassDto, SubjectDto, WorkDto, WorkUpsertRequestDto } from '../learner-management/learner-management.models';
+import { ClassDto, SubjectDto, WorkDto, WorkTypeLookupDto, WorkUpsertRequestDto } from '../learner-management/learner-management.models';
 import { LearnerManagementService } from '../services/learner-management.service';
 
 @Component({
@@ -9,16 +9,16 @@ import { LearnerManagementService } from '../services/learner-management.service
   styleUrls: ['./work-management.component.css']
 })
 export class WorkManagementComponent implements OnInit {
-  private readonly workTypeLookup = ['Test', 'Exam', 'Exercise', 'Homework', 'Project'];
-
   workItems: WorkDto[] = [];
   classes: ClassDto[] = [];
   subjects: SubjectDto[] = [];
+  workTypes: WorkTypeLookupDto[] = [];
   searchTerm = '';
 
   loadingWork = false;
   loadingClasses = false;
   loadingSubjects = false;
+  loadingWorkTypes = false;
   creatingWork = false;
   updatingWork = false;
   archivingWorkId: number | null = null;
@@ -38,10 +38,7 @@ export class WorkManagementComponent implements OnInit {
     this.loadWorkItems();
     this.loadClasses();
     this.loadSubjects();
-  }
-
-  get workTypeOptions(): string[] {
-    return this.workTypeLookup;
+    this.loadWorkTypes();
   }
 
   get filteredWorkItems(): WorkDto[] {
@@ -103,6 +100,20 @@ export class WorkManagementComponent implements OnInit {
     });
   }
 
+  loadWorkTypes(): void {
+    this.loadingWorkTypes = true;
+    this.learnerService.getWorkTypes().subscribe({
+      next: workTypes => {
+        this.workTypes = workTypes;
+        this.loadingWorkTypes = false;
+      },
+      error: err => {
+        this.loadingWorkTypes = false;
+        this.errorMessage = this.mapHttpError(err, 'Failed to load work types.');
+      }
+    });
+  }
+
   openAddWork(): void {
     this.clearMessages();
     this.isEditMode = false;
@@ -119,10 +130,10 @@ export class WorkManagementComponent implements OnInit {
       title: work.title,
       subjectId: work.subjectId,
       description: work.description,
-      workType: work.workType,
+      workTypeId: work.workTypeId,
       classId: work.classId,
       dueDate: work.dueDate,
-      maxScore: work.maxScore
+      totalMark: work.totalMark
     };
     this.showWorkForm = true;
   }
@@ -211,11 +222,12 @@ export class WorkManagementComponent implements OnInit {
       return 'Subject is required.';
     }
 
-    if (!this.workForm.workType?.trim()) {
+    if (!Number.isFinite(this.workForm.workTypeId) || this.workForm.workTypeId <= 0) {
       return 'Work type is required.';
     }
 
-    if (!this.workTypeOptions.includes(this.workForm.workType)) {
+    const validWorkTypeIds = new Set(this.workTypes.map(workType => workType.id));
+    if (!validWorkTypeIds.has(this.workForm.workTypeId)) {
       return 'Work type is invalid.';
     }
 
@@ -223,8 +235,8 @@ export class WorkManagementComponent implements OnInit {
       return 'Class is required.';
     }
 
-    if (this.workForm.maxScore < 0) {
-      return 'Max score cannot be negative.';
+    if (!Number.isFinite(this.workForm.totalMark) || this.workForm.totalMark <= 0) {
+      return 'Total mark must be greater than zero.';
     }
 
     return '';
@@ -235,10 +247,10 @@ export class WorkManagementComponent implements OnInit {
       title: '',
       subjectId: 0,
       description: '',
-      workType: '',
+      workTypeId: 0,
       classId: 0,
       dueDate: '',
-      maxScore: 100
+      totalMark: 100
     };
   }
 

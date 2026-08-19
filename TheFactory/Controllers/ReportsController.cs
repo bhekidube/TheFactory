@@ -449,6 +449,14 @@ public class ReportsController : ControllerBase
         return Ok(workItems);
     }
 
+    [HttpGet("work-types")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<WorkTypeLookupDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<WorkTypeLookupDto>>> GetWorkTypes(CancellationToken cancellationToken)
+    {
+        var workTypes = await _learnerService.GetWorkTypesAsync(cancellationToken);
+        return Ok(workTypes);
+    }
+
     [HttpPost("work")]
     [ProducesResponseType(typeof(WorkDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -515,6 +523,83 @@ public class ReportsController : ControllerBase
         catch (Exception ex)
         {
             return BadRequest($"Failed to archive work item: {ex.Message}");
+        }
+    }
+
+    [HttpGet("classes/{classId:int}/work")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<WorkDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<WorkDto>>> GetClassWorkItems(int classId, CancellationToken cancellationToken)
+    {
+        var workItems = await _learnerService.GetWorkItemsForClassAsync(classId, cancellationToken);
+        return Ok(workItems);
+    }
+
+    [HttpPost("classes/{classId:int}/work")]
+    [ProducesResponseType(typeof(WorkDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<WorkDto>> CreateClassWorkItem(int classId, [FromBody] WorkUpsertRequestDto request, CancellationToken cancellationToken)
+    {
+        if (!TryValidateWorkRequest(request, out var validationError))
+        {
+            return BadRequest(validationError);
+        }
+
+        try
+        {
+            var created = await _learnerService.CreateWorkItemForClassAsync(classId, request, cancellationToken);
+            return Created($"/api/classes/{classId}/work/{created.Id}", created);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Failed to create class work item: {ex.Message}");
+        }
+    }
+
+    [HttpPut("classes/{classId:int}/work/{workId:int}")]
+    [ProducesResponseType(typeof(WorkDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<WorkDto>> UpdateClassWorkItem(int classId, int workId, [FromBody] WorkUpsertRequestDto request, CancellationToken cancellationToken)
+    {
+        if (!TryValidateWorkRequest(request, out var validationError))
+        {
+            return BadRequest(validationError);
+        }
+
+        try
+        {
+            var updated = await _learnerService.UpdateWorkItemForClassAsync(classId, workId, request, cancellationToken);
+            if (updated is null)
+            {
+                return NotFound();
+            }
+
+            return Ok(updated);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Failed to update class work item: {ex.Message}");
+        }
+    }
+
+    [HttpDelete("classes/{classId:int}/work/{workId:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> ArchiveClassWorkItem(int classId, int workId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var archived = await _learnerService.ArchiveWorkItemForClassAsync(classId, workId, cancellationToken);
+            if (!archived)
+            {
+                return NotFound();
+            }
+
+            return Ok(new { message = "Class work item archived successfully." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Failed to archive class work item: {ex.Message}");
         }
     }
 
@@ -897,9 +982,9 @@ public class ReportsController : ControllerBase
             return false;
         }
 
-        if (string.IsNullOrWhiteSpace(request.WorkType))
+        if (request.WorkTypeId <= 0)
         {
-            error = "WorkType is required.";
+            error = "WorkTypeId is required.";
             return false;
         }
 
@@ -909,9 +994,9 @@ public class ReportsController : ControllerBase
             return false;
         }
 
-        if (request.MaxScore < 0)
+        if (request.TotalMark <= 0)
         {
-            error = "MaxScore cannot be negative.";
+            error = "TotalMark must be greater than zero.";
             return false;
         }
 

@@ -18,6 +18,11 @@ public interface ILearnerService
     Task<LearnerDetailDto?> GetLearnerDetailByIdAsync(int learnerId, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<LearnerAcademicRecordDto>> GetLearnerAcademicRecordsAsync(int learnerId, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<WorkDto>> GetWorkItemsForCurrentSchoolAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<WorkTypeLookupDto>> GetWorkTypesAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<WorkDto>> GetWorkItemsForClassAsync(int classId, CancellationToken cancellationToken = default);
+    Task<WorkDto> CreateWorkItemForClassAsync(int classId, WorkUpsertRequestDto request, CancellationToken cancellationToken = default);
+    Task<WorkDto?> UpdateWorkItemForClassAsync(int classId, int workId, WorkUpsertRequestDto request, CancellationToken cancellationToken = default);
+    Task<bool> ArchiveWorkItemForClassAsync(int classId, int workId, CancellationToken cancellationToken = default);
     Task<WorkDto> CreateWorkItemAsync(WorkUpsertRequestDto request, CancellationToken cancellationToken = default);
     Task<WorkDto?> UpdateWorkItemAsync(int workId, WorkUpsertRequestDto request, CancellationToken cancellationToken = default);
     Task<bool> ArchiveWorkItemAsync(int workId, CancellationToken cancellationToken = default);

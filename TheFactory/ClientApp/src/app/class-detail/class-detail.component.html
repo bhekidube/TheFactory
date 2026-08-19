@@ -83,6 +83,49 @@
         </table>
       </div>
     </div>
+
+    <div class="section-card">
+      <div class="section-header">
+        <h3>Work</h3>
+        <button type="button" class="primary-btn" (click)="openAddWorkModal()">+ Add Work</button>
+      </div>
+
+      <div class="state-card" *ngIf="loadingWork">Loading class work items...</div>
+      <div class="state-card" *ngIf="!loadingWork && workItems.length === 0">No work items assigned to this class yet.</div>
+      <div class="table-wrap" *ngIf="!loadingWork && workItems.length > 0">
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Subject</th>
+              <th>Work Type</th>
+              <th>Due Date</th>
+              <th>Total Mark</th>
+              <th class="actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let work of workItems; trackBy: trackByWorkId">
+              <td>{{ work.title }}</td>
+              <td>{{ work.subjectName || '-' }}</td>
+              <td>{{ work.workType || '-' }}</td>
+              <td>{{ work.dueDate || '-' }}</td>
+              <td>{{ work.totalMark }}</td>
+              <td class="actions-col">
+                <button type="button" class="link-btn" (click)="openEditWorkModal(work)">Edit</button>
+                <button
+                  type="button"
+                  class="danger-link-btn"
+                  [disabled]="archivingWorkId === work.id"
+                  (click)="archiveWork(work)">
+                  {{ archivingWorkId === work.id ? 'Deleting...' : 'Delete' }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <div class="overlay" *ngIf="showSubjectModal">
@@ -124,6 +167,61 @@
           Cancel
         </button>
       </div>
+    </div>
+  </div>
+
+  <div class="overlay" *ngIf="showWorkModal">
+    <div class="panel">
+      <h3>{{ isEditWorkMode ? 'Edit Work' : 'Add Work' }}</h3>
+
+      <form (ngSubmit)="saveWork()">
+        <label>
+          Title <span class="required">*</span>
+          <input type="text" name="workTitle" [(ngModel)]="workForm.title" required />
+        </label>
+
+        <label>
+          Work Type <span class="required">*</span>
+          <select name="workTypeId" [(ngModel)]="workForm.workTypeId" required>
+            <option [ngValue]="0">Select work type</option>
+            <option *ngFor="let workType of workTypes" [ngValue]="workType.id">{{ workType.name }}</option>
+          </select>
+        </label>
+
+        <label>
+          Subject <span class="required">*</span>
+          <select name="workSubjectId" [(ngModel)]="workForm.subjectId" required>
+            <option [ngValue]="0">Select class subject</option>
+            <option *ngFor="let subject of classDetail?.subjects || []" [ngValue]="subject.subjectId">
+              {{ subject.name }}{{ subject.code ? ' (' + subject.code + ')' : '' }}
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Description / Instructions
+          <textarea name="workDescription" rows="3" [(ngModel)]="workForm.description"></textarea>
+        </label>
+
+        <label>
+          Due Date
+          <input type="date" name="workDueDate" [(ngModel)]="workForm.dueDate" />
+        </label>
+
+        <label>
+          Total Mark
+          <input type="number" name="workTotalMark" min="1" [(ngModel)]="workForm.totalMark" />
+        </label>
+
+        <div class="panel-actions">
+          <button type="submit" class="primary-btn" [disabled]="creatingWork || updatingWork">
+            {{ creatingWork || updatingWork ? 'Saving...' : (isEditWorkMode ? 'Save Changes' : 'Create Work') }}
+          </button>
+          <button type="button" class="secondary-btn" [disabled]="creatingWork || updatingWork" (click)="closeWorkModal()">
+            Cancel
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </section>

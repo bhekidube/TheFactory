@@ -147,11 +147,12 @@ public sealed class WorkDto
     public int SubjectId { get; set; }
     public string SubjectName { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    public int WorkTypeId { get; set; }
     public string WorkType { get; set; } = string.Empty;
     public int ClassId { get; set; }
     public string ClassName { get; set; } = string.Empty;
     public string DueDate { get; set; } = string.Empty;
-    public int MaxScore { get; set; }
+    public int TotalMark { get; set; }
     public bool IsArchived { get; set; }
 }
 
@@ -160,8 +161,14 @@ public sealed class WorkUpsertRequestDto
     public string Title { get; set; } = string.Empty;
     public int SubjectId { get; set; }
     public string Description { get; set; } = string.Empty;
-    public string WorkType { get; set; } = string.Empty;
+    public int WorkTypeId { get; set; }
     public int ClassId { get; set; }
     public string DueDate { get; set; } = string.Empty;
-    public int MaxScore { get; set; }
+    public int TotalMark { get; set; }
+}
+
+public sealed class WorkTypeLookupDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
 }

@@ -17,6 +17,7 @@ import {
   SubjectDto,
   WorkDto,
   WorkUpsertRequestDto,
+  WorkTypeLookupDto,
   SubjectScoreDto,
   SubjectScoreUpsertRequest
 } from '../learner-management/learner-management.models';
@@ -142,6 +143,10 @@ export class LearnerManagementService {
     return this.http.get<WorkDto[]>(`${this.baseUrl}/work`, this.getRequestOptions());
   }
 
+  getWorkTypes(): Observable<WorkTypeLookupDto[]> {
+    return this.http.get<WorkTypeLookupDto[]>(`${this.baseUrl}/work-types`, this.getRequestOptions());
+  }
+
   createWorkItem(payload: WorkUpsertRequestDto): Observable<WorkDto> {
     return this.http.post<WorkDto>(`${this.baseUrl}/work`, payload, this.getRequestOptions());
   }
@@ -152,6 +157,22 @@ export class LearnerManagementService {
 
   archiveWorkItem(id: number): Observable<unknown> {
     return this.http.delete(`${this.baseUrl}/work/${id}`, this.getRequestOptions());
+  }
+
+  getClassWorkItems(classId: number): Observable<WorkDto[]> {
+    return this.http.get<WorkDto[]>(`${this.baseUrl}/classes/${classId}/work`, this.getRequestOptions());
+  }
+
+  createClassWorkItem(classId: number, payload: WorkUpsertRequestDto): Observable<WorkDto> {
+    return this.http.post<WorkDto>(`${this.baseUrl}/classes/${classId}/work`, payload, this.getRequestOptions());
+  }
+
+  updateClassWorkItem(classId: number, workId: number, payload: WorkUpsertRequestDto): Observable<WorkDto> {
+    return this.http.put<WorkDto>(`${this.baseUrl}/classes/${classId}/work/${workId}`, payload, this.getRequestOptions());
+  }
+
+  archiveClassWorkItem(classId: number, workId: number): Observable<unknown> {
+    return this.http.delete(`${this.baseUrl}/classes/${classId}/work/${workId}`, this.getRequestOptions());
   }
 
   getLearner(id: number): Observable<LearnerDto> {

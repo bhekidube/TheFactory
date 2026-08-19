@@ -584,15 +584,17 @@ public sealed class LearnerService : ILearnerService
                                          ISNULL(w.SubjectId, 0),
                                          ISNULL(s.Name, ''),
                      ISNULL(w.Description, ''),
-                     w.WorkType,
+                                         ISNULL(w.WorkTypeId, 0),
+                                         ISNULL(wt.Name, ''),
                      w.ClassId,
                      ISNULL(c.Name, ''),
                      ISNULL(CONVERT(NVARCHAR(10), w.DueDate, 23), ''),
-                     ISNULL(w.MaxScore, 0),
+                                         ISNULL(w.TotalMark, ISNULL(w.MaxScore, 0)),
                      w.IsArchived
               FROM institution.Work AS w
               LEFT JOIN institution.Class AS c ON c.Id = w.ClassId
                             LEFT JOIN institution.Subject AS s ON s.Id = w.SubjectId AND s.TenantId = w.SchoolId
+                            LEFT JOIN institution.WorkTypes AS wt ON wt.Id = w.WorkTypeId
               WHERE w.SchoolId = @SchoolId
                 AND w.IsArchived = 0
               ORDER BY w.DueDate ASC, w.Id DESC;",
@@ -611,16 +613,276 @@ public sealed class LearnerService : ILearnerService
                 SubjectId = reader.IsDBNull(3) ? 0 : reader.GetInt32(3),
                 SubjectName = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
                 Description = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
-                WorkType = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
-                ClassId = reader.GetInt32(7),
-                ClassName = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
-                DueDate = reader.IsDBNull(9) ? string.Empty : reader.GetString(9),
-                MaxScore = reader.IsDBNull(10) ? 0 : reader.GetInt32(10),
-                IsArchived = !reader.IsDBNull(11) && reader.GetBoolean(11)
+                WorkTypeId = reader.IsDBNull(6) ? 0 : reader.GetInt32(6),
+                WorkType = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+                ClassId = reader.GetInt32(8),
+                ClassName = reader.IsDBNull(9) ? string.Empty : reader.GetString(9),
+                DueDate = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
+                TotalMark = reader.IsDBNull(11) ? 0 : reader.GetInt32(11),
+                IsArchived = !reader.IsDBNull(12) && reader.GetBoolean(12)
             });
         }
 
         return workItems;
+    }
+
+    public async Task<IReadOnlyCollection<WorkTypeLookupDto>> GetWorkTypesAsync(CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        using var command = new SqlCommand(
+            @"SELECT Id, Name
+              FROM institution.WorkTypes
+              ORDER BY Id ASC;",
+            connection);
+
+        var workTypes = new List<WorkTypeLookupDto>();
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            workTypes.Add(new WorkTypeLookupDto
+            {
+                Id = reader.GetInt32(0),
+                Name = reader.IsDBNull(1) ? string.Empty : reader.GetString(1)
+            });
+        }
+
+        return workTypes;
+    }
+
+    public async Task<IReadOnlyCollection<WorkDto>> GetWorkItemsForClassAsync(int classId, CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        var tenantId = await ResolveTenantIdAsync(connection, cancellationToken);
+        if (!tenantId.HasValue)
+        {
+            return Array.Empty<WorkDto>();
+        }
+
+        using var command = new SqlCommand(
+            @"SELECT w.Id,
+                     w.SchoolId,
+                     ISNULL(w.Title, ''),
+                     ISNULL(w.SubjectId, 0),
+                     ISNULL(s.Name, ''),
+                     ISNULL(w.Description, ''),
+                                         ISNULL(w.WorkTypeId, 0),
+                                         ISNULL(wt.Name, ''),
+                     w.ClassId,
+                     ISNULL(c.Name, ''),
+                     ISNULL(CONVERT(NVARCHAR(10), w.DueDate, 23), ''),
+                                         ISNULL(w.TotalMark, ISNULL(w.MaxScore, 0)),
+                     w.IsArchived
+              FROM institution.Work AS w
+              LEFT JOIN institution.Class AS c ON c.Id = w.ClassId
+              LEFT JOIN institution.Subject AS s ON s.Id = w.SubjectId AND s.TenantId = w.SchoolId
+                            LEFT JOIN institution.WorkTypes AS wt ON wt.Id = w.WorkTypeId
+              WHERE w.SchoolId = @SchoolId
+                AND w.ClassId = @ClassId
+                AND w.IsArchived = 0
+              ORDER BY w.DueDate ASC, w.Id DESC;",
+            connection);
+        command.Parameters.AddWithValue("@SchoolId", tenantId.Value);
+        command.Parameters.AddWithValue("@ClassId", classId);
+
+        var workItems = new List<WorkDto>();
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            workItems.Add(new WorkDto
+            {
+                Id = reader.GetInt32(0),
+                SchoolId = reader.GetInt32(1),
+                Title = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                SubjectId = reader.IsDBNull(3) ? 0 : reader.GetInt32(3),
+                SubjectName = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
+                Description = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
+                WorkTypeId = reader.IsDBNull(6) ? 0 : reader.GetInt32(6),
+                WorkType = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+                ClassId = reader.GetInt32(8),
+                ClassName = reader.IsDBNull(9) ? string.Empty : reader.GetString(9),
+                DueDate = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
+                TotalMark = reader.IsDBNull(11) ? 0 : reader.GetInt32(11),
+                IsArchived = !reader.IsDBNull(12) && reader.GetBoolean(12)
+            });
+        }
+
+        return workItems;
+    }
+
+    public async Task<WorkDto> CreateWorkItemForClassAsync(int classId, WorkUpsertRequestDto request, CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        var tenantId = await ResolveTenantIdAsync(connection, cancellationToken);
+        if (!tenantId.HasValue)
+        {
+            throw new InvalidOperationException("No tenant found in institution.Tenant.");
+        }
+
+        using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
+        try
+        {
+            var className = await ResolveClassNameAsync(connection, transaction, tenantId.Value, classId, cancellationToken);
+            if (string.IsNullOrWhiteSpace(className))
+            {
+                throw new InvalidOperationException("Selected class does not exist for this school.");
+            }
+
+            var subjectName = await ResolveClassAssignedSubjectNameAsync(connection, transaction, classId, tenantId.Value, request.SubjectId, cancellationToken);
+            if (string.IsNullOrWhiteSpace(subjectName))
+            {
+                throw new InvalidOperationException("Selected subject is not assigned to this class.");
+            }
+
+                        var workTypeName = await ResolveWorkTypeNameAsync(connection, transaction, request.WorkTypeId, cancellationToken);
+                        if (string.IsNullOrWhiteSpace(workTypeName))
+                        {
+                                throw new InvalidOperationException("Selected work type is invalid.");
+                        }
+
+            var nextId = await GetNextIdAsync(connection, transaction, "institution.Work", cancellationToken);
+            using var command = new SqlCommand(
+                                @"INSERT INTO institution.Work (Id, SchoolId, Title, SubjectId, Description, WorkTypeId, WorkType, ClassId, DueDate, TotalMark, MaxScore, IsArchived)
+                                    VALUES (@Id, @SchoolId, @Title, @SubjectId, @Description, @WorkTypeId, @WorkType, @ClassId, @DueDate, @TotalMark, @TotalMark, 0);",
+                connection,
+                transaction);
+            command.Parameters.AddWithValue("@Id", nextId);
+            command.Parameters.AddWithValue("@SchoolId", tenantId.Value);
+            command.Parameters.AddWithValue("@Title", request.Title.Trim());
+            command.Parameters.AddWithValue("@SubjectId", request.SubjectId);
+            command.Parameters.AddWithValue("@Description", string.IsNullOrWhiteSpace(request.Description) ? DBNull.Value : request.Description.Trim());
+            command.Parameters.AddWithValue("@WorkTypeId", request.WorkTypeId);
+            command.Parameters.AddWithValue("@WorkType", workTypeName);
+            command.Parameters.AddWithValue("@ClassId", classId);
+            command.Parameters.AddWithValue("@DueDate", string.IsNullOrWhiteSpace(request.DueDate) ? DBNull.Value : request.DueDate.Trim());
+            command.Parameters.AddWithValue("@TotalMark", request.TotalMark);
+
+            await command.ExecuteNonQueryAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            return new WorkDto
+            {
+                Id = nextId,
+                SchoolId = tenantId.Value,
+                Title = request.Title.Trim(),
+                SubjectId = request.SubjectId,
+                SubjectName = subjectName,
+                Description = request.Description?.Trim() ?? string.Empty,
+                WorkTypeId = request.WorkTypeId,
+                WorkType = workTypeName,
+                ClassId = classId,
+                ClassName = className,
+                DueDate = request.DueDate?.Trim() ?? string.Empty,
+                TotalMark = request.TotalMark,
+                IsArchived = false
+            };
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
+    public async Task<WorkDto?> UpdateWorkItemForClassAsync(int classId, int workId, WorkUpsertRequestDto request, CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        var tenantId = await ResolveTenantIdAsync(connection, cancellationToken);
+        if (!tenantId.HasValue)
+        {
+            return null;
+        }
+
+        var className = await ResolveClassNameAsync(connection, null, tenantId.Value, classId, cancellationToken);
+        if (string.IsNullOrWhiteSpace(className))
+        {
+            return null;
+        }
+
+        var subjectName = await ResolveClassAssignedSubjectNameAsync(connection, null, classId, tenantId.Value, request.SubjectId, cancellationToken);
+        if (string.IsNullOrWhiteSpace(subjectName))
+        {
+            return null;
+        }
+
+        var workTypeName = await ResolveWorkTypeNameAsync(connection, null, request.WorkTypeId, cancellationToken);
+        if (string.IsNullOrWhiteSpace(workTypeName))
+        {
+            return null;
+        }
+
+        using var command = new SqlCommand(
+            @"UPDATE institution.Work
+              SET Title = @Title,
+                  SubjectId = @SubjectId,
+                  Description = @Description,
+                  WorkTypeId = @WorkTypeId,
+                  WorkType = @WorkType,
+                  DueDate = @DueDate,
+                                    TotalMark = @TotalMark,
+                                    MaxScore = @TotalMark
+              WHERE Id = @Id
+                AND SchoolId = @SchoolId
+                AND ClassId = @ClassId
+                AND IsArchived = 0;",
+            connection);
+        command.Parameters.AddWithValue("@Id", workId);
+        command.Parameters.AddWithValue("@SchoolId", tenantId.Value);
+        command.Parameters.AddWithValue("@ClassId", classId);
+        command.Parameters.AddWithValue("@Title", request.Title.Trim());
+        command.Parameters.AddWithValue("@SubjectId", request.SubjectId);
+        command.Parameters.AddWithValue("@Description", string.IsNullOrWhiteSpace(request.Description) ? DBNull.Value : request.Description.Trim());
+        command.Parameters.AddWithValue("@WorkTypeId", request.WorkTypeId);
+        command.Parameters.AddWithValue("@WorkType", workTypeName);
+        command.Parameters.AddWithValue("@DueDate", string.IsNullOrWhiteSpace(request.DueDate) ? DBNull.Value : request.DueDate.Trim());
+        command.Parameters.AddWithValue("@TotalMark", request.TotalMark);
+
+        var affected = await command.ExecuteNonQueryAsync(cancellationToken);
+        if (affected == 0)
+        {
+            return null;
+        }
+
+        return new WorkDto
+        {
+            Id = workId,
+            SchoolId = tenantId.Value,
+            Title = request.Title.Trim(),
+            SubjectId = request.SubjectId,
+            SubjectName = subjectName,
+            Description = request.Description?.Trim() ?? string.Empty,
+            WorkTypeId = request.WorkTypeId,
+            WorkType = workTypeName,
+            ClassId = classId,
+            ClassName = className,
+            DueDate = request.DueDate?.Trim() ?? string.Empty,
+            TotalMark = request.TotalMark,
+            IsArchived = false
+        };
+    }
+
+    public async Task<bool> ArchiveWorkItemForClassAsync(int classId, int workId, CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        var tenantId = await ResolveTenantIdAsync(connection, cancellationToken);
+        if (!tenantId.HasValue)
+        {
+            return false;
+        }
+
+        using var command = new SqlCommand(
+            @"UPDATE institution.Work
+              SET IsArchived = 1
+              WHERE Id = @Id
+                AND SchoolId = @SchoolId
+                AND ClassId = @ClassId
+                AND IsArchived = 0;",
+            connection);
+        command.Parameters.AddWithValue("@Id", workId);
+        command.Parameters.AddWithValue("@SchoolId", tenantId.Value);
+        command.Parameters.AddWithValue("@ClassId", classId);
+
+        var affected = await command.ExecuteNonQueryAsync(cancellationToken);
+        return affected > 0;
     }
 
     public async Task<WorkDto> CreateWorkItemAsync(WorkUpsertRequestDto request, CancellationToken cancellationToken = default)
@@ -647,10 +909,16 @@ public sealed class LearnerService : ILearnerService
                 throw new InvalidOperationException("Selected subject does not exist for this school.");
             }
 
+                        var workTypeName = await ResolveWorkTypeNameAsync(connection, transaction, request.WorkTypeId, cancellationToken);
+                        if (string.IsNullOrWhiteSpace(workTypeName))
+                        {
+                                throw new InvalidOperationException("Selected work type is invalid.");
+                        }
+
             var nextId = await GetNextIdAsync(connection, transaction, "institution.Work", cancellationToken);
             using var command = new SqlCommand(
-                @"INSERT INTO institution.Work (Id, SchoolId, Title, SubjectId, Description, WorkType, ClassId, DueDate, MaxScore, IsArchived)
-                  VALUES (@Id, @SchoolId, @Title, @SubjectId, @Description, @WorkType, @ClassId, @DueDate, @MaxScore, 0);",
+                                @"INSERT INTO institution.Work (Id, SchoolId, Title, SubjectId, Description, WorkTypeId, WorkType, ClassId, DueDate, TotalMark, MaxScore, IsArchived)
+                                    VALUES (@Id, @SchoolId, @Title, @SubjectId, @Description, @WorkTypeId, @WorkType, @ClassId, @DueDate, @TotalMark, @TotalMark, 0);",
                 connection,
                 transaction);
             command.Parameters.AddWithValue("@Id", nextId);
@@ -658,10 +926,11 @@ public sealed class LearnerService : ILearnerService
                         command.Parameters.AddWithValue("@Title", request.Title.Trim());
             command.Parameters.AddWithValue("@SubjectId", request.SubjectId);
             command.Parameters.AddWithValue("@Description", string.IsNullOrWhiteSpace(request.Description) ? DBNull.Value : request.Description.Trim());
-            command.Parameters.AddWithValue("@WorkType", request.WorkType.Trim());
+                        command.Parameters.AddWithValue("@WorkTypeId", request.WorkTypeId);
+                        command.Parameters.AddWithValue("@WorkType", workTypeName);
             command.Parameters.AddWithValue("@ClassId", request.ClassId);
             command.Parameters.AddWithValue("@DueDate", string.IsNullOrWhiteSpace(request.DueDate) ? DBNull.Value : request.DueDate.Trim());
-            command.Parameters.AddWithValue("@MaxScore", request.MaxScore <= 0 ? DBNull.Value : request.MaxScore);
+            command.Parameters.AddWithValue("@TotalMark", request.TotalMark);
 
             await command.ExecuteNonQueryAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
@@ -674,11 +943,12 @@ public sealed class LearnerService : ILearnerService
                 SubjectId = request.SubjectId,
                 SubjectName = subjectName,
                 Description = request.Description?.Trim() ?? string.Empty,
-                WorkType = request.WorkType.Trim(),
+                WorkTypeId = request.WorkTypeId,
+                WorkType = workTypeName,
                 ClassId = request.ClassId,
                 ClassName = className,
                 DueDate = request.DueDate?.Trim() ?? string.Empty,
-                MaxScore = request.MaxScore,
+                TotalMark = request.TotalMark,
                 IsArchived = false
             };
         }
@@ -710,15 +980,23 @@ public sealed class LearnerService : ILearnerService
             return null;
         }
 
+        var workTypeName = await ResolveWorkTypeNameAsync(connection, null, request.WorkTypeId, cancellationToken);
+        if (string.IsNullOrWhiteSpace(workTypeName))
+        {
+            return null;
+        }
+
         using var command = new SqlCommand(
             @"UPDATE institution.Work
               SET Title = @Title,
                   SubjectId = @SubjectId,
                   Description = @Description,
+                  WorkTypeId = @WorkTypeId,
                   WorkType = @WorkType,
                   ClassId = @ClassId,
                   DueDate = @DueDate,
-                  MaxScore = @MaxScore
+                                    TotalMark = @TotalMark,
+                                    MaxScore = @TotalMark
               WHERE Id = @Id
                 AND SchoolId = @SchoolId
                 AND IsArchived = 0;",
@@ -728,10 +1006,11 @@ public sealed class LearnerService : ILearnerService
         command.Parameters.AddWithValue("@Title", request.Title.Trim());
         command.Parameters.AddWithValue("@SubjectId", request.SubjectId);
         command.Parameters.AddWithValue("@Description", string.IsNullOrWhiteSpace(request.Description) ? DBNull.Value : request.Description.Trim());
-        command.Parameters.AddWithValue("@WorkType", request.WorkType.Trim());
+        command.Parameters.AddWithValue("@WorkTypeId", request.WorkTypeId);
+        command.Parameters.AddWithValue("@WorkType", workTypeName);
         command.Parameters.AddWithValue("@ClassId", request.ClassId);
         command.Parameters.AddWithValue("@DueDate", string.IsNullOrWhiteSpace(request.DueDate) ? DBNull.Value : request.DueDate.Trim());
-        command.Parameters.AddWithValue("@MaxScore", request.MaxScore <= 0 ? DBNull.Value : request.MaxScore);
+        command.Parameters.AddWithValue("@TotalMark", request.TotalMark);
 
         var affected = await command.ExecuteNonQueryAsync(cancellationToken);
         if (affected == 0)
@@ -747,11 +1026,12 @@ public sealed class LearnerService : ILearnerService
             SubjectId = request.SubjectId,
             SubjectName = subjectName,
             Description = request.Description?.Trim() ?? string.Empty,
-            WorkType = request.WorkType.Trim(),
+            WorkTypeId = request.WorkTypeId,
+            WorkType = workTypeName,
             ClassId = request.ClassId,
             ClassName = className,
             DueDate = request.DueDate?.Trim() ?? string.Empty,
-            MaxScore = request.MaxScore,
+            TotalMark = request.TotalMark,
             IsArchived = false
         };
     }
@@ -1430,6 +1710,50 @@ public sealed class LearnerService : ILearnerService
                 AND IsActive = 1;",
             connection,
             transaction);
+        command.Parameters.AddWithValue("@SubjectId", subjectId);
+        command.Parameters.AddWithValue("@SchoolId", schoolId);
+
+        var value = await command.ExecuteScalarAsync(cancellationToken);
+        return value is null || value == DBNull.Value ? string.Empty : Convert.ToString(value) ?? string.Empty;
+    }
+
+    private static async Task<string> ResolveWorkTypeNameAsync(
+        SqlConnection connection,
+        SqlTransaction? transaction,
+        int workTypeId,
+        CancellationToken cancellationToken)
+    {
+        using var command = new SqlCommand(
+            @"SELECT TOP (1) Name
+              FROM institution.WorkTypes
+              WHERE Id = @WorkTypeId;",
+            connection,
+            transaction);
+        command.Parameters.AddWithValue("@WorkTypeId", workTypeId);
+
+        var value = await command.ExecuteScalarAsync(cancellationToken);
+        return value is null || value == DBNull.Value ? string.Empty : Convert.ToString(value) ?? string.Empty;
+    }
+
+    private static async Task<string> ResolveClassAssignedSubjectNameAsync(
+        SqlConnection connection,
+        SqlTransaction? transaction,
+        int classId,
+        int schoolId,
+        int subjectId,
+        CancellationToken cancellationToken)
+    {
+        using var command = new SqlCommand(
+            @"SELECT TOP (1) s.Name
+              FROM institution.ClassSubject AS cs
+              INNER JOIN institution.Subject AS s ON s.Id = cs.SubjectId
+              WHERE cs.ClassId = @ClassId
+                AND cs.SubjectId = @SubjectId
+                AND s.TenantId = @SchoolId
+                AND s.IsActive = 1;",
+            connection,
+            transaction);
+        command.Parameters.AddWithValue("@ClassId", classId);
         command.Parameters.AddWithValue("@SubjectId", subjectId);
         command.Parameters.AddWithValue("@SchoolId", schoolId);
 
