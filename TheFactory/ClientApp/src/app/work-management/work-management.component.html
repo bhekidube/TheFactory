@@ -1,0 +1,117 @@
+<section class="work-page">
+  <div class="page-header">
+    <div>
+      <h2>Work Management</h2>
+      <p>Create and manage work items assigned to classes.</p>
+    </div>
+    <button type="button" class="primary-btn" (click)="openAddWork()">+ Add Work</button>
+  </div>
+
+  <div class="message error" *ngIf="errorMessage">{{ errorMessage }}</div>
+  <div class="message success" *ngIf="successMessage">{{ successMessage }}</div>
+
+  <div class="toolbar">
+    <input
+      type="text"
+      [(ngModel)]="searchTerm"
+      placeholder="Search work..."
+      aria-label="Search work"
+    />
+    <button type="button" class="secondary-btn" (click)="loadWorkItems()" [disabled]="loadingWork">
+      {{ loadingWork ? 'Refreshing...' : 'Refresh Work' }}
+    </button>
+  </div>
+
+  <div *ngIf="loadingWork" class="state-card">Loading work items...</div>
+
+  <div class="state-card empty" *ngIf="!loadingWork && filteredWorkItems.length === 0">
+    <strong>No work items yet</strong>
+    <p>Add the first work item for this school.</p>
+    <button type="button" class="primary-btn" (click)="openAddWork()">Add Work</button>
+  </div>
+
+  <div class="table-wrap" *ngIf="!loadingWork && filteredWorkItems.length > 0">
+    <table>
+      <thead>
+        <tr>
+          <th>Work ID</th>
+          <th>Title</th>
+          <th>Work Type</th>
+          <th>Class</th>
+          <th>Due Date</th>
+          <th class="actions-col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let work of filteredWorkItems; trackBy: trackByWorkId">
+          <td>{{ work.id }}</td>
+          <td>{{ work.title }}</td>
+          <td>{{ work.workType }}</td>
+          <td>{{ work.className || ('Class #' + work.classId) }}</td>
+          <td>{{ work.dueDate || '-' }}</td>
+          <td class="actions-col">
+            <button type="button" class="link-btn" (click)="openEditWork(work)">Edit</button>
+            <button
+              type="button"
+              class="danger-link-btn"
+              [disabled]="archivingWorkId === work.id"
+              (click)="archiveWork(work)">
+              {{ archivingWorkId === work.id ? 'Archiving...' : 'Archive' }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="overlay" *ngIf="showWorkForm">
+    <div class="panel">
+      <h3>{{ isEditMode ? 'Edit Work' : 'Add Work' }}</h3>
+
+      <form (ngSubmit)="saveWork()">
+        <label>
+          Title
+          <input type="text" name="workTitle" [(ngModel)]="workForm.title" required />
+        </label>
+
+        <label>
+          Description
+          <textarea name="workDescription" rows="3" [(ngModel)]="workForm.description"></textarea>
+        </label>
+
+        <label>
+          Work Type
+          <select name="workType" [(ngModel)]="workForm.workType" required>
+            <option value="">Select work type</option>
+            <option *ngFor="let workType of workTypeOptions" [value]="workType">{{ workType }}</option>
+          </select>
+        </label>
+
+        <label>
+          Class
+          <select name="classId" [(ngModel)]="workForm.classId" [disabled]="loadingClasses" required>
+            <option [ngValue]="0">Select class</option>
+            <option *ngFor="let schoolClass of classes" [ngValue]="schoolClass.id">{{ schoolClass.name }} ({{ schoolClass.grade }})</option>
+          </select>
+        </label>
+
+        <label>
+          Due Date
+          <input type="date" name="dueDate" [(ngModel)]="workForm.dueDate" />
+        </label>
+
+        <label>
+          Max Score
+          <input type="number" name="maxScore" min="0" [(ngModel)]="workForm.maxScore" />
+        </label>
+
+        <div class="panel-actions">
+          <button type="submit" class="primary-btn" [disabled]="creatingWork || updatingWork">
+            {{ creatingWork || updatingWork ? 'Saving...' : (isEditMode ? 'Save Changes' : 'Create Work') }}
+          </button>
+          <button type="button" class="secondary-btn" [disabled]="creatingWork || updatingWork" (click)="closeWorkForm()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>

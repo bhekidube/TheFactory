@@ -12,6 +12,7 @@ import { BusSearchComponent } from './bus-search/bus-search.component';
 import { ClassDetailComponent } from './class-detail/class-detail.component';
 import { CurriculumViewComponent } from './curriculum-view/curriculum-view.component';
 import { LearnerDetailComponent } from './learner-detail/learner-detail.component';
+import { WorkManagementComponent } from './work-management/work-management.component';
 
 const routes: Routes = [
   { path: '', component: BusSearchComponent, pathMatch: 'full' },
@@ -22,11 +23,13 @@ const routes: Routes = [
   { path: 'learning/schools/:schoolId/reports', component: LearningSchoolComponent },
   { path: 'learning/schools/:schoolId/classes', component: LearningSchoolComponent },
   { path: 'learning/schools/:schoolId/curriculum', component: LearningSchoolComponent },
+  { path: 'learning/schools/:schoolId/work', component: LearningSchoolComponent },
   { path: 'admin-screen', component: AdminScreenComponent },
   { path: 'school/admin/learners', component: LearnerManagementComponent },
   { path: 'school/admin/learners/:id', component: LearnerDetailComponent },
   { path: 'school/admin/classes/:id', component: ClassDetailComponent },
   { path: 'school/admin/curriculum', component: CurriculumViewComponent },
+  { path: 'school/admin/work', component: WorkManagementComponent },
   { path: 'operator-admin/:operator', component: OperatorAdminComponent },
   { path: 'zimra-guide-2026', component: ZimraComponent },
   { path: 'bus-fares-jhb-bulawayo', component: FaresComponent },

@@ -138,3 +138,27 @@ public sealed class LearnerDetailDto
     public string ParentGuardianContact { get; set; } = string.Empty;
     public IReadOnlyCollection<LearnerAcademicRecordDto> AcademicRecords { get; set; } = Array.Empty<LearnerAcademicRecordDto>();
 }
+
+public sealed class WorkDto
+{
+    public int Id { get; set; }
+    public int SchoolId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string WorkType { get; set; } = string.Empty;
+    public int ClassId { get; set; }
+    public string ClassName { get; set; } = string.Empty;
+    public string DueDate { get; set; } = string.Empty;
+    public int MaxScore { get; set; }
+    public bool IsArchived { get; set; }
+}
+
+public sealed class WorkUpsertRequestDto
+{
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string WorkType { get; set; } = string.Empty;
+    public int ClassId { get; set; }
+    public string DueDate { get; set; } = string.Empty;
+    public int MaxScore { get; set; }
+}

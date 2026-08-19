@@ -441,6 +441,83 @@ public class ReportsController : ControllerBase
         }
     }
 
+    [HttpGet("work")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<WorkDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<WorkDto>>> GetWorkItems(CancellationToken cancellationToken)
+    {
+        var workItems = await _learnerService.GetWorkItemsForCurrentSchoolAsync(cancellationToken);
+        return Ok(workItems);
+    }
+
+    [HttpPost("work")]
+    [ProducesResponseType(typeof(WorkDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<WorkDto>> CreateWorkItem([FromBody] WorkUpsertRequestDto request, CancellationToken cancellationToken)
+    {
+        if (!TryValidateWorkRequest(request, out var validationError))
+        {
+            return BadRequest(validationError);
+        }
+
+        try
+        {
+            var created = await _learnerService.CreateWorkItemAsync(request, cancellationToken);
+            return Created($"/api/work/{created.Id}", created);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Failed to create work item: {ex.Message}");
+        }
+    }
+
+    [HttpPut("work/{id:int}")]
+    [ProducesResponseType(typeof(WorkDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<WorkDto>> UpdateWorkItem(int id, [FromBody] WorkUpsertRequestDto request, CancellationToken cancellationToken)
+    {
+        if (!TryValidateWorkRequest(request, out var validationError))
+        {
+            return BadRequest(validationError);
+        }
+
+        try
+        {
+            var updated = await _learnerService.UpdateWorkItemAsync(id, request, cancellationToken);
+            if (updated is null)
+            {
+                return NotFound();
+            }
+
+            return Ok(updated);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Failed to update work item: {ex.Message}");
+        }
+    }
+
+    [HttpDelete("work/{id:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> ArchiveWorkItem(int id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var archived = await _learnerService.ArchiveWorkItemAsync(id, cancellationToken);
+            if (!archived)
+            {
+                return NotFound();
+            }
+
+            return Ok(new { message = "Work item archived successfully." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Failed to archive work item: {ex.Message}");
+        }
+    }
+
     [HttpGet("subjects")]
     [ProducesResponseType(typeof(IReadOnlyCollection<SubjectDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyCollection<SubjectDto>>> GetSubjectsForCurriculum(CancellationToken cancellationToken)
@@ -793,6 +870,42 @@ public class ReportsController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.Code))
         {
             error = "Subject code is required.";
+            return false;
+        }
+
+        error = string.Empty;
+        return true;
+    }
+
+    private static bool TryValidateWorkRequest(WorkUpsertRequestDto request, out string error)
+    {
+        if (request is null)
+        {
+            error = "Work payload is required.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Title))
+        {
+            error = "Title is required.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(request.WorkType))
+        {
+            error = "WorkType is required.";
+            return false;
+        }
+
+        if (request.ClassId <= 0)
+        {
+            error = "ClassId is required.";
+            return false;
+        }
+
+        if (request.MaxScore < 0)
+        {
+            error = "MaxScore cannot be negative.";
             return false;
         }
 

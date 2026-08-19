@@ -15,6 +15,8 @@ import {
   SubjectUpsertRequestDto,
   TeacherLookupDto,
   SubjectDto,
+  WorkDto,
+  WorkUpsertRequestDto,
   SubjectScoreDto,
   SubjectScoreUpsertRequest
 } from '../learner-management/learner-management.models';
@@ -134,6 +136,22 @@ export class LearnerManagementService {
 
   updateSubject(id: number, payload: SubjectUpsertRequestDto): Observable<SubjectDto> {
     return this.http.post<SubjectDto>(`${this.baseUrl}/subjects/${id}`, payload, this.getRequestOptions());
+  }
+
+  getWorkItems(): Observable<WorkDto[]> {
+    return this.http.get<WorkDto[]>(`${this.baseUrl}/work`, this.getRequestOptions());
+  }
+
+  createWorkItem(payload: WorkUpsertRequestDto): Observable<WorkDto> {
+    return this.http.post<WorkDto>(`${this.baseUrl}/work`, payload, this.getRequestOptions());
+  }
+
+  updateWorkItem(id: number, payload: WorkUpsertRequestDto): Observable<WorkDto> {
+    return this.http.put<WorkDto>(`${this.baseUrl}/work/${id}`, payload, this.getRequestOptions());
+  }
+
+  archiveWorkItem(id: number): Observable<unknown> {
+    return this.http.delete(`${this.baseUrl}/work/${id}`, this.getRequestOptions());
   }
 
   getLearner(id: number): Observable<LearnerDto> {

@@ -40,6 +40,10 @@ export class LearningSchoolComponent implements OnInit {
     return this.activeSection === 'curriculum';
   }
 
+  get isWorkView(): boolean {
+    return this.activeSection === 'work';
+  }
+
   private loadSchoolContext(): void {
     this.loading = true;
     this.errorMessage = '';

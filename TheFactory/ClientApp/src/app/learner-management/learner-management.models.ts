@@ -112,3 +112,25 @@ export interface LearnerDetailDto {
   parentGuardianContact: string;
   academicRecords: LearnerAcademicRecordDto[];
 }
+
+export interface WorkDto {
+  id: number;
+  schoolId: number;
+  title: string;
+  description: string;
+  workType: string;
+  classId: number;
+  className: string;
+  dueDate: string;
+  maxScore: number;
+  isArchived: boolean;
+}
+
+export interface WorkUpsertRequestDto {
+  title: string;
+  description: string;
+  workType: string;
+  classId: number;
+  dueDate: string;
+  maxScore: number;
+}
