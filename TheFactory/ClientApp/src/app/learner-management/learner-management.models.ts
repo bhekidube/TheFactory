@@ -71,3 +71,20 @@ export interface CreateClassRequestDto {
   teacherId: number;
   learnerIds: number[];
 }
+
+export interface ClassAssignedSubjectDto {
+  subjectId: number;
+  name: string;
+  code: string;
+}
+
+export interface ClassDetailDto {
+  id: number;
+  schoolId: number;
+  name: string;
+  grade: string;
+  teacherId: number;
+  teacherName: string;
+  learners: LearnerLookupDto[];
+  subjects: ClassAssignedSubjectDto[];
+}

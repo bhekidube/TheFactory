@@ -75,6 +75,102 @@ public sealed class LearnerService : ILearnerService
         return classes;
     }
 
+    public async Task<ClassDetailDto?> GetClassByIdAsync(int classId, CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        var tenantId = await ResolveTenantIdAsync(connection, cancellationToken);
+        if (!tenantId.HasValue)
+        {
+            return null;
+        }
+
+        ClassDetailDto? detail;
+        using (var classCommand = new SqlCommand(
+            @"SELECT c.Id, c.SchoolId, c.Name, c.Grade, c.TeacherId, u.Name
+              FROM institution.Class AS c
+              LEFT JOIN [User] AS u ON u.UserId = c.TeacherId
+              WHERE c.Id = @ClassId
+                AND c.SchoolId = @SchoolId;",
+            connection))
+        {
+            classCommand.Parameters.AddWithValue("@ClassId", classId);
+            classCommand.Parameters.AddWithValue("@SchoolId", tenantId.Value);
+
+            using var reader = await classCommand.ExecuteReaderAsync(cancellationToken);
+            if (!await reader.ReadAsync(cancellationToken))
+            {
+                return null;
+            }
+
+            detail = new ClassDetailDto
+            {
+                Id = reader.GetInt32(0),
+                SchoolId = reader.GetInt32(1),
+                Name = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                Grade = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+                TeacherId = reader.GetInt32(4),
+                TeacherName = reader.IsDBNull(5) ? string.Empty : reader.GetString(5)
+            };
+        }
+
+        var learners = new List<LearnerLookupDto>();
+        using (var learnersCommand = new SqlCommand(
+            @"SELECT l.Id, l.FirstName, l.Surname, l.Grade
+              FROM institution.ClassEnrolment AS ce
+              INNER JOIN institution.Learner AS l ON l.Id = ce.LearnerId
+              WHERE ce.ClassId = @ClassId
+                AND l.TenantId = @TenantId
+                AND l.IsArchived = 0
+              ORDER BY l.FirstName ASC, l.Surname ASC;",
+            connection))
+        {
+            learnersCommand.Parameters.AddWithValue("@ClassId", classId);
+            learnersCommand.Parameters.AddWithValue("@TenantId", tenantId.Value);
+
+            using var reader = await learnersCommand.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                learners.Add(new LearnerLookupDto
+                {
+                    LearnerId = reader.GetInt32(0),
+                    FirstName = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                    Surname = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                    Grade = reader.IsDBNull(3) ? string.Empty : reader.GetString(3)
+                });
+            }
+        }
+
+        var subjects = new List<ClassAssignedSubjectDto>();
+        using (var subjectsCommand = new SqlCommand(
+            @"SELECT s.Id, s.Name, ISNULL(s.Code, '')
+              FROM institution.ClassSubject AS cs
+              INNER JOIN institution.Subject AS s ON s.Id = cs.SubjectId
+              WHERE cs.ClassId = @ClassId
+                AND s.TenantId = @TenantId
+                AND s.IsActive = 1
+              ORDER BY s.Name ASC;",
+            connection))
+        {
+            subjectsCommand.Parameters.AddWithValue("@ClassId", classId);
+            subjectsCommand.Parameters.AddWithValue("@TenantId", tenantId.Value);
+
+            using var reader = await subjectsCommand.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                subjects.Add(new ClassAssignedSubjectDto
+                {
+                    SubjectId = reader.GetInt32(0),
+                    Name = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                    Code = reader.IsDBNull(2) ? string.Empty : reader.GetString(2)
+                });
+            }
+        }
+
+        detail.Learners = learners;
+        detail.Subjects = subjects;
+        return detail;
+    }
+
     public async Task<IReadOnlyCollection<TeacherLookupDto>> SearchTeachersAsync(string query, CancellationToken cancellationToken = default)
     {
         var searchTerm = query?.Trim();
@@ -170,6 +266,47 @@ public sealed class LearnerService : ILearnerService
         return learners;
     }
 
+    public async Task<IReadOnlyCollection<ClassAssignedSubjectDto>> SearchSubjectsAsync(string query, CancellationToken cancellationToken = default)
+    {
+        var searchTerm = query?.Trim();
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            return Array.Empty<ClassAssignedSubjectDto>();
+        }
+
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        var tenantId = await ResolveTenantIdAsync(connection, cancellationToken);
+        if (!tenantId.HasValue)
+        {
+            return Array.Empty<ClassAssignedSubjectDto>();
+        }
+
+        using var command = new SqlCommand(
+            @"SELECT TOP (20) Id, Name, ISNULL(Code, '')
+              FROM institution.Subject
+              WHERE TenantId = @TenantId
+                AND IsActive = 1
+                AND (Name LIKE @Search OR Code LIKE @Search)
+              ORDER BY Name ASC;",
+            connection);
+        command.Parameters.AddWithValue("@TenantId", tenantId.Value);
+        command.Parameters.AddWithValue("@Search", $"%{searchTerm}%");
+
+        var subjects = new List<ClassAssignedSubjectDto>();
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            subjects.Add(new ClassAssignedSubjectDto
+            {
+                SubjectId = reader.GetInt32(0),
+                Name = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                Code = reader.IsDBNull(2) ? string.Empty : reader.GetString(2)
+            });
+        }
+
+        return subjects;
+    }
+
     public async Task<ClassDto> CreateClassAsync(CreateClassRequestDto request, CancellationToken cancellationToken = default)
     {
         using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
@@ -260,6 +397,101 @@ public sealed class LearnerService : ILearnerService
                 Grade = request.Grade.Trim(),
                 TeacherId = request.TeacherId,
                 LearnerIds = distinctLearners
+            };
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
+    public async Task<ClassAssignedSubjectDto?> AssignSubjectToClassAsync(int classId, int subjectId, CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        var tenantId = await ResolveTenantIdAsync(connection, cancellationToken);
+        if (!tenantId.HasValue)
+        {
+            return null;
+        }
+
+        using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
+        try
+        {
+            using (var classCheckCommand = new SqlCommand(
+                @"SELECT COUNT(1)
+                  FROM institution.Class
+                  WHERE Id = @ClassId
+                    AND SchoolId = @SchoolId;",
+                connection,
+                transaction))
+            {
+                classCheckCommand.Parameters.AddWithValue("@ClassId", classId);
+                classCheckCommand.Parameters.AddWithValue("@SchoolId", tenantId.Value);
+                var classExists = Convert.ToInt32(await classCheckCommand.ExecuteScalarAsync(cancellationToken)) > 0;
+                if (!classExists)
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    return null;
+                }
+            }
+
+            string subjectName;
+            string subjectCode;
+            using (var subjectCommand = new SqlCommand(
+                @"SELECT TOP (1) Name, ISNULL(Code, '')
+                  FROM institution.Subject
+                  WHERE Id = @SubjectId
+                    AND TenantId = @TenantId
+                    AND IsActive = 1;",
+                connection,
+                transaction))
+            {
+                subjectCommand.Parameters.AddWithValue("@SubjectId", subjectId);
+                subjectCommand.Parameters.AddWithValue("@TenantId", tenantId.Value);
+
+                using var subjectReader = await subjectCommand.ExecuteReaderAsync(cancellationToken);
+                if (!await subjectReader.ReadAsync(cancellationToken))
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    return null;
+                }
+
+                subjectName = subjectReader.IsDBNull(0) ? string.Empty : subjectReader.GetString(0);
+                subjectCode = subjectReader.IsDBNull(1) ? string.Empty : subjectReader.GetString(1);
+            }
+
+            using (var existsCommand = new SqlCommand(
+                @"SELECT COUNT(1)
+                  FROM institution.ClassSubject
+                  WHERE ClassId = @ClassId
+                    AND SubjectId = @SubjectId;",
+                connection,
+                transaction))
+            {
+                existsCommand.Parameters.AddWithValue("@ClassId", classId);
+                existsCommand.Parameters.AddWithValue("@SubjectId", subjectId);
+
+                var exists = Convert.ToInt32(await existsCommand.ExecuteScalarAsync(cancellationToken)) > 0;
+                if (!exists)
+                {
+                    using var insertCommand = new SqlCommand(
+                        @"INSERT INTO institution.ClassSubject (ClassId, SubjectId)
+                          VALUES (@ClassId, @SubjectId);",
+                        connection,
+                        transaction);
+                    insertCommand.Parameters.AddWithValue("@ClassId", classId);
+                    insertCommand.Parameters.AddWithValue("@SubjectId", subjectId);
+                    await insertCommand.ExecuteNonQueryAsync(cancellationToken);
+                }
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+            return new ClassAssignedSubjectDto
+            {
+                SubjectId = subjectId,
+                Name = subjectName,
+                Code = subjectCode
             };
         }
         catch

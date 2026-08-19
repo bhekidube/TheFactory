@@ -352,6 +352,20 @@ public class ReportsController : ControllerBase
         return Ok(classes);
     }
 
+    [HttpGet("classes/{id:int}")]
+    [ProducesResponseType(typeof(ClassDetailDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ClassDetailDto>> GetClassById(int id, CancellationToken cancellationToken)
+    {
+        var classDetail = await _learnerService.GetClassByIdAsync(id, cancellationToken);
+        if (classDetail is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(classDetail);
+    }
+
     [HttpGet("teachers/search")]
     [ProducesResponseType(typeof(IReadOnlyCollection<TeacherLookupDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyCollection<TeacherLookupDto>>> SearchTeachers([FromQuery] string q, CancellationToken cancellationToken)
@@ -366,6 +380,14 @@ public class ReportsController : ControllerBase
     {
         var learners = await _learnerService.SearchLearnersAsync(q, cancellationToken);
         return Ok(learners);
+    }
+
+    [HttpGet("subjects/search")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<ClassAssignedSubjectDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<ClassAssignedSubjectDto>>> SearchSubjects([FromQuery] string q, CancellationToken cancellationToken)
+    {
+        var subjects = await _learnerService.SearchSubjectsAsync(q, cancellationToken);
+        return Ok(subjects);
     }
 
     [HttpPost("classes")]
@@ -386,6 +408,36 @@ public class ReportsController : ControllerBase
         catch (Exception ex)
         {
             return BadRequest($"Failed to create class: {ex.Message}");
+        }
+    }
+
+    [HttpPost("classes/{id:int}/subjects")]
+    [ProducesResponseType(typeof(ClassAssignedSubjectDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ClassAssignedSubjectDto>> AssignSubjectToClass(
+        int id,
+        [FromBody] AssignClassSubjectRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        if (request is null || request.SubjectId <= 0)
+        {
+            return BadRequest("SubjectId is required.");
+        }
+
+        try
+        {
+            var assignedSubject = await _learnerService.AssignSubjectToClassAsync(id, request.SubjectId, cancellationToken);
+            if (assignedSubject is null)
+            {
+                return NotFound();
+            }
+
+            return Ok(assignedSubject);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Failed to assign subject: {ex.Message}");
         }
     }
 

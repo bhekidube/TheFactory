@@ -123,7 +123,9 @@
       <tbody>
         <tr *ngFor="let schoolClass of filteredClasses; trackBy: trackByClassId">
           <td>{{ schoolClass.id }}</td>
-          <td>{{ schoolClass.name }}</td>
+          <td>
+            <a [routerLink]="['/school/admin/classes', schoolClass.id]">{{ schoolClass.name }}</a>
+          </td>
           <td>{{ schoolClass.grade }}</td>
           <td>{{ schoolClass.teacherName || ('User #' + schoolClass.teacherId) }}</td>
           <td>{{ schoolClass.learnerIds.length }}</td>

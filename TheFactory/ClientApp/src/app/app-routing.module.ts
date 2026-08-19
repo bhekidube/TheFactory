@@ -9,6 +9,7 @@ import { LearnerManagementComponent } from './learner-management/learner-managem
 import { LearningComponent } from './learning/learning.component';
 import { LearningSchoolComponent } from './learning/learning-school.component';
 import { BusSearchComponent } from './bus-search/bus-search.component';
+import { ClassDetailComponent } from './class-detail/class-detail.component';
 
 const routes: Routes = [
   { path: '', component: BusSearchComponent, pathMatch: 'full' },
@@ -20,6 +21,7 @@ const routes: Routes = [
   { path: 'learning/schools/:schoolId/classes', component: LearningSchoolComponent },
   { path: 'admin-screen', component: AdminScreenComponent },
   { path: 'school/admin/learners', component: LearnerManagementComponent },
+  { path: 'school/admin/classes/:id', component: ClassDetailComponent },
   { path: 'operator-admin/:operator', component: OperatorAdminComponent },
   { path: 'zimra-guide-2026', component: ZimraComponent },
   { path: 'bus-fares-jhb-bulawayo', component: FaresComponent },

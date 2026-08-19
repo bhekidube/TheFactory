@@ -39,6 +39,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { LearnerManagementComponent } from './learner-management/learner-management.component';
 import { LearningComponent } from './learning/learning.component';
 import { LearningSchoolComponent } from './learning/learning-school.component';
+import { ClassDetailComponent } from './class-detail/class-detail.component';
 
 @NgModule({
   declarations: [
@@ -61,7 +62,8 @@ import { LearningSchoolComponent } from './learning/learning-school.component';
     DutyCalculatorComponent,
     LearnerManagementComponent,
     LearningComponent,
-    LearningSchoolComponent
+    LearningSchoolComponent,
+    ClassDetailComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),

@@ -87,3 +87,27 @@ public sealed class LearnerLookupDto
     public string Surname { get; set; } = string.Empty;
     public string Grade { get; set; } = string.Empty;
 }
+
+public sealed class ClassAssignedSubjectDto
+{
+    public int SubjectId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
+}
+
+public sealed class ClassDetailDto
+{
+    public int Id { get; set; }
+    public int SchoolId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Grade { get; set; } = string.Empty;
+    public int TeacherId { get; set; }
+    public string TeacherName { get; set; } = string.Empty;
+    public IReadOnlyCollection<LearnerLookupDto> Learners { get; set; } = Array.Empty<LearnerLookupDto>();
+    public IReadOnlyCollection<ClassAssignedSubjectDto> Subjects { get; set; } = Array.Empty<ClassAssignedSubjectDto>();
+}
+
+public sealed class AssignClassSubjectRequestDto
+{
+    public int SubjectId { get; set; }
+}

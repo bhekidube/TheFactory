@@ -1,0 +1,129 @@
+<section class="class-detail-page">
+  <app-logout-link></app-logout-link>
+
+  <div class="page-header">
+    <div>
+      <h2>Class Detail</h2>
+      <p *ngIf="classDetail">{{ classDetail.name }} - {{ classDetail.grade }}</p>
+    </div>
+    <a class="secondary-btn" [routerLink]="['/school/admin/learners']">Back to Learner Admin</a>
+  </div>
+
+  <div class="message error" *ngIf="errorMessage">{{ errorMessage }}</div>
+  <div class="message success" *ngIf="successMessage">{{ successMessage }}</div>
+
+  <div class="state-card" *ngIf="loading">Loading class detail...</div>
+
+  <div *ngIf="!loading && classDetail">
+    <div class="detail-grid">
+      <div class="detail-card">
+        <span class="label">Class Name</span>
+        <strong>{{ classDetail.name }}</strong>
+      </div>
+      <div class="detail-card">
+        <span class="label">Grade</span>
+        <strong>{{ classDetail.grade }}</strong>
+      </div>
+      <div class="detail-card">
+        <span class="label">Assigned Teacher</span>
+        <strong>{{ classDetail.teacherName || ('User #' + classDetail.teacherId) }}</strong>
+      </div>
+      <div class="detail-card">
+        <span class="label">Learners Enrolled</span>
+        <strong>{{ classDetail.learners.length }}</strong>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h3>Enrolled Learners</h3>
+      <div class="state-card" *ngIf="classDetail.learners.length === 0">No learners enrolled yet.</div>
+      <div class="table-wrap" *ngIf="classDetail.learners.length > 0">
+        <table>
+          <thead>
+            <tr>
+              <th>Learner ID</th>
+              <th>First Name</th>
+              <th>Surname</th>
+              <th>Grade</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let learner of classDetail.learners">
+              <td>{{ learner.learnerId }}</td>
+              <td>{{ learner.firstName }}</td>
+              <td>{{ learner.surname }}</td>
+              <td>{{ learner.grade }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-header">
+        <h3>Subjects</h3>
+        <button type="button" class="primary-btn" (click)="openAddSubjectModal()">+ Add Subject</button>
+      </div>
+
+      <div class="state-card" *ngIf="classDetail.subjects.length === 0">No subjects assigned yet.</div>
+      <div class="table-wrap" *ngIf="classDetail.subjects.length > 0">
+        <table>
+          <thead>
+            <tr>
+              <th>Subject</th>
+              <th>Code</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let subject of classDetail.subjects">
+              <td>{{ subject.name }}</td>
+              <td>{{ subject.code || '-' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" *ngIf="showSubjectModal">
+    <div class="panel">
+      <h3>Add Subject</h3>
+
+      <label>
+        Search Subject
+        <input
+          type="text"
+          name="subjectSearch"
+          [(ngModel)]="subjectSearchTerm"
+          (ngModelChange)="searchSubjects()"
+          placeholder="Search subject by name or code"
+        />
+      </label>
+
+      <div class="lookup-results" *ngIf="subjectLookupResults.length > 0">
+        <button
+          type="button"
+          class="lookup-item"
+          *ngFor="let subject of subjectLookupResults"
+          (click)="selectSubject(subject)">
+          {{ subject.name }}{{ subject.code ? ' (' + subject.code + ')' : '' }}
+        </button>
+      </div>
+
+      <div class="state-card" *ngIf="searchingSubjects">Searching subjects...</div>
+      <div class="state-card" *ngIf="selectedSubject">
+        <strong>Selected Subject:</strong>
+        {{ selectedSubject.name }}{{ selectedSubject.code ? ' (' + selectedSubject.code + ')' : '' }}
+      </div>
+
+      <div class="panel-actions">
+        <button type="button" class="primary-btn" [disabled]="assigningSubject || !selectedSubject" (click)="assignSelectedSubject()">
+          {{ assigningSubject ? 'Assigning...' : 'Assign Subject' }}
+        </button>
+        <button type="button" class="secondary-btn" [disabled]="assigningSubject" (click)="closeAddSubjectModal()">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
