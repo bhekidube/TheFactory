@@ -70,6 +70,11 @@
 
       <form (ngSubmit)="saveWork()">
         <label>
+          Title
+          <input type="text" name="workTitle" [(ngModel)]="workForm.title" required />
+        </label>
+
+        <label>
           Subject
           <select name="subjectId" [(ngModel)]="workForm.subjectId" [disabled]="loadingSubjects" required>
             <option [ngValue]="0">Select subject</option>

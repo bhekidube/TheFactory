@@ -129,6 +129,7 @@ export interface WorkDto {
 }
 
 export interface WorkUpsertRequestDto {
+  title: string;
   subjectId: number;
   description: string;
   workType: string;

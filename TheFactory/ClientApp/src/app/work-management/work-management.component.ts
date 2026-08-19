@@ -116,6 +116,7 @@ export class WorkManagementComponent implements OnInit {
     this.isEditMode = true;
     this.editingWorkId = work.id;
     this.workForm = {
+      title: work.title,
       subjectId: work.subjectId,
       description: work.description,
       workType: work.workType,
@@ -202,6 +203,10 @@ export class WorkManagementComponent implements OnInit {
   }
 
   private validateWorkForm(): string {
+    if (!this.workForm.title?.trim()) {
+      return 'Title is required.';
+    }
+
     if (!Number.isFinite(this.workForm.subjectId) || this.workForm.subjectId <= 0) {
       return 'Subject is required.';
     }
@@ -227,6 +232,7 @@ export class WorkManagementComponent implements OnInit {
 
   private getEmptyWorkForm(): WorkUpsertRequestDto {
     return {
+      title: '',
       subjectId: 0,
       description: '',
       workType: '',

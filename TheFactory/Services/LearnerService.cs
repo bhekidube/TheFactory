@@ -580,7 +580,7 @@ public sealed class LearnerService : ILearnerService
         using var command = new SqlCommand(
             @"SELECT w.Id,
                      w.SchoolId,
-                                         ISNULL(s.Name, ISNULL(w.Title, '')),
+                     ISNULL(w.Title, ''),
                                          ISNULL(w.SubjectId, 0),
                                          ISNULL(s.Name, ''),
                      ISNULL(w.Description, ''),
@@ -655,7 +655,7 @@ public sealed class LearnerService : ILearnerService
                 transaction);
             command.Parameters.AddWithValue("@Id", nextId);
             command.Parameters.AddWithValue("@SchoolId", tenantId.Value);
-            command.Parameters.AddWithValue("@Title", subjectName);
+                        command.Parameters.AddWithValue("@Title", request.Title.Trim());
             command.Parameters.AddWithValue("@SubjectId", request.SubjectId);
             command.Parameters.AddWithValue("@Description", string.IsNullOrWhiteSpace(request.Description) ? DBNull.Value : request.Description.Trim());
             command.Parameters.AddWithValue("@WorkType", request.WorkType.Trim());
@@ -670,7 +670,7 @@ public sealed class LearnerService : ILearnerService
             {
                 Id = nextId,
                 SchoolId = tenantId.Value,
-                Title = subjectName,
+                Title = request.Title.Trim(),
                 SubjectId = request.SubjectId,
                 SubjectName = subjectName,
                 Description = request.Description?.Trim() ?? string.Empty,
@@ -725,7 +725,7 @@ public sealed class LearnerService : ILearnerService
             connection);
         command.Parameters.AddWithValue("@Id", workId);
         command.Parameters.AddWithValue("@SchoolId", tenantId.Value);
-        command.Parameters.AddWithValue("@Title", subjectName);
+        command.Parameters.AddWithValue("@Title", request.Title.Trim());
         command.Parameters.AddWithValue("@SubjectId", request.SubjectId);
         command.Parameters.AddWithValue("@Description", string.IsNullOrWhiteSpace(request.Description) ? DBNull.Value : request.Description.Trim());
         command.Parameters.AddWithValue("@WorkType", request.WorkType.Trim());
@@ -743,7 +743,7 @@ public sealed class LearnerService : ILearnerService
         {
             Id = workId,
             SchoolId = tenantId.Value,
-            Title = subjectName,
+            Title = request.Title.Trim(),
             SubjectId = request.SubjectId,
             SubjectName = subjectName,
             Description = request.Description?.Trim() ?? string.Empty,

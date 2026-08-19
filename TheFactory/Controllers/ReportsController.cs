@@ -885,6 +885,12 @@ public class ReportsController : ControllerBase
             return false;
         }
 
+        if (string.IsNullOrWhiteSpace(request.Title))
+        {
+            error = "Title is required.";
+            return false;
+        }
+
         if (request.SubjectId <= 0)
         {
             error = "SubjectId is required.";

@@ -157,6 +157,7 @@ public sealed class WorkDto
 
 public sealed class WorkUpsertRequestDto
 {
+    public string Title { get; set; } = string.Empty;
     public int SubjectId { get; set; }
     public string Description { get; set; } = string.Empty;
     public string WorkType { get; set; } = string.Empty;
