@@ -1,0 +1,68 @@
+<section class="curriculum-page">
+  <div class="page-header">
+    <div>
+      <h2>Curriculum</h2>
+      <p>Manage school subjects for this tenant.</p>
+    </div>
+    <button type="button" class="primary-btn" (click)="openAddSubject()">+ Add Subject</button>
+  </div>
+
+  <div class="message error" *ngIf="errorMessage">{{ errorMessage }}</div>
+  <div class="message success" *ngIf="successMessage">{{ successMessage }}</div>
+
+  <div class="state-card" *ngIf="loading">Loading subjects...</div>
+
+  <div class="table-wrap" *ngIf="!loading">
+    <table>
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Name</th>
+          <th>Status</th>
+          <th class="actions-col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let subject of subjects">
+          <td>{{ subject.code }}</td>
+          <td>{{ subject.name }}</td>
+          <td>{{ subject.isActive ? 'Active' : 'Inactive' }}</td>
+          <td class="actions-col">
+            <button type="button" class="link-btn" [disabled]="saving" (click)="openEditSubject(subject)">Edit</button>
+            <button type="button" class="link-btn" [disabled]="saving" (click)="toggleActive(subject)">
+              {{ subject.isActive ? 'Deactivate' : 'Activate' }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="overlay" *ngIf="showModal">
+    <div class="panel">
+      <h3>{{ isEditMode ? 'Edit Subject' : 'Add Subject' }}</h3>
+
+      <form (ngSubmit)="saveSubject()">
+        <label>
+          Name
+          <input type="text" name="subjectName" [(ngModel)]="form.name" required />
+        </label>
+
+        <label>
+          Code
+          <input type="text" name="subjectCode" [(ngModel)]="form.code" required />
+        </label>
+
+        <label class="checkbox-row">
+          <input type="checkbox" name="subjectActive" [(ngModel)]="form.isActive" />
+          <span>Is Active</span>
+        </label>
+
+        <div class="panel-actions">
+          <button type="submit" class="primary-btn" [disabled]="saving">{{ saving ? 'Saving...' : 'Save Subject' }}</button>
+          <button type="button" class="secondary-btn" [disabled]="saving" (click)="closeModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>

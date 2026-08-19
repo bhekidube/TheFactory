@@ -32,6 +32,12 @@
     </a>
     <a
       class="school-nav-link"
+      [routerLink]="['/learning/schools', schoolId, 'curriculum']"
+      [routerLinkActive]="['is-active']">
+      Curriculum
+    </a>
+    <a
+      class="school-nav-link"
       [routerLink]="['/school/admin/learners']"
       [routerLinkActive]="['is-active']">
       Full Learner Admin
@@ -47,5 +53,6 @@
     <p><strong>Learner records available:</strong> {{ learnersCount }}</p>
   </div>
 
-  <app-learner-management *ngIf="!loading && schoolName"></app-learner-management>
+  <app-curriculum-view *ngIf="!loading && schoolName && isCurriculumView"></app-curriculum-view>
+  <app-learner-management *ngIf="!loading && schoolName && !isCurriculumView"></app-learner-management>
 </section>

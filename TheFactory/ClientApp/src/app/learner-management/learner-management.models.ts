@@ -88,3 +88,9 @@ export interface ClassDetailDto {
   learners: LearnerLookupDto[];
   subjects: ClassAssignedSubjectDto[];
 }
+
+export interface SubjectUpsertRequestDto {
+  name: string;
+  code: string;
+  isActive: boolean;
+}

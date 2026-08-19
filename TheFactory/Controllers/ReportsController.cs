@@ -441,6 +441,62 @@ public class ReportsController : ControllerBase
         }
     }
 
+    [HttpGet("subjects")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<SubjectDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<SubjectDto>>> GetSubjectsForCurriculum(CancellationToken cancellationToken)
+    {
+        var subjects = await _learnerService.GetAllSubjectsForCurrentTenantAsync(cancellationToken);
+        return Ok(subjects);
+    }
+
+    [HttpPost("subjects")]
+    [ProducesResponseType(typeof(SubjectDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<SubjectDto>> CreateSubject([FromBody] SubjectUpsertRequestDto request, CancellationToken cancellationToken)
+    {
+        if (!TryValidateSubjectUpsertRequest(request, out var validationError))
+        {
+            return BadRequest(validationError);
+        }
+
+        try
+        {
+            var created = await _learnerService.CreateSubjectAsync(request, cancellationToken);
+            return Created($"/api/subjects/{created.Id}", created);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Failed to create subject: {ex.Message}");
+        }
+    }
+
+    [HttpPost("subjects/{id:int}")]
+    [ProducesResponseType(typeof(SubjectDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<SubjectDto>> UpdateSubject(int id, [FromBody] SubjectUpsertRequestDto request, CancellationToken cancellationToken)
+    {
+        if (!TryValidateSubjectUpsertRequest(request, out var validationError))
+        {
+            return BadRequest(validationError);
+        }
+
+        try
+        {
+            var updated = await _learnerService.UpdateSubjectAsync(id, request, cancellationToken);
+            if (updated is null)
+            {
+                return NotFound();
+            }
+
+            return Ok(updated);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Failed to update subject: {ex.Message}");
+        }
+    }
+
     /// <summary>
     /// Gets a learner by ID.
     /// </summary>
@@ -705,6 +761,30 @@ public class ReportsController : ControllerBase
         if (request.TeacherId <= 0)
         {
             error = "Teacher is required.";
+            return false;
+        }
+
+        error = string.Empty;
+        return true;
+    }
+
+    private static bool TryValidateSubjectUpsertRequest(SubjectUpsertRequestDto request, out string error)
+    {
+        if (request is null)
+        {
+            error = "Subject payload is required.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            error = "Subject name is required.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Code))
+        {
+            error = "Subject code is required.";
             return false;
         }
 

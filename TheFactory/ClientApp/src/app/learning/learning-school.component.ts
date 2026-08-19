@@ -9,6 +9,7 @@ import { LearnerManagementService } from '../services/learner-management.service
 })
 export class LearningSchoolComponent implements OnInit {
   schoolId = '';
+  activeSection = 'learners';
   schoolName = '';
   schoolsCount = 0;
   learnersCount = 0;
@@ -21,6 +22,10 @@ export class LearningSchoolComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.route.url.subscribe(segments => {
+      this.activeSection = segments.length > 0 ? segments[segments.length - 1].path : 'learners';
+    });
+
     this.route.paramMap.subscribe(params => {
       this.schoolId = params.get('schoolId') || '';
       const tenantId = Number(this.schoolId);
@@ -29,6 +34,10 @@ export class LearningSchoolComponent implements OnInit {
       }
       this.loadSchoolContext();
     });
+  }
+
+  get isCurriculumView(): boolean {
+    return this.activeSection === 'curriculum';
   }
 
   private loadSchoolContext(): void {

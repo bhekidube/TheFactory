@@ -10,6 +10,7 @@ import {
   LearnerLookupDto,
   LearnerDto,
   LearnerReportResponseDto,
+  SubjectUpsertRequestDto,
   TeacherLookupDto,
   SubjectDto,
   SubjectScoreDto,
@@ -119,6 +120,18 @@ export class LearnerManagementService {
       { subjectId },
       this.getRequestOptions()
     );
+  }
+
+  getSubjectsForCurriculum(): Observable<SubjectDto[]> {
+    return this.http.get<SubjectDto[]>(`${this.baseUrl}/subjects`, this.getRequestOptions());
+  }
+
+  createSubject(payload: SubjectUpsertRequestDto): Observable<SubjectDto> {
+    return this.http.post<SubjectDto>(`${this.baseUrl}/subjects`, payload, this.getRequestOptions());
+  }
+
+  updateSubject(id: number, payload: SubjectUpsertRequestDto): Observable<SubjectDto> {
+    return this.http.post<SubjectDto>(`${this.baseUrl}/subjects/${id}`, payload, this.getRequestOptions());
   }
 
   getLearner(id: number): Observable<LearnerDto> {

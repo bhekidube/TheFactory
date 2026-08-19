@@ -535,6 +535,120 @@ public sealed class LearnerService : ILearnerService
         return learners;
     }
 
+    public async Task<IReadOnlyCollection<SubjectDto>> GetAllSubjectsForCurrentTenantAsync(CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        var tenantId = await ResolveTenantIdAsync(connection, cancellationToken);
+        if (!tenantId.HasValue)
+        {
+            return Array.Empty<SubjectDto>();
+        }
+
+        using var command = new SqlCommand(
+            @"SELECT Id, Name, Code, IsActive
+              FROM institution.Subject
+              WHERE TenantId = @TenantId
+              ORDER BY Name ASC;",
+            connection);
+        command.Parameters.AddWithValue("@TenantId", tenantId.Value);
+
+        var subjects = new List<SubjectDto>();
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            subjects.Add(new SubjectDto
+            {
+                Id = reader.GetInt32(0),
+                Name = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                Code = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                IsActive = !reader.IsDBNull(3) && reader.GetBoolean(3)
+            });
+        }
+
+        return subjects;
+    }
+
+    public async Task<SubjectDto> CreateSubjectAsync(SubjectUpsertRequestDto request, CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        var tenantId = await ResolveTenantIdAsync(connection, cancellationToken);
+        if (!tenantId.HasValue)
+        {
+            throw new InvalidOperationException("No tenant found in institution.Tenant.");
+        }
+
+        using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
+        try
+        {
+            var nextId = await GetNextIdAsync(connection, transaction, "institution.Subject", cancellationToken);
+
+            using var command = new SqlCommand(
+                @"INSERT INTO institution.Subject (Id, TenantId, Name, Code, IsActive)
+                  VALUES (@Id, @TenantId, @Name, @Code, @IsActive);",
+                connection,
+                transaction);
+            command.Parameters.AddWithValue("@Id", nextId);
+            command.Parameters.AddWithValue("@TenantId", tenantId.Value);
+            command.Parameters.AddWithValue("@Name", request.Name.Trim());
+            command.Parameters.AddWithValue("@Code", request.Code.Trim());
+            command.Parameters.AddWithValue("@IsActive", request.IsActive);
+
+            await command.ExecuteNonQueryAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            return new SubjectDto
+            {
+                Id = nextId,
+                Name = request.Name.Trim(),
+                Code = request.Code.Trim(),
+                IsActive = request.IsActive
+            };
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
+    public async Task<SubjectDto?> UpdateSubjectAsync(int subjectId, SubjectUpsertRequestDto request, CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        var tenantId = await ResolveTenantIdAsync(connection, cancellationToken);
+        if (!tenantId.HasValue)
+        {
+            return null;
+        }
+
+        using var command = new SqlCommand(
+            @"UPDATE institution.Subject
+              SET Name = @Name,
+                  Code = @Code,
+                  IsActive = @IsActive
+              WHERE Id = @SubjectId
+                AND TenantId = @TenantId;",
+            connection);
+        command.Parameters.AddWithValue("@SubjectId", subjectId);
+        command.Parameters.AddWithValue("@TenantId", tenantId.Value);
+        command.Parameters.AddWithValue("@Name", request.Name.Trim());
+        command.Parameters.AddWithValue("@Code", request.Code.Trim());
+        command.Parameters.AddWithValue("@IsActive", request.IsActive);
+
+        var affected = await command.ExecuteNonQueryAsync(cancellationToken);
+        if (affected == 0)
+        {
+            return null;
+        }
+
+        return new SubjectDto
+        {
+            Id = subjectId,
+            Name = request.Name.Trim(),
+            Code = request.Code.Trim(),
+            IsActive = request.IsActive
+        };
+    }
+
     public async Task<LearnerDto?> GetLearnerByIdAsync(int learnerId, CancellationToken cancellationToken = default)
     {
                 using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
