@@ -712,18 +712,20 @@ public sealed class LearnerService : ILearnerService
     public async Task<WorkDetailDto?> GetWorkDetailForClassAsync(int classId, int workId, CancellationToken cancellationToken = default)
     {
         using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
-        var tenantId = await ResolveTenantIdAsync(connection, cancellationToken);
-        if (!tenantId.HasValue)
-        {
-            return null;
-        }
+        var hasMarkCommentColumn = await HasColumnAsync(connection, "institution", "Mark", "Comment", cancellationToken);
+        var hasTeacherCommentsColumn = await HasColumnAsync(connection, "institution", "Mark", "TeacherComments", cancellationToken);
 
         WorkDetailDto? detail;
+        var schoolId = 0;
+        var workSubjectId = 0;
+        var workSubjectName = string.Empty;
         using (var workCommand = new SqlCommand(
             @"SELECT w.Id,
                      w.ClassId,
-                     ISNULL(w.Title, ''),
+                     ISNULL(w.SchoolId, 0),
+                     ISNULL(w.SubjectId, 0),
                      ISNULL(s.Name, ''),
+                     ISNULL(w.Title, ''),
                      ISNULL(wt.Name, ''),
                      ISNULL(CONVERT(NVARCHAR(10), w.DueDate, 23), ''),
                      ISNULL(w.TotalMark, ISNULL(w.MaxScore, 0))
@@ -732,13 +734,11 @@ public sealed class LearnerService : ILearnerService
               LEFT JOIN institution.WorkTypes AS wt ON wt.Id = w.WorkTypeId
               WHERE w.Id = @WorkId
                 AND w.ClassId = @ClassId
-                AND w.SchoolId = @SchoolId
                 AND w.IsArchived = 0;",
             connection))
         {
             workCommand.Parameters.AddWithValue("@WorkId", workId);
             workCommand.Parameters.AddWithValue("@ClassId", classId);
-            workCommand.Parameters.AddWithValue("@SchoolId", tenantId.Value);
 
             using var reader = await workCommand.ExecuteReaderAsync(cancellationToken);
             if (!await reader.ReadAsync(cancellationToken))
@@ -750,61 +750,75 @@ public sealed class LearnerService : ILearnerService
             {
                 WorkId = reader.GetInt32(0),
                 ClassId = reader.GetInt32(1),
-                Title = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
-                SubjectName = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
-                WorkType = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
-                DueDate = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
-                TotalMark = reader.IsDBNull(6) ? 0 : reader.GetInt32(6)
+                Title = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
+                SubjectName = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
+                WorkType = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
+                DueDate = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+                TotalMark = reader.IsDBNull(8) ? 0 : reader.GetInt32(8)
             };
+
+            schoolId = reader.IsDBNull(2) ? 0 : reader.GetInt32(2);
+            workSubjectId = reader.IsDBNull(3) ? 0 : reader.GetInt32(3);
+            workSubjectName = reader.IsDBNull(4) ? string.Empty : reader.GetString(4);
         }
 
+        if (workSubjectId <= 0)
+        {
+            return detail;
+        }
+
+        var markCommentProjection = hasMarkCommentColumn
+            ? "ISNULL(m.Comment, '')"
+            : hasTeacherCommentsColumn
+                ? "ISNULL(m.TeacherComments, '')"
+                : "CAST('' AS NVARCHAR(500))";
+
         var learners = new List<WorkLearnerMarkDto>();
-        using (var marksCommand = new SqlCommand(
-            @"SELECT l.Id,
+        using var marksCommand = new SqlCommand(
+            $@"SELECT l.Id,
                      ISNULL(l.FirstName, ''),
                      ISNULL(l.Surname, ''),
                      ISNULL(l.Grade, ''),
-                     m.MarkObtained,
-                     ISNULL(m.Comment, '')
+                     m.Score,
+                     {markCommentProjection} AS Comment
               FROM institution.ClassEnrolment AS ce
               INNER JOIN institution.Learner AS l ON l.Id = ce.LearnerId
-              LEFT JOIN institution.WorkLearnerMark AS m
-                     ON m.WorkId = @WorkId
-                    AND m.LearnerId = l.Id
-                    AND m.SchoolId = @SchoolId
+              LEFT JOIN institution.Mark AS m
+                     ON m.LearnerId = l.Id
+                    AND m.TenantId = @SchoolId
+                                        AND (m.SubjectId = @SubjectId OR (@SubjectName <> '' AND m.Subject = @SubjectName))
               WHERE ce.ClassId = @ClassId
                 AND l.TenantId = @SchoolId
                 AND l.IsArchived = 0
               ORDER BY l.FirstName ASC, l.Surname ASC;",
-            connection))
+            connection);
+        marksCommand.Parameters.AddWithValue("@ClassId", classId);
+        marksCommand.Parameters.AddWithValue("@SchoolId", schoolId);
+        marksCommand.Parameters.AddWithValue("@SubjectId", workSubjectId);
+                marksCommand.Parameters.AddWithValue("@SubjectName", workSubjectName);
+
+        using var marksReader = await marksCommand.ExecuteReaderAsync(cancellationToken);
+        while (await marksReader.ReadAsync(cancellationToken))
         {
-            marksCommand.Parameters.AddWithValue("@WorkId", workId);
-            marksCommand.Parameters.AddWithValue("@ClassId", classId);
-            marksCommand.Parameters.AddWithValue("@SchoolId", tenantId.Value);
+            var firstName = marksReader.IsDBNull(1) ? string.Empty : marksReader.GetString(1);
+            var surname = marksReader.IsDBNull(2) ? string.Empty : marksReader.GetString(2);
 
-            using var reader = await marksCommand.ExecuteReaderAsync(cancellationToken);
-            while (await reader.ReadAsync(cancellationToken))
+            learners.Add(new WorkLearnerMarkDto
             {
-                var firstName = reader.IsDBNull(1) ? string.Empty : reader.GetString(1);
-                var surname = reader.IsDBNull(2) ? string.Empty : reader.GetString(2);
-
-                learners.Add(new WorkLearnerMarkDto
-                {
-                    LearnerId = reader.GetInt32(0),
-                    LearnerName = string.Join(" ", new[] { firstName, surname }.Where(x => !string.IsNullOrWhiteSpace(x))).Trim(),
-                    Grade = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
-                    TotalMark = detail.TotalMark,
-                    MarkObtained = reader.IsDBNull(4) ? null : reader.GetInt32(4),
-                    Comment = reader.IsDBNull(5) ? string.Empty : reader.GetString(5)
-                });
-            }
+                LearnerId = marksReader.GetInt32(0),
+                LearnerName = string.Join(" ", new[] { firstName, surname }.Where(x => !string.IsNullOrWhiteSpace(x))).Trim(),
+                Grade = marksReader.IsDBNull(3) ? string.Empty : marksReader.GetString(3),
+                TotalMark = detail.TotalMark,
+                MarkObtained = marksReader.IsDBNull(4) ? null : Convert.ToInt32(Math.Round(Convert.ToDecimal(marksReader.GetValue(4)), MidpointRounding.AwayFromZero)),
+                Comment = marksReader.IsDBNull(5) ? string.Empty : marksReader.GetString(5)
+            });
         }
 
         detail.Learners = learners;
         return detail;
     }
 
-    public async Task<bool> SaveWorkMarksAsync(int classId, int workId, IReadOnlyCollection<WorkLearnerMarkUpsertDto> marks, CancellationToken cancellationToken = default)
+    public async Task<bool> SaveWorkMarksAsync(int classId, int workId, IReadOnlyCollection<SaveLearnerMarkDto> marks, CancellationToken cancellationToken = default)
     {
         if (marks is null)
         {
@@ -812,39 +826,49 @@ public sealed class LearnerService : ILearnerService
         }
 
         using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
-        var tenantId = await ResolveTenantIdAsync(connection, cancellationToken);
-        if (!tenantId.HasValue)
-        {
-            return false;
-        }
-
         using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
         try
         {
             int totalMark;
+            int subjectId;
+            int schoolId;
+                        string subjectName;
             using (var workCommand = new SqlCommand(
-                @"SELECT ISNULL(TotalMark, ISNULL(MaxScore, 0))
-                  FROM institution.Work
-                  WHERE Id = @WorkId
-                    AND ClassId = @ClassId
-                    AND SchoolId = @SchoolId
-                    AND IsArchived = 0;",
+                                @"SELECT ISNULL(TotalMark, ISNULL(MaxScore, 0)),
+                                                 ISNULL(SubjectId, 0),
+                                                                                                 ISNULL(SchoolId, 0),
+                                                                                                 ISNULL(s.Name, '')
+                                    FROM institution.Work w
+                                    LEFT JOIN institution.Subject s ON s.Id = w.SubjectId AND s.TenantId = w.SchoolId
+                                    WHERE w.Id = @WorkId
+                                        AND w.ClassId = @ClassId
+                                        AND w.IsArchived = 0;",
                 connection,
                 transaction))
             {
                 workCommand.Parameters.AddWithValue("@WorkId", workId);
                 workCommand.Parameters.AddWithValue("@ClassId", classId);
-                workCommand.Parameters.AddWithValue("@SchoolId", tenantId.Value);
 
-                var raw = await workCommand.ExecuteScalarAsync(cancellationToken);
-                if (raw is null || raw == DBNull.Value)
+                using var reader = await workCommand.ExecuteReaderAsync(cancellationToken);
+                if (!await reader.ReadAsync(cancellationToken))
                 {
                     await transaction.RollbackAsync(cancellationToken);
                     return false;
                 }
 
-                totalMark = Convert.ToInt32(raw);
+                totalMark = reader.IsDBNull(0) ? 0 : Convert.ToInt32(reader.GetValue(0));
+                subjectId = reader.IsDBNull(1) ? 0 : reader.GetInt32(1);
+                schoolId = reader.IsDBNull(2) ? 0 : reader.GetInt32(2);
+                subjectName = reader.IsDBNull(3) ? string.Empty : reader.GetString(3);
+                if (subjectId <= 0 || schoolId <= 0)
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    return false;
+                }
             }
+
+            var hasMarkCommentColumn = await HasColumnAsync(connection, "institution", "Mark", "Comment", cancellationToken, transaction);
+            var hasTeacherCommentsColumn = await HasColumnAsync(connection, "institution", "Mark", "TeacherComments", cancellationToken, transaction);
 
             foreach (var mark in marks)
             {
@@ -860,7 +884,7 @@ public sealed class LearnerService : ILearnerService
                     transaction);
                 learnerCheckCommand.Parameters.AddWithValue("@ClassId", classId);
                 learnerCheckCommand.Parameters.AddWithValue("@LearnerId", mark.LearnerId);
-                learnerCheckCommand.Parameters.AddWithValue("@SchoolId", tenantId.Value);
+                learnerCheckCommand.Parameters.AddWithValue("@SchoolId", schoolId);
 
                 var learnerExists = Convert.ToInt32(await learnerCheckCommand.ExecuteScalarAsync(cancellationToken)) > 0;
                 if (!learnerExists)
@@ -876,21 +900,37 @@ public sealed class LearnerService : ILearnerService
                     return false;
                 }
 
+                if (!markValue.HasValue)
+                {
+                    continue;
+                }
+
+                var commentSetClause = hasMarkCommentColumn
+                    ? "Comment = @Comment,"
+                    : hasTeacherCommentsColumn
+                        ? "TeacherComments = @Comment,"
+                        : string.Empty;
+
                 using var updateCommand = new SqlCommand(
-                    @"UPDATE institution.WorkLearnerMark
-                      SET MarkObtained = @MarkObtained,
-                          Comment = @Comment,
-                          UpdatedAt = GETUTCDATE()
-                      WHERE WorkId = @WorkId
-                        AND LearnerId = @LearnerId
-                        AND SchoolId = @SchoolId;",
+                    $@"UPDATE institution.Mark
+                      SET Score = @Score,
+                          {commentSetClause}
+                          Subject = @Subject,
+                          SubjectId = @SubjectId
+                      WHERE LearnerId = @LearnerId
+                        AND TenantId = @SchoolId
+                        AND (SubjectId = @SubjectId OR (@Subject <> '' AND Subject = @Subject));",
                     connection,
                     transaction);
-                updateCommand.Parameters.AddWithValue("@WorkId", workId);
                 updateCommand.Parameters.AddWithValue("@LearnerId", mark.LearnerId);
-                updateCommand.Parameters.AddWithValue("@SchoolId", tenantId.Value);
-                updateCommand.Parameters.AddWithValue("@MarkObtained", markValue.HasValue ? markValue.Value : DBNull.Value);
-                updateCommand.Parameters.AddWithValue("@Comment", string.IsNullOrWhiteSpace(mark.Comment) ? DBNull.Value : mark.Comment.Trim());
+                updateCommand.Parameters.AddWithValue("@SchoolId", schoolId);
+                updateCommand.Parameters.AddWithValue("@SubjectId", subjectId);
+                updateCommand.Parameters.AddWithValue("@Subject", subjectName);
+                updateCommand.Parameters.AddWithValue("@Score", markValue.Value);
+                if (hasMarkCommentColumn || hasTeacherCommentsColumn)
+                {
+                    updateCommand.Parameters.AddWithValue("@Comment", string.IsNullOrWhiteSpace(mark.Comment) ? DBNull.Value : mark.Comment.Trim());
+                }
 
                 var affected = await updateCommand.ExecuteNonQueryAsync(cancellationToken);
                 if (affected > 0)
@@ -898,18 +938,35 @@ public sealed class LearnerService : ILearnerService
                     continue;
                 }
 
-                var nextId = await GetNextIdAsync(connection, transaction, "institution.WorkLearnerMark", cancellationToken);
+                var insertColumns = new List<string> { "Id", "TenantId", "LearnerId", "Subject", "SubjectId", "Score" };
+                var insertValues = new List<string> { "@Id", "@TenantId", "@LearnerId", "@Subject", "@SubjectId", "@Score" };
+                if (hasMarkCommentColumn)
+                {
+                    insertColumns.Add("Comment");
+                    insertValues.Add("@Comment");
+                }
+                else if (hasTeacherCommentsColumn)
+                {
+                    insertColumns.Add("TeacherComments");
+                    insertValues.Add("@Comment");
+                }
+
+                var nextId = await GetNextIdAsync(connection, transaction, "institution.Mark", cancellationToken);
                 using var insertCommand = new SqlCommand(
-                    @"INSERT INTO institution.WorkLearnerMark (Id, WorkId, LearnerId, SchoolId, MarkObtained, Comment, UpdatedAt)
-                      VALUES (@Id, @WorkId, @LearnerId, @SchoolId, @MarkObtained, @Comment, GETUTCDATE());",
+                    $@"INSERT INTO institution.Mark ({string.Join(", ", insertColumns)})
+                       VALUES ({string.Join(", ", insertValues)});",
                     connection,
                     transaction);
                 insertCommand.Parameters.AddWithValue("@Id", nextId);
-                insertCommand.Parameters.AddWithValue("@WorkId", workId);
+                insertCommand.Parameters.AddWithValue("@TenantId", schoolId);
                 insertCommand.Parameters.AddWithValue("@LearnerId", mark.LearnerId);
-                insertCommand.Parameters.AddWithValue("@SchoolId", tenantId.Value);
-                insertCommand.Parameters.AddWithValue("@MarkObtained", markValue.HasValue ? markValue.Value : DBNull.Value);
-                insertCommand.Parameters.AddWithValue("@Comment", string.IsNullOrWhiteSpace(mark.Comment) ? DBNull.Value : mark.Comment.Trim());
+                insertCommand.Parameters.AddWithValue("@Subject", subjectName);
+                insertCommand.Parameters.AddWithValue("@SubjectId", subjectId);
+                insertCommand.Parameters.AddWithValue("@Score", markValue.Value);
+                if (hasMarkCommentColumn || hasTeacherCommentsColumn)
+                {
+                    insertCommand.Parameters.AddWithValue("@Comment", string.IsNullOrWhiteSpace(mark.Comment) ? DBNull.Value : mark.Comment.Trim());
+                }
 
                 await insertCommand.ExecuteNonQueryAsync(cancellationToken);
             }
@@ -1992,7 +2049,13 @@ public sealed class LearnerService : ILearnerService
         return value is null || value == DBNull.Value ? string.Empty : Convert.ToString(value) ?? string.Empty;
     }
 
-    private static async Task<bool> HasColumnAsync(SqlConnection connection, string schemaName, string tableName, string columnName, CancellationToken cancellationToken)
+    private static async Task<bool> HasColumnAsync(
+        SqlConnection connection,
+        string schemaName,
+        string tableName,
+        string columnName,
+        CancellationToken cancellationToken,
+        SqlTransaction? transaction = null)
     {
         using var command = new SqlCommand(
             @"SELECT CASE WHEN EXISTS (
@@ -2005,6 +2068,11 @@ public sealed class LearnerService : ILearnerService
                       AND c.name = @ColumnName)
                 THEN 1 ELSE 0 END;",
             connection);
+
+        if (transaction is not null)
+        {
+            command.Transaction = transaction;
+        }
 
         command.Parameters.AddWithValue("@SchemaName", schemaName);
         command.Parameters.AddWithValue("@TableName", tableName);

@@ -147,6 +147,13 @@ export class WorkDetailComponent implements OnInit {
         return httpError.error.error;
       }
 
+      if (httpError.error && typeof httpError.error.title === 'string') {
+        const details = this.extractValidationErrors(httpError.error.errors);
+        return details.length > 0
+          ? `${httpError.error.title}: ${details.join(' | ')}`
+          : httpError.error.title;
+      }
+
       return 'Request validation failed. Please review your input.';
     }
 
@@ -168,5 +175,33 @@ export class WorkDetailComponent implements OnInit {
   private clearMessages(): void {
     this.errorMessage = '';
     this.successMessage = '';
+  }
+
+  private extractValidationErrors(errors: unknown): string[] {
+    if (!errors || typeof errors !== 'object') {
+      return [];
+    }
+
+    const entries = Object.entries(errors as Record<string, unknown>);
+    const messages: string[] = [];
+
+    for (const [field, value] of entries) {
+      if (!Array.isArray(value)) {
+        continue;
+      }
+
+      const fieldMessages = value
+        .filter(item => typeof item === 'string')
+        .map(item => item.trim())
+        .filter(item => item.length > 0);
+
+      if (fieldMessages.length === 0) {
+        continue;
+      }
+
+      messages.push(`${field}: ${fieldMessages.join(', ')}`);
+    }
+
+    return messages;
   }
 }

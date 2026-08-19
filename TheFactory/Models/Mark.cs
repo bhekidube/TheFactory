@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace TheFactory.Models
 {
     public class Mark
@@ -6,6 +8,7 @@ namespace TheFactory.Models
         public int TenantId { get; set; }
         public int LearnerId { get; set; }
         public int SubjectId { get; set; }
+        [Column("Score")]
         public int Score { get; set; }
         public string? TeacherComments { get; set; }
         public Subject? Subject { get; set; }

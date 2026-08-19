@@ -204,7 +204,14 @@ public sealed class WorkLearnerMarkUpsertDto
     public string Comment { get; set; } = string.Empty;
 }
 
+public sealed class SaveLearnerMarkDto
+{
+    public int LearnerId { get; set; }
+    public int? MarkObtained { get; set; }
+    public string Comment { get; set; } = string.Empty;
+}
+
 public sealed class SaveWorkMarksRequestDto
 {
-    public IReadOnlyCollection<WorkLearnerMarkUpsertDto> Marks { get; set; } = Array.Empty<WorkLearnerMarkUpsertDto>();
+    public IReadOnlyCollection<SaveLearnerMarkDto> Marks { get; set; } = Array.Empty<SaveLearnerMarkDto>();
 }
