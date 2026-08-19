@@ -41,6 +41,7 @@ import { LearningComponent } from './learning/learning.component';
 import { LearningSchoolComponent } from './learning/learning-school.component';
 import { ClassDetailComponent } from './class-detail/class-detail.component';
 import { CurriculumViewComponent } from './curriculum-view/curriculum-view.component';
+import { LearnerDetailComponent } from './learner-detail/learner-detail.component';
 
 @NgModule({
   declarations: [
@@ -65,7 +66,8 @@ import { CurriculumViewComponent } from './curriculum-view/curriculum-view.compo
     LearningComponent,
     LearningSchoolComponent,
     ClassDetailComponent,
-    CurriculumViewComponent
+    CurriculumViewComponent,
+    LearnerDetailComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),

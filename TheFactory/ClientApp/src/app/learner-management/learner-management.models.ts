@@ -94,3 +94,21 @@ export interface SubjectUpsertRequestDto {
   code: string;
   isActive: boolean;
 }
+
+export interface LearnerAcademicRecordDto {
+  subjectName: string;
+  subjectCode: string;
+  termOrPeriod: string;
+  gradeOrMarkPercent: number;
+  teacherRemarks: string;
+}
+
+export interface LearnerDetailDto {
+  learnerId: number;
+  firstName: string;
+  surname: string;
+  grade: string;
+  dateOfBirth: string;
+  parentGuardianContact: string;
+  academicRecords: LearnerAcademicRecordDto[];
+}

@@ -568,6 +568,117 @@ public sealed class LearnerService : ILearnerService
         return subjects;
     }
 
+    public async Task<LearnerDetailDto?> GetLearnerDetailByIdAsync(int learnerId, CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        var tenantId = await ResolveTenantIdAsync(connection, cancellationToken);
+        if (!tenantId.HasValue)
+        {
+            return null;
+        }
+
+        var hasDateOfBirth = await HasColumnAsync(connection, "institution", "Learner", "DateOfBirth", cancellationToken);
+        var hasParentGuardianContact = await HasColumnAsync(connection, "institution", "Learner", "ParentGuardianContact", cancellationToken);
+
+        var learnerColumns = new List<string>
+        {
+            "Id",
+            "FirstName",
+            "Surname",
+            "Grade",
+            hasDateOfBirth ? "CONVERT(NVARCHAR(30), DateOfBirth, 23) AS DateOfBirth" : "CAST(NULL AS NVARCHAR(30)) AS DateOfBirth",
+            hasParentGuardianContact ? "ParentGuardianContact" : "CAST(NULL AS NVARCHAR(200)) AS ParentGuardianContact"
+        };
+
+        using var learnerCommand = new SqlCommand(
+            $@"SELECT {string.Join(", ", learnerColumns)}
+               FROM institution.Learner
+               WHERE Id = @LearnerId
+                 AND TenantId = @TenantId
+                 AND IsArchived = 0;",
+            connection);
+        learnerCommand.Parameters.AddWithValue("@LearnerId", learnerId);
+        learnerCommand.Parameters.AddWithValue("@TenantId", tenantId.Value);
+
+        using var reader = await learnerCommand.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        var detail = new LearnerDetailDto
+        {
+            LearnerId = reader.GetInt32(0),
+            FirstName = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+            Surname = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+            Grade = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+            DateOfBirth = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
+            ParentGuardianContact = reader.IsDBNull(5) ? string.Empty : reader.GetString(5)
+        };
+
+        detail.AcademicRecords = await GetLearnerAcademicRecordsAsync(learnerId, cancellationToken);
+        return detail;
+    }
+
+    public async Task<IReadOnlyCollection<LearnerAcademicRecordDto>> GetLearnerAcademicRecordsAsync(int learnerId, CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        var tenantId = await ResolveTenantIdAsync(connection, cancellationToken);
+        if (!tenantId.HasValue)
+        {
+            return Array.Empty<LearnerAcademicRecordDto>();
+        }
+
+        var hasTeacherComments = await HasColumnAsync(connection, "institution", "Mark", "TeacherComments", cancellationToken);
+        var hasTermColumn = await HasColumnAsync(connection, "institution", "Mark", "TermOrPeriod", cancellationToken);
+
+        var termProjection = hasTermColumn
+            ? "ISNULL(CAST(m.TermOrPeriod AS NVARCHAR(100)), '')"
+            : "CAST('' AS NVARCHAR(100))";
+
+        var commentsProjection = hasTeacherComments
+            ? "ISNULL(m.TeacherComments, '')"
+            : "CAST('' AS NVARCHAR(MAX))";
+
+        using var command = new SqlCommand(
+            $@"SELECT
+                    s.Name AS SubjectName,
+                    ISNULL(s.Code, '') AS SubjectCode,
+                    {termProjection} AS TermOrPeriod,
+                    CASE
+                        WHEN ISNULL(m.Score, 0) < 0 THEN 0
+                        WHEN ISNULL(m.Score, 0) > 100 THEN 100
+                        ELSE CONVERT(DECIMAL(5,2), ISNULL(m.Score, 0))
+                    END AS GradeOrMarkPercent,
+                    {commentsProjection} AS TeacherRemarks
+               FROM institution.Mark AS m
+               INNER JOIN institution.Subject AS s
+                    ON s.Id = m.SubjectId
+                   AND s.TenantId = m.TenantId
+               WHERE m.LearnerId = @LearnerId
+                 AND m.TenantId = @TenantId
+               ORDER BY s.Name ASC;",
+            connection);
+        command.Parameters.AddWithValue("@LearnerId", learnerId);
+        command.Parameters.AddWithValue("@TenantId", tenantId.Value);
+
+        var records = new List<LearnerAcademicRecordDto>();
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            records.Add(new LearnerAcademicRecordDto
+            {
+                SubjectName = reader.IsDBNull(0) ? string.Empty : reader.GetString(0),
+                SubjectCode = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                TermOrPeriod = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                GradeOrMarkPercent = reader.IsDBNull(3) ? 0m : Convert.ToDecimal(reader.GetValue(3)),
+                TeacherRemarks = reader.IsDBNull(4) ? string.Empty : reader.GetString(4)
+            });
+        }
+
+        return records;
+    }
+
     public async Task<SubjectDto> CreateSubjectAsync(SubjectUpsertRequestDto request, CancellationToken cancellationToken = default)
     {
         using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);

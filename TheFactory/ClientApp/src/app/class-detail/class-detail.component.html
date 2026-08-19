@@ -49,9 +49,9 @@
           </thead>
           <tbody>
             <tr *ngFor="let learner of classDetail.learners">
-              <td>{{ learner.learnerId }}</td>
-              <td>{{ learner.firstName }}</td>
-              <td>{{ learner.surname }}</td>
+              <td><a [routerLink]="['/school/admin/learners', learner.learnerId]">{{ learner.learnerId }}</a></td>
+              <td><a [routerLink]="['/school/admin/learners', learner.learnerId]">{{ learner.firstName }}</a></td>
+              <td><a [routerLink]="['/school/admin/learners', learner.learnerId]">{{ learner.surname }}</a></td>
               <td>{{ learner.grade }}</td>
             </tr>
           </tbody>

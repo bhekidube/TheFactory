@@ -9,6 +9,8 @@ import {
   CreateClassRequestDto,
   LearnerLookupDto,
   LearnerDto,
+  LearnerDetailDto,
+  LearnerAcademicRecordDto,
   LearnerReportResponseDto,
   SubjectUpsertRequestDto,
   TeacherLookupDto,
@@ -136,6 +138,14 @@ export class LearnerManagementService {
 
   getLearner(id: number): Observable<LearnerDto> {
     return this.http.get<LearnerDto>(`${this.baseUrl}/learners/${id}`, this.getRequestOptions());
+  }
+
+  getLearnerDetail(id: number): Observable<LearnerDetailDto> {
+    return this.http.get<LearnerDetailDto>(`${this.baseUrl}/learners/${id}`, this.getRequestOptions());
+  }
+
+  getLearnerAcademicRecords(id: number): Observable<LearnerAcademicRecordDto[]> {
+    return this.http.get<LearnerAcademicRecordDto[]>(`${this.baseUrl}/learners/${id}/academic-records`, this.getRequestOptions());
   }
 
   createLearner(payload: LearnerDto): Observable<LearnerDto> {

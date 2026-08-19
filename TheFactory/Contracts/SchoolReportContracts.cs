@@ -118,3 +118,23 @@ public sealed class SubjectUpsertRequestDto
     public string Code { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
 }
+
+public sealed class LearnerAcademicRecordDto
+{
+    public string SubjectName { get; set; } = string.Empty;
+    public string SubjectCode { get; set; } = string.Empty;
+    public string TermOrPeriod { get; set; } = string.Empty;
+    public decimal GradeOrMarkPercent { get; set; }
+    public string TeacherRemarks { get; set; } = string.Empty;
+}
+
+public sealed class LearnerDetailDto
+{
+    public int LearnerId { get; set; }
+    public string FirstName { get; set; } = string.Empty;
+    public string Surname { get; set; } = string.Empty;
+    public string Grade { get; set; } = string.Empty;
+    public string DateOfBirth { get; set; } = string.Empty;
+    public string ParentGuardianContact { get; set; } = string.Empty;
+    public IReadOnlyCollection<LearnerAcademicRecordDto> AcademicRecords { get; set; } = Array.Empty<LearnerAcademicRecordDto>();
+}

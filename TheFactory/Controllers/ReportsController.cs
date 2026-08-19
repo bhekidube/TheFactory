@@ -501,17 +501,25 @@ public class ReportsController : ControllerBase
     /// Gets a learner by ID.
     /// </summary>
     [HttpGet("learners/{id:int}")]
-    [ProducesResponseType(typeof(LearnerDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(LearnerDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<LearnerDto>> GetLearnerById(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<LearnerDetailDto>> GetLearnerById(int id, CancellationToken cancellationToken)
     {
-        var learner = await _learnerService.GetLearnerByIdAsync(id, cancellationToken);
+        var learner = await _learnerService.GetLearnerDetailByIdAsync(id, cancellationToken);
         if (learner is null)
         {
             return NotFound();
         }
 
         return Ok(learner);
+    }
+
+    [HttpGet("learners/{id:int}/academic-records")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<LearnerAcademicRecordDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<LearnerAcademicRecordDto>>> GetLearnerAcademicRecords(int id, CancellationToken cancellationToken)
+    {
+        var records = await _learnerService.GetLearnerAcademicRecordsAsync(id, cancellationToken);
+        return Ok(records);
     }
 
     /// <summary>
