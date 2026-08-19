@@ -45,12 +45,24 @@ export class LearnerDetailComponent implements OnInit {
     this.learnerService.getLearnerDetail(this.learnerId).subscribe({
       next: learner => {
         this.learner = learner;
-        this.academicRecords = learner.academicRecords || [];
-        this.loading = false;
+        this.loadAcademicRecords();
       },
       error: err => {
         this.loading = false;
         this.errorMessage = this.mapHttpError(err, 'Failed to load learner details.');
+      }
+    });
+  }
+
+  private loadAcademicRecords(): void {
+    this.learnerService.getLearnerAcademicRecords(this.learnerId).subscribe({
+      next: records => {
+        this.academicRecords = records || [];
+        this.loading = false;
+      },
+      error: err => {
+        this.loading = false;
+        this.errorMessage = this.mapHttpError(err, 'Failed to load academic records.');
       }
     });
   }

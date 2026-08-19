@@ -1337,10 +1337,21 @@ public sealed class LearnerService : ILearnerService
 
         var hasTeacherComments = await HasColumnAsync(connection, "institution", "Mark", "TeacherComments", cancellationToken);
         var hasTermColumn = await HasColumnAsync(connection, "institution", "Mark", "TermOrPeriod", cancellationToken);
+        var hasAssessmentNameColumn = await HasColumnAsync(connection, "institution", "Mark", "AssessmentName", cancellationToken);
+        var hasAssessmentOrExamColumn = await HasColumnAsync(connection, "institution", "Mark", "AssessmentOrExamName", cancellationToken);
+        var hasExamNameColumn = await HasColumnAsync(connection, "institution", "Mark", "ExamName", cancellationToken);
 
         var termProjection = hasTermColumn
             ? "ISNULL(CAST(m.TermOrPeriod AS NVARCHAR(100)), '')"
             : "CAST('' AS NVARCHAR(100))";
+
+        var assessmentProjection = hasAssessmentNameColumn
+            ? "ISNULL(CAST(m.AssessmentName AS NVARCHAR(200)), '')"
+            : hasAssessmentOrExamColumn
+                ? "ISNULL(CAST(m.AssessmentOrExamName AS NVARCHAR(200)), '')"
+                : hasExamNameColumn
+                    ? "ISNULL(CAST(m.ExamName AS NVARCHAR(200)), '')"
+                    : "CAST('' AS NVARCHAR(200))";
 
         var commentsProjection = hasTeacherComments
             ? "ISNULL(m.TeacherComments, '')"
@@ -1348,7 +1359,8 @@ public sealed class LearnerService : ILearnerService
 
         using var command = new SqlCommand(
             $@"SELECT
-                    s.Name AS SubjectName,
+                    ISNULL(s.Name, 'Unknown Subject') AS SubjectName,
+                    {assessmentProjection} AS AssessmentOrExamName,
                     ISNULL(s.Code, '') AS SubjectCode,
                     {termProjection} AS TermOrPeriod,
                     CASE
@@ -1357,12 +1369,14 @@ public sealed class LearnerService : ILearnerService
                         ELSE CONVERT(DECIMAL(5,2), ISNULL(m.Score, 0))
                     END AS GradeOrMarkPercent,
                     {commentsProjection} AS TeacherRemarks
-               FROM institution.Mark AS m
-               INNER JOIN institution.Subject AS s
-                    ON s.Id = m.SubjectId
-                   AND s.TenantId = m.TenantId
+            FROM institution.Mark AS m
+            INNER JOIN institution.Learner AS l
+                ON l.Id = m.LearnerId
+                AND l.TenantId = @TenantId
+                AND l.IsArchived = 0
+            LEFT JOIN institution.Subject AS s
+                ON s.Id = m.SubjectId
                WHERE m.LearnerId = @LearnerId
-                 AND m.TenantId = @TenantId
                ORDER BY s.Name ASC;",
             connection);
         command.Parameters.AddWithValue("@LearnerId", learnerId);
@@ -1375,10 +1389,12 @@ public sealed class LearnerService : ILearnerService
             records.Add(new LearnerAcademicRecordDto
             {
                 SubjectName = reader.IsDBNull(0) ? string.Empty : reader.GetString(0),
-                SubjectCode = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
-                TermOrPeriod = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
-                GradeOrMarkPercent = reader.IsDBNull(3) ? 0m : Convert.ToDecimal(reader.GetValue(3)),
-                TeacherRemarks = reader.IsDBNull(4) ? string.Empty : reader.GetString(4)
+                AssessmentOrExamName = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                SubjectCode = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                TermOrPeriod = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+                GradeOrMarkPercent = reader.IsDBNull(4) ? 0m : Convert.ToDecimal(reader.GetValue(4)),
+                Grade = ResolveGrade(Convert.ToInt32(Math.Round(reader.IsDBNull(4) ? 0m : Convert.ToDecimal(reader.GetValue(4)), MidpointRounding.AwayFromZero)), 100),
+                TeacherRemarks = reader.IsDBNull(5) ? string.Empty : reader.GetString(5)
             });
         }
 

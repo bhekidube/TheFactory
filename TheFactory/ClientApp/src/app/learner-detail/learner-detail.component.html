@@ -29,20 +29,20 @@
         <table>
           <thead>
             <tr>
-              <th>Subject Name</th>
-              <th>Subject Code</th>
-              <th>Term/Period</th>
-              <th>Grade/Mark (%)</th>
-              <th>Teacher Remarks</th>
+              <th>Subject</th>
+              <th>Assessment / Exam Name</th>
+              <th>Term / Period</th>
+              <th>Score / Percentage</th>
+              <th>Grade</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let record of academicRecords">
               <td>{{ record.subjectName }}</td>
-              <td>{{ record.subjectCode || '-' }}</td>
+              <td>{{ record.assessmentOrExamName || '-' }}</td>
               <td>{{ record.termOrPeriod || '-' }}</td>
               <td>{{ record.gradeOrMarkPercent | number: '1.0-2' }}%</td>
-              <td>{{ record.teacherRemarks || '-' }}</td>
+              <td>{{ record.grade || '-' }}</td>
             </tr>
           </tbody>
         </table>

@@ -97,9 +97,11 @@ export interface SubjectUpsertRequestDto {
 
 export interface LearnerAcademicRecordDto {
   subjectName: string;
+  assessmentOrExamName: string;
   subjectCode: string;
   termOrPeriod: string;
   gradeOrMarkPercent: number;
+  grade: string;
   teacherRemarks: string;
 }
 

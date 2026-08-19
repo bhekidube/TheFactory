@@ -122,9 +122,11 @@ public sealed class SubjectUpsertRequestDto
 public sealed class LearnerAcademicRecordDto
 {
     public string SubjectName { get; set; } = string.Empty;
+    public string AssessmentOrExamName { get; set; } = string.Empty;
     public string SubjectCode { get; set; } = string.Empty;
     public string TermOrPeriod { get; set; } = string.Empty;
     public decimal GradeOrMarkPercent { get; set; }
+    public string Grade { get; set; } = string.Empty;
     public string TeacherRemarks { get; set; } = string.Empty;
 }
 
