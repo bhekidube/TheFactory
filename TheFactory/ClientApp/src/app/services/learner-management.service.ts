@@ -3,8 +3,12 @@ import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
+  ClassDto,
+  CreateClassRequestDto,
+  LearnerLookupDto,
   LearnerDto,
   LearnerReportResponseDto,
+  TeacherLookupDto,
   SubjectDto,
   SubjectScoreDto,
   SubjectScoreUpsertRequest
@@ -72,6 +76,28 @@ export class LearnerManagementService {
 
   getLearners(): Observable<LearnerDto[]> {
     return this.http.get<LearnerDto[]>(`${this.baseUrl}/learners`, this.getRequestOptions());
+  }
+
+  getClasses(): Observable<ClassDto[]> {
+    return this.http.get<ClassDto[]>(`${this.baseUrl}/classes`, this.getRequestOptions());
+  }
+
+  createClass(payload: CreateClassRequestDto): Observable<ClassDto> {
+    return this.http.post<ClassDto>(`${this.baseUrl}/classes`, payload, this.getRequestOptions());
+  }
+
+  searchTeachers(query: string): Observable<TeacherLookupDto[]> {
+    return this.http.get<TeacherLookupDto[]>(
+      `${this.baseUrl}/teachers/search?q=${encodeURIComponent(query)}`,
+      this.getRequestOptions()
+    );
+  }
+
+  searchLearnersForLookup(query: string): Observable<LearnerLookupDto[]> {
+    return this.http.get<LearnerLookupDto[]>(
+      `${this.baseUrl}/learners/search?q=${encodeURIComponent(query)}`,
+      this.getRequestOptions()
+    );
   }
 
   getLearner(id: number): Observable<LearnerDto> {

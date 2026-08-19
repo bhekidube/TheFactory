@@ -2,11 +2,15 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { forkJoin } from 'rxjs';
 import {
+  ClassDto,
+  CreateClassRequestDto,
+  LearnerLookupDto,
   LearnerDto,
   LearnerReportResponseDto,
   SubjectDto,
   SubjectScoreDto,
-  SubjectScoreUpsertRequest
+  SubjectScoreUpsertRequest,
+  TeacherLookupDto
 } from './learner-management.models';
 import { LearnerManagementService } from '../services/learner-management.service';
 
@@ -18,12 +22,27 @@ import { LearnerManagementService } from '../services/learner-management.service
 export class LearnerManagementComponent implements OnInit {
   learners: LearnerDto[] = [];
   filteredLearners: LearnerDto[] = [];
+  classes: ClassDto[] = [];
   searchTerm = '';
+  classSearchTerm = '';
+  teacherSearchTerm = '';
+  learnerLookupSearchTerm = '';
+  teacherLookupResults: TeacherLookupDto[] = [];
+  learnerLookupResults: LearnerLookupDto[] = [];
+  selectedTeacher: TeacherLookupDto | null = null;
+  selectedLearners: LearnerLookupDto[] = [];
+  selectedGrade = '';
+  className = '';
+  gradeOptions = ['Baby Class', 'Middle Class', 'ECD A', 'ECD B', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4'];
 
   loadingLearners = false;
+  loadingClasses = false;
   loadingLearnerDetail = false;
   loadingReport = false;
   loadingSubjects = false;
+  searchingTeachers = false;
+  searchingLearnersLookup = false;
+  creatingClass = false;
   creatingLearner = false;
   updatingLearner = false;
   archivingLearnerId: number | null = null;
@@ -36,6 +55,7 @@ export class LearnerManagementComponent implements OnInit {
 
   showLearnerForm = false;
   showReportPanel = false;
+  showClassForm = false;
   isEditMode = false;
 
   learnerForm: LearnerDto = this.getEmptyLearner();
@@ -48,6 +68,7 @@ export class LearnerManagementComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadLearners();
+    this.loadClasses();
   }
 
   get activeLearnersCount(): number {
@@ -56,6 +77,20 @@ export class LearnerManagementComponent implements OnInit {
 
   get learnersWithReportsCount(): number {
     return this.learners.filter(learner => learner.id > 0).length;
+  }
+
+  get filteredClasses(): ClassDto[] {
+    const term = this.classSearchTerm.trim().toLowerCase();
+    if (!term) {
+      return [...this.classes];
+    }
+
+    return this.classes.filter(schoolClass =>
+      schoolClass.name.toLowerCase().includes(term)
+      || schoolClass.grade.toLowerCase().includes(term)
+      || schoolClass.teacherName.toLowerCase().includes(term)
+      || schoolClass.id.toString().includes(term)
+    );
   }
 
   get overallAverage(): number {
@@ -79,6 +114,22 @@ export class LearnerManagementComponent implements OnInit {
       error: err => {
         this.loadingLearners = false;
         this.errorMessage = this.mapHttpError(err, 'Failed to load learners.');
+      }
+    });
+  }
+
+  loadClasses(): void {
+    this.loadingClasses = true;
+    this.errorMessage = '';
+
+    this.learnerService.getClasses().subscribe({
+      next: classes => {
+        this.classes = classes;
+        this.loadingClasses = false;
+      },
+      error: err => {
+        this.loadingClasses = false;
+        this.errorMessage = this.mapHttpError(err, 'Failed to load classes.');
       }
     });
   }
@@ -108,6 +159,118 @@ export class LearnerManagementComponent implements OnInit {
     this.isEditMode = false;
     this.learnerForm = this.getEmptyLearner();
     this.showLearnerForm = true;
+  }
+
+  openAddClass(): void {
+    this.clearMessages();
+    this.resetClassForm();
+    this.showClassForm = true;
+  }
+
+  closeClassForm(): void {
+    if (this.creatingClass || this.searchingTeachers || this.searchingLearnersLookup) {
+      return;
+    }
+
+    this.showClassForm = false;
+    this.resetClassForm();
+  }
+
+  searchTeachers(): void {
+    const term = this.teacherSearchTerm.trim();
+    if (term.length < 2) {
+      this.teacherLookupResults = [];
+      return;
+    }
+
+    this.searchingTeachers = true;
+    this.learnerService.searchTeachers(term).subscribe({
+      next: results => {
+        this.teacherLookupResults = results;
+        this.searchingTeachers = false;
+      },
+      error: err => {
+        this.searchingTeachers = false;
+        this.errorMessage = this.mapHttpError(err, 'Failed to search teachers.');
+      }
+    });
+  }
+
+  selectTeacher(teacher: TeacherLookupDto): void {
+    this.selectedTeacher = teacher;
+    this.teacherSearchTerm = `${teacher.name} (${teacher.email})`;
+    this.teacherLookupResults = [];
+  }
+
+  searchLearnersForLookup(): void {
+    const term = this.learnerLookupSearchTerm.trim();
+    if (term.length < 2) {
+      this.learnerLookupResults = [];
+      return;
+    }
+
+    this.searchingLearnersLookup = true;
+    this.learnerService.searchLearnersForLookup(term).subscribe({
+      next: results => {
+        const selectedIds = new Set(this.selectedLearners.map(item => item.learnerId));
+        this.learnerLookupResults = results.filter(item => !selectedIds.has(item.learnerId));
+        this.searchingLearnersLookup = false;
+      },
+      error: err => {
+        this.searchingLearnersLookup = false;
+        this.errorMessage = this.mapHttpError(err, 'Failed to search learners.');
+      }
+    });
+  }
+
+  addLearnerToClass(learner: LearnerLookupDto): void {
+    if (this.selectedLearners.some(item => item.learnerId === learner.learnerId)) {
+      return;
+    }
+
+    this.selectedLearners = [...this.selectedLearners, learner];
+    this.learnerLookupResults = this.learnerLookupResults.filter(item => item.learnerId !== learner.learnerId);
+    this.learnerLookupSearchTerm = '';
+  }
+
+  removeLearnerFromClass(learnerId: number): void {
+    this.selectedLearners = this.selectedLearners.filter(item => item.learnerId !== learnerId);
+  }
+
+  saveClass(): void {
+    this.clearMessages();
+
+    const validationError = this.validateClassForm();
+    if (validationError) {
+      this.errorMessage = validationError;
+      return;
+    }
+
+    if (!this.selectedTeacher) {
+      this.errorMessage = 'Teacher is required.';
+      return;
+    }
+
+    const payload: CreateClassRequestDto = {
+      name: this.className.trim(),
+      grade: this.selectedGrade.trim(),
+      teacherId: this.selectedTeacher.teacherId,
+      learnerIds: this.selectedLearners.map(item => item.learnerId)
+    };
+
+    this.creatingClass = true;
+    this.learnerService.createClass(payload).subscribe({
+      next: () => {
+        this.creatingClass = false;
+        this.showClassForm = false;
+        this.successMessage = 'Class created successfully.';
+        this.loadClasses();
+      },
+      error: err => {
+        this.creatingClass = false;
+        this.errorMessage = this.mapHttpError(err, 'Failed to create class.');
+      }
+    });
   }
 
   openEditLearner(learner: LearnerDto): void {
@@ -366,6 +529,10 @@ export class LearnerManagementComponent implements OnInit {
     return learner.id;
   }
 
+  trackByClassId(_: number, schoolClass: ClassDto): number {
+    return schoolClass.id;
+  }
+
   private validateLearner(learner: LearnerDto): string {
     if (!learner.firstName?.trim()) {
       return 'First name is required.';
@@ -377,6 +544,22 @@ export class LearnerManagementComponent implements OnInit {
 
     if (!learner.grade?.trim()) {
       return 'Grade is required.';
+    }
+
+    return '';
+  }
+
+  private validateClassForm(): string {
+    if (!this.className.trim()) {
+      return 'Class name is required.';
+    }
+
+    if (!this.selectedGrade.trim()) {
+      return 'Class grade is required.';
+    }
+
+    if (!this.selectedTeacher || this.selectedTeacher.teacherId <= 0) {
+      return 'Teacher is required.';
     }
 
     return '';
@@ -497,5 +680,16 @@ export class LearnerManagementComponent implements OnInit {
   private clearMessages(): void {
     this.errorMessage = '';
     this.successMessage = '';
+  }
+
+  private resetClassForm(): void {
+    this.className = '';
+    this.selectedGrade = '';
+    this.teacherSearchTerm = '';
+    this.learnerLookupSearchTerm = '';
+    this.teacherLookupResults = [];
+    this.learnerLookupResults = [];
+    this.selectedTeacher = null;
+    this.selectedLearners = [];
   }
 }

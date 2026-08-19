@@ -52,3 +52,38 @@ public sealed class LearnerReportResponseDto
     public IReadOnlyCollection<SubjectScoreDto> Subjects { get; set; } = Array.Empty<SubjectScoreDto>();
     public decimal Average { get; set; }
 }
+
+public sealed class CreateClassRequestDto
+{
+    public string Name { get; set; } = string.Empty;
+    public string Grade { get; set; } = string.Empty;
+    public int TeacherId { get; set; }
+    public IReadOnlyCollection<int> LearnerIds { get; set; } = Array.Empty<int>();
+}
+
+public sealed class ClassDto
+{
+    public int Id { get; set; }
+    public int SchoolId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Grade { get; set; } = string.Empty;
+    public int TeacherId { get; set; }
+    public string TeacherName { get; set; } = string.Empty;
+    public IReadOnlyCollection<int> LearnerIds { get; set; } = Array.Empty<int>();
+}
+
+public sealed class TeacherLookupDto
+{
+    public int TeacherId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
+}
+
+public sealed class LearnerLookupDto
+{
+    public int LearnerId { get; set; }
+    public string FirstName { get; set; } = string.Empty;
+    public string Surname { get; set; } = string.Empty;
+    public string Grade { get; set; } = string.Empty;
+}

@@ -81,6 +81,57 @@
     </table>
   </div>
 
+  <div class="page-header classes-header">
+    <div>
+      <h2>Classes</h2>
+      <p>Manage crèche classes, assigned teachers, and learner enrolments.</p>
+    </div>
+    <button type="button" class="primary-btn" (click)="openAddClass()">+ Add Class</button>
+  </div>
+
+  <div class="toolbar">
+    <input
+      type="text"
+      [(ngModel)]="classSearchTerm"
+      placeholder="Search classes..."
+      aria-label="Search classes"
+    />
+    <button type="button" class="secondary-btn" (click)="loadClasses()" [disabled]="loadingClasses">
+      {{ loadingClasses ? 'Refreshing...' : 'Refresh Classes' }}
+    </button>
+  </div>
+
+  <div *ngIf="loadingClasses" class="state-card">Loading classes...</div>
+
+  <div *ngIf="!loadingClasses && filteredClasses.length === 0" class="state-card empty">
+    <strong>No classes yet</strong>
+    <p>Create the first class for this school.</p>
+    <button type="button" class="primary-btn" (click)="openAddClass()">Add Class</button>
+  </div>
+
+  <div class="table-wrap" *ngIf="!loadingClasses && filteredClasses.length > 0">
+    <table>
+      <thead>
+        <tr>
+          <th>Class ID</th>
+          <th>Class Name</th>
+          <th>Grade</th>
+          <th>Teacher</th>
+          <th>Learners</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let schoolClass of filteredClasses; trackBy: trackByClassId">
+          <td>{{ schoolClass.id }}</td>
+          <td>{{ schoolClass.name }}</td>
+          <td>{{ schoolClass.grade }}</td>
+          <td>{{ schoolClass.teacherName || ('User #' + schoolClass.teacherId) }}</td>
+          <td>{{ schoolClass.learnerIds.length }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
   <div class="overlay" *ngIf="showLearnerForm">
     <div class="panel">
       <h3>{{ isEditMode ? 'Edit Learner' : 'Add Learner' }}</h3>
@@ -112,6 +163,90 @@
             class="secondary-btn"
             [disabled]="creatingLearner || updatingLearner"
             (click)="closeLearnerForm()">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="overlay" *ngIf="showClassForm">
+    <div class="panel">
+      <h3>Add Class</h3>
+
+      <form (ngSubmit)="saveClass()" class="score-form">
+        <label>
+          Class Name
+          <input type="text" name="className" [(ngModel)]="className" required />
+        </label>
+
+        <label>
+          Grade
+          <select name="classGrade" [(ngModel)]="selectedGrade" required>
+            <option value="">Select a grade</option>
+            <option *ngFor="let grade of gradeOptions" [value]="grade">{{ grade }}</option>
+          </select>
+        </label>
+
+        <label>
+          Teacher
+          <input
+            type="text"
+            name="teacherSearch"
+            [(ngModel)]="teacherSearchTerm"
+            (ngModelChange)="searchTeachers()"
+            placeholder="Search teacher/staff by name or email"
+            required
+          />
+        </label>
+        <div class="lookup-results" *ngIf="teacherLookupResults.length > 0">
+          <button
+            type="button"
+            class="lookup-item"
+            *ngFor="let teacher of teacherLookupResults"
+            (click)="selectTeacher(teacher)">
+            {{ teacher.name }} ({{ teacher.email }}) - {{ teacher.role }}
+          </button>
+        </div>
+        <div class="state-card" *ngIf="searchingTeachers">Searching teachers...</div>
+        <div class="state-card" *ngIf="selectedTeacher">
+          <strong>Selected Teacher:</strong> {{ selectedTeacher.name }} ({{ selectedTeacher.email }})
+        </div>
+
+        <label>
+          Learners
+          <input
+            type="text"
+            name="learnerLookupSearch"
+            [(ngModel)]="learnerLookupSearchTerm"
+            (ngModelChange)="searchLearnersForLookup()"
+            placeholder="Search learners by name or learner ID"
+          />
+        </label>
+        <div class="lookup-results" *ngIf="learnerLookupResults.length > 0">
+          <button
+            type="button"
+            class="lookup-item"
+            *ngFor="let learner of learnerLookupResults"
+            (click)="addLearnerToClass(learner)">
+            {{ learner.firstName }} {{ learner.surname }} ({{ learner.grade }})
+          </button>
+        </div>
+        <div class="state-card" *ngIf="searchingLearnersLookup">Searching learners...</div>
+
+        <div class="selected-learners" *ngIf="selectedLearners.length > 0">
+          <strong>Selected Learners</strong>
+          <div class="selected-learner-row" *ngFor="let learner of selectedLearners">
+            <span>{{ learner.firstName }} {{ learner.surname }} ({{ learner.grade }})</span>
+            <button type="button" class="danger-link-btn" (click)="removeLearnerFromClass(learner.learnerId)">Remove</button>
+          </div>
+        </div>
+
+        <div class="panel-actions">
+          <button type="submit" class="primary-btn" [disabled]="creatingClass">
+            {{ creatingClass ? 'Saving...' : 'Create Class' }}
+          </button>
+          <button type="button" class="secondary-btn" [disabled]="creatingClass" (click)="closeClassForm()">
             Cancel
           </button>
         </div>

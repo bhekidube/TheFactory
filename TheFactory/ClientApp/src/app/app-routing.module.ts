@@ -17,6 +17,7 @@ const routes: Routes = [
   { path: 'learning/schools/:schoolId', redirectTo: 'learning/schools/:schoolId/learners', pathMatch: 'full' },
   { path: 'learning/schools/:schoolId/learners', component: LearningSchoolComponent },
   { path: 'learning/schools/:schoolId/reports', component: LearningSchoolComponent },
+  { path: 'learning/schools/:schoolId/classes', component: LearningSchoolComponent },
   { path: 'admin-screen', component: AdminScreenComponent },
   { path: 'school/admin/learners', component: LearnerManagementComponent },
   { path: 'operator-admin/:operator', component: OperatorAdminComponent },

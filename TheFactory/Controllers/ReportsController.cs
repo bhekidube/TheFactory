@@ -344,6 +344,51 @@ public class ReportsController : ControllerBase
         return Ok(learners);
     }
 
+    [HttpGet("classes")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<ClassDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<ClassDto>>> GetClasses(CancellationToken cancellationToken)
+    {
+        var classes = await _learnerService.GetClassesForCurrentSchoolAsync(cancellationToken);
+        return Ok(classes);
+    }
+
+    [HttpGet("teachers/search")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<TeacherLookupDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<TeacherLookupDto>>> SearchTeachers([FromQuery] string q, CancellationToken cancellationToken)
+    {
+        var teachers = await _learnerService.SearchTeachersAsync(q, cancellationToken);
+        return Ok(teachers);
+    }
+
+    [HttpGet("learners/search")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<LearnerLookupDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<LearnerLookupDto>>> SearchLearners([FromQuery] string q, CancellationToken cancellationToken)
+    {
+        var learners = await _learnerService.SearchLearnersAsync(q, cancellationToken);
+        return Ok(learners);
+    }
+
+    [HttpPost("classes")]
+    [ProducesResponseType(typeof(ClassDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ClassDto>> CreateClass([FromBody] CreateClassRequestDto request, CancellationToken cancellationToken)
+    {
+        if (!TryValidateCreateClassRequest(request, out var validationError))
+        {
+            return BadRequest(validationError);
+        }
+
+        try
+        {
+            var createdClass = await _learnerService.CreateClassAsync(request, cancellationToken);
+            return CreatedAtAction(nameof(GetClasses), new { id = createdClass.Id }, createdClass);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Failed to create class: {ex.Message}");
+        }
+    }
+
     /// <summary>
     /// Gets a learner by ID.
     /// </summary>
@@ -578,6 +623,36 @@ public class ReportsController : ControllerBase
         if (subjectScoreDto.PupilMark < 0 || subjectScoreDto.PupilMark > subjectScoreDto.PossibleMark)
         {
             error = "PupilMark must be between 0 and PossibleMark.";
+            return false;
+        }
+
+        error = string.Empty;
+        return true;
+    }
+
+    private static bool TryValidateCreateClassRequest(CreateClassRequestDto request, out string error)
+    {
+        if (request is null)
+        {
+            error = "Class payload is required.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            error = "Class name is required.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Grade))
+        {
+            error = "Class grade is required.";
+            return false;
+        }
+
+        if (request.TeacherId <= 0)
+        {
+            error = "Teacher is required.";
             return false;
         }
 

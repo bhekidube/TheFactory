@@ -40,3 +40,34 @@ export interface LearnerReportResponseDto {
   subjects: SubjectScoreDto[];
   average: number;
 }
+
+export interface TeacherLookupDto {
+  teacherId: number;
+  name: string;
+  email: string;
+  role: string;
+}
+
+export interface LearnerLookupDto {
+  learnerId: number;
+  firstName: string;
+  surname: string;
+  grade: string;
+}
+
+export interface ClassDto {
+  id: number;
+  schoolId: number;
+  name: string;
+  grade: string;
+  teacherId: number;
+  teacherName: string;
+  learnerIds: number[];
+}
+
+export interface CreateClassRequestDto {
+  name: string;
+  grade: string;
+  teacherId: number;
+  learnerIds: number[];
+}

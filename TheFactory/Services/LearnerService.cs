@@ -17,6 +17,258 @@ public sealed class LearnerService : ILearnerService
         _httpContextAccessor = httpContextAccessor;
     }
 
+    public async Task<IReadOnlyCollection<ClassDto>> GetClassesForCurrentSchoolAsync(CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        var tenantId = await ResolveTenantIdAsync(connection, cancellationToken);
+        if (!tenantId.HasValue)
+        {
+            return Array.Empty<ClassDto>();
+        }
+
+        var classes = new List<ClassDto>();
+        using (var command = new SqlCommand(
+            @"SELECT c.Id, c.SchoolId, c.Name, c.Grade, c.TeacherId, u.Name
+              FROM institution.Class AS c
+              LEFT JOIN [User] AS u ON u.UserId = c.TeacherId
+              WHERE c.SchoolId = @SchoolId
+              ORDER BY c.Name ASC;",
+            connection))
+        {
+            command.Parameters.AddWithValue("@SchoolId", tenantId.Value);
+
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                classes.Add(new ClassDto
+                {
+                    Id = reader.GetInt32(0),
+                    SchoolId = reader.GetInt32(1),
+                    Name = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                    Grade = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+                    TeacherId = reader.GetInt32(4),
+                    TeacherName = reader.IsDBNull(5) ? string.Empty : reader.GetString(5)
+                });
+            }
+        }
+
+        foreach (var schoolClass in classes)
+        {
+            using var learnersCommand = new SqlCommand(
+                @"SELECT ce.LearnerId
+                  FROM institution.ClassEnrolment AS ce
+                  WHERE ce.ClassId = @ClassId
+                  ORDER BY ce.LearnerId ASC;",
+                connection);
+            learnersCommand.Parameters.AddWithValue("@ClassId", schoolClass.Id);
+
+            var learnerIds = new List<int>();
+            using var learnersReader = await learnersCommand.ExecuteReaderAsync(cancellationToken);
+            while (await learnersReader.ReadAsync(cancellationToken))
+            {
+                learnerIds.Add(learnersReader.GetInt32(0));
+            }
+
+            schoolClass.LearnerIds = learnerIds;
+        }
+
+        return classes;
+    }
+
+    public async Task<IReadOnlyCollection<TeacherLookupDto>> SearchTeachersAsync(string query, CancellationToken cancellationToken = default)
+    {
+        var searchTerm = query?.Trim();
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            return Array.Empty<TeacherLookupDto>();
+        }
+
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        var hasIsActiveColumn = await HasColumnAsync(connection, "dbo", "User", "IsActive", cancellationToken);
+        var activeFilter = hasIsActiveColumn ? "AND ISNULL(u.IsActive, 1) = 1" : string.Empty;
+
+        using var command = new SqlCommand(
+            $@"SELECT DISTINCT TOP (20)
+                    u.UserId,
+                    u.Name,
+                    u.Email,
+                    ISNULL(ur.Name, '') AS RoleName
+               FROM [User] AS u
+               LEFT JOIN SystemUserRole AS sur ON sur.UserId = u.UserId
+               LEFT JOIN OperatorUser AS ou ON ou.UserId = u.UserId
+               LEFT JOIN OperatorUserRole AS our ON our.OperatorUserId = ou.OperatorUserId
+               LEFT JOIN [UserRole] AS ur ON ur.UserRoleId = COALESCE(our.UserRoleId, sur.UserRoleId, u.UserRoleId)
+               WHERE (u.Name LIKE @Search OR u.Email LIKE @Search)
+                 AND (
+                    ur.Name LIKE '%Teacher%'
+                    OR ur.Name LIKE '%Staff%'
+                    OR ur.Name LIKE '%Admin%')
+                 {activeFilter}
+               ORDER BY u.Name ASC, u.Email ASC;",
+            connection);
+        command.Parameters.AddWithValue("@Search", $"%{searchTerm}%");
+
+        var teachers = new List<TeacherLookupDto>();
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            teachers.Add(new TeacherLookupDto
+            {
+                TeacherId = reader.GetInt32(0),
+                Name = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                Email = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                Role = reader.IsDBNull(3) ? string.Empty : reader.GetString(3)
+            });
+        }
+
+        return teachers;
+    }
+
+    public async Task<IReadOnlyCollection<LearnerLookupDto>> SearchLearnersAsync(string query, CancellationToken cancellationToken = default)
+    {
+        var searchTerm = query?.Trim();
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            return Array.Empty<LearnerLookupDto>();
+        }
+
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        var tenantId = await ResolveTenantIdAsync(connection, cancellationToken);
+        if (!tenantId.HasValue)
+        {
+            return Array.Empty<LearnerLookupDto>();
+        }
+
+        using var command = new SqlCommand(
+            @"SELECT TOP (30) Id, FirstName, Surname, Grade
+              FROM institution.Learner
+              WHERE TenantId = @TenantId
+                AND IsArchived = 0
+                AND (
+                    FirstName LIKE @Search
+                    OR Surname LIKE @Search
+                    OR CONCAT(FirstName, ' ', Surname) LIKE @Search
+                    OR CAST(Id AS NVARCHAR(20)) LIKE @Search)
+              ORDER BY FirstName ASC, Surname ASC;",
+            connection);
+        command.Parameters.AddWithValue("@TenantId", tenantId.Value);
+        command.Parameters.AddWithValue("@Search", $"%{searchTerm}%");
+
+        var learners = new List<LearnerLookupDto>();
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            learners.Add(new LearnerLookupDto
+            {
+                LearnerId = reader.GetInt32(0),
+                FirstName = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                Surname = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                Grade = reader.IsDBNull(3) ? string.Empty : reader.GetString(3)
+            });
+        }
+
+        return learners;
+    }
+
+    public async Task<ClassDto> CreateClassAsync(CreateClassRequestDto request, CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        var tenantId = await ResolveTenantIdAsync(connection, cancellationToken);
+        if (!tenantId.HasValue)
+        {
+            throw new InvalidOperationException("No tenant found in institution.Tenant.");
+        }
+
+        var hasIsActiveColumn = await HasColumnAsync(connection, "dbo", "User", "IsActive", cancellationToken);
+        var activeFilter = hasIsActiveColumn ? "AND ISNULL(IsActive, 1) = 1" : string.Empty;
+
+        using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
+        try
+        {
+            using (var teacherCommand = new SqlCommand(
+                $@"SELECT COUNT(1)
+                   FROM [User]
+                   WHERE UserId = @TeacherId
+                   {activeFilter};",
+                connection,
+                transaction))
+            {
+                teacherCommand.Parameters.AddWithValue("@TeacherId", request.TeacherId);
+                var teacherExists = Convert.ToInt32(await teacherCommand.ExecuteScalarAsync(cancellationToken)) > 0;
+                if (!teacherExists)
+                {
+                    throw new InvalidOperationException("Selected teacher was not found or is inactive.");
+                }
+            }
+
+            var classId = await GetNextIdAsync(connection, transaction, "institution.Class", cancellationToken);
+            using (var insertClassCommand = new SqlCommand(
+                @"INSERT INTO institution.Class (Id, SchoolId, Name, Grade, TeacherId)
+                  VALUES (@Id, @SchoolId, @Name, @Grade, @TeacherId);",
+                connection,
+                transaction))
+            {
+                insertClassCommand.Parameters.AddWithValue("@Id", classId);
+                insertClassCommand.Parameters.AddWithValue("@SchoolId", tenantId.Value);
+                insertClassCommand.Parameters.AddWithValue("@Name", request.Name.Trim());
+                insertClassCommand.Parameters.AddWithValue("@Grade", request.Grade.Trim());
+                insertClassCommand.Parameters.AddWithValue("@TeacherId", request.TeacherId);
+                await insertClassCommand.ExecuteNonQueryAsync(cancellationToken);
+            }
+
+            var distinctLearners = request.LearnerIds
+                .Where(id => id > 0)
+                .Distinct()
+                .ToArray();
+
+            foreach (var learnerId in distinctLearners)
+            {
+                using var learnerCheckCommand = new SqlCommand(
+                    @"SELECT COUNT(1)
+                      FROM institution.Learner
+                      WHERE Id = @LearnerId
+                        AND TenantId = @TenantId
+                        AND IsArchived = 0;",
+                    connection,
+                    transaction);
+                learnerCheckCommand.Parameters.AddWithValue("@LearnerId", learnerId);
+                learnerCheckCommand.Parameters.AddWithValue("@TenantId", tenantId.Value);
+
+                var learnerExists = Convert.ToInt32(await learnerCheckCommand.ExecuteScalarAsync(cancellationToken)) > 0;
+                if (!learnerExists)
+                {
+                    continue;
+                }
+
+                using var insertEnrolmentCommand = new SqlCommand(
+                    @"INSERT INTO institution.ClassEnrolment (ClassId, LearnerId)
+                      VALUES (@ClassId, @LearnerId);",
+                    connection,
+                    transaction);
+                insertEnrolmentCommand.Parameters.AddWithValue("@ClassId", classId);
+                insertEnrolmentCommand.Parameters.AddWithValue("@LearnerId", learnerId);
+                await insertEnrolmentCommand.ExecuteNonQueryAsync(cancellationToken);
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+
+            return new ClassDto
+            {
+                Id = classId,
+                SchoolId = tenantId.Value,
+                Name = request.Name.Trim(),
+                Grade = request.Grade.Trim(),
+                TeacherId = request.TeacherId,
+                LearnerIds = distinctLearners
+            };
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
     public async Task<IReadOnlyCollection<LearnerDto>> GetLearnersForCurrentSchoolAsync(CancellationToken cancellationToken = default)
     {
         using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);

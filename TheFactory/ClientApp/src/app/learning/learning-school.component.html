@@ -25,6 +25,13 @@
     </a>
     <a
       class="school-nav-link"
+      [routerLink]="['/learning/schools', schoolId, 'classes']"
+      [queryParams]="{ tab: 'classes' }"
+      [routerLinkActive]="['is-active']">
+      Classes
+    </a>
+    <a
+      class="school-nav-link"
       [routerLink]="['/school/admin/learners']"
       [routerLinkActive]="['is-active']">
       Full Learner Admin
