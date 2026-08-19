@@ -580,7 +580,9 @@ public sealed class LearnerService : ILearnerService
         using var command = new SqlCommand(
             @"SELECT w.Id,
                      w.SchoolId,
-                     w.Title,
+                                         ISNULL(s.Name, ISNULL(w.Title, '')),
+                                         ISNULL(w.SubjectId, 0),
+                                         ISNULL(s.Name, ''),
                      ISNULL(w.Description, ''),
                      w.WorkType,
                      w.ClassId,
@@ -590,6 +592,7 @@ public sealed class LearnerService : ILearnerService
                      w.IsArchived
               FROM institution.Work AS w
               LEFT JOIN institution.Class AS c ON c.Id = w.ClassId
+                            LEFT JOIN institution.Subject AS s ON s.Id = w.SubjectId AND s.TenantId = w.SchoolId
               WHERE w.SchoolId = @SchoolId
                 AND w.IsArchived = 0
               ORDER BY w.DueDate ASC, w.Id DESC;",
@@ -605,13 +608,15 @@ public sealed class LearnerService : ILearnerService
                 Id = reader.GetInt32(0),
                 SchoolId = reader.GetInt32(1),
                 Title = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
-                Description = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
-                WorkType = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
-                ClassId = reader.GetInt32(5),
-                ClassName = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
-                DueDate = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
-                MaxScore = reader.IsDBNull(8) ? 0 : reader.GetInt32(8),
-                IsArchived = !reader.IsDBNull(9) && reader.GetBoolean(9)
+                SubjectId = reader.IsDBNull(3) ? 0 : reader.GetInt32(3),
+                SubjectName = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
+                Description = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
+                WorkType = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
+                ClassId = reader.GetInt32(7),
+                ClassName = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
+                DueDate = reader.IsDBNull(9) ? string.Empty : reader.GetString(9),
+                MaxScore = reader.IsDBNull(10) ? 0 : reader.GetInt32(10),
+                IsArchived = !reader.IsDBNull(11) && reader.GetBoolean(11)
             });
         }
 
@@ -636,15 +641,22 @@ public sealed class LearnerService : ILearnerService
                 throw new InvalidOperationException("Selected class does not exist for this school.");
             }
 
+            var subjectName = await ResolveSubjectNameAsync(connection, transaction, tenantId.Value, request.SubjectId, cancellationToken);
+            if (string.IsNullOrWhiteSpace(subjectName))
+            {
+                throw new InvalidOperationException("Selected subject does not exist for this school.");
+            }
+
             var nextId = await GetNextIdAsync(connection, transaction, "institution.Work", cancellationToken);
             using var command = new SqlCommand(
-                @"INSERT INTO institution.Work (Id, SchoolId, Title, Description, WorkType, ClassId, DueDate, MaxScore, IsArchived)
-                  VALUES (@Id, @SchoolId, @Title, @Description, @WorkType, @ClassId, @DueDate, @MaxScore, 0);",
+                @"INSERT INTO institution.Work (Id, SchoolId, Title, SubjectId, Description, WorkType, ClassId, DueDate, MaxScore, IsArchived)
+                  VALUES (@Id, @SchoolId, @Title, @SubjectId, @Description, @WorkType, @ClassId, @DueDate, @MaxScore, 0);",
                 connection,
                 transaction);
             command.Parameters.AddWithValue("@Id", nextId);
             command.Parameters.AddWithValue("@SchoolId", tenantId.Value);
-            command.Parameters.AddWithValue("@Title", request.Title.Trim());
+            command.Parameters.AddWithValue("@Title", subjectName);
+            command.Parameters.AddWithValue("@SubjectId", request.SubjectId);
             command.Parameters.AddWithValue("@Description", string.IsNullOrWhiteSpace(request.Description) ? DBNull.Value : request.Description.Trim());
             command.Parameters.AddWithValue("@WorkType", request.WorkType.Trim());
             command.Parameters.AddWithValue("@ClassId", request.ClassId);
@@ -658,7 +670,9 @@ public sealed class LearnerService : ILearnerService
             {
                 Id = nextId,
                 SchoolId = tenantId.Value,
-                Title = request.Title.Trim(),
+                Title = subjectName,
+                SubjectId = request.SubjectId,
+                SubjectName = subjectName,
                 Description = request.Description?.Trim() ?? string.Empty,
                 WorkType = request.WorkType.Trim(),
                 ClassId = request.ClassId,
@@ -690,9 +704,16 @@ public sealed class LearnerService : ILearnerService
             return null;
         }
 
+        var subjectName = await ResolveSubjectNameAsync(connection, null, tenantId.Value, request.SubjectId, cancellationToken);
+        if (string.IsNullOrWhiteSpace(subjectName))
+        {
+            return null;
+        }
+
         using var command = new SqlCommand(
             @"UPDATE institution.Work
               SET Title = @Title,
+                  SubjectId = @SubjectId,
                   Description = @Description,
                   WorkType = @WorkType,
                   ClassId = @ClassId,
@@ -704,7 +725,8 @@ public sealed class LearnerService : ILearnerService
             connection);
         command.Parameters.AddWithValue("@Id", workId);
         command.Parameters.AddWithValue("@SchoolId", tenantId.Value);
-        command.Parameters.AddWithValue("@Title", request.Title.Trim());
+        command.Parameters.AddWithValue("@Title", subjectName);
+        command.Parameters.AddWithValue("@SubjectId", request.SubjectId);
         command.Parameters.AddWithValue("@Description", string.IsNullOrWhiteSpace(request.Description) ? DBNull.Value : request.Description.Trim());
         command.Parameters.AddWithValue("@WorkType", request.WorkType.Trim());
         command.Parameters.AddWithValue("@ClassId", request.ClassId);
@@ -721,7 +743,9 @@ public sealed class LearnerService : ILearnerService
         {
             Id = workId,
             SchoolId = tenantId.Value,
-            Title = request.Title.Trim(),
+            Title = subjectName,
+            SubjectId = request.SubjectId,
+            SubjectName = subjectName,
             Description = request.Description?.Trim() ?? string.Empty,
             WorkType = request.WorkType.Trim(),
             ClassId = request.ClassId,
@@ -1385,6 +1409,28 @@ public sealed class LearnerService : ILearnerService
             connection,
             transaction);
         command.Parameters.AddWithValue("@ClassId", classId);
+        command.Parameters.AddWithValue("@SchoolId", schoolId);
+
+        var value = await command.ExecuteScalarAsync(cancellationToken);
+        return value is null || value == DBNull.Value ? string.Empty : Convert.ToString(value) ?? string.Empty;
+    }
+
+    private static async Task<string> ResolveSubjectNameAsync(
+        SqlConnection connection,
+        SqlTransaction? transaction,
+        int schoolId,
+        int subjectId,
+        CancellationToken cancellationToken)
+    {
+        using var command = new SqlCommand(
+            @"SELECT TOP (1) Name
+              FROM institution.Subject
+              WHERE Id = @SubjectId
+                AND TenantId = @SchoolId
+                AND IsActive = 1;",
+            connection,
+            transaction);
+        command.Parameters.AddWithValue("@SubjectId", subjectId);
         command.Parameters.AddWithValue("@SchoolId", schoolId);
 
         var value = await command.ExecuteScalarAsync(cancellationToken);

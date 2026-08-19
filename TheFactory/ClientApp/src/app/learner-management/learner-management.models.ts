@@ -117,6 +117,8 @@ export interface WorkDto {
   id: number;
   schoolId: number;
   title: string;
+  subjectId: number;
+  subjectName: string;
   description: string;
   workType: string;
   classId: number;
@@ -127,7 +129,7 @@ export interface WorkDto {
 }
 
 export interface WorkUpsertRequestDto {
-  title: string;
+  subjectId: number;
   description: string;
   workType: string;
   classId: number;

@@ -144,6 +144,8 @@ public sealed class WorkDto
     public int Id { get; set; }
     public int SchoolId { get; set; }
     public string Title { get; set; } = string.Empty;
+    public int SubjectId { get; set; }
+    public string SubjectName { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string WorkType { get; set; } = string.Empty;
     public int ClassId { get; set; }
@@ -155,7 +157,7 @@ public sealed class WorkDto
 
 public sealed class WorkUpsertRequestDto
 {
-    public string Title { get; set; } = string.Empty;
+    public int SubjectId { get; set; }
     public string Description { get; set; } = string.Empty;
     public string WorkType { get; set; } = string.Empty;
     public int ClassId { get; set; }

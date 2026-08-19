@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
-import { ClassDto, WorkDto, WorkUpsertRequestDto } from '../learner-management/learner-management.models';
+import { ClassDto, SubjectDto, WorkDto, WorkUpsertRequestDto } from '../learner-management/learner-management.models';
 import { LearnerManagementService } from '../services/learner-management.service';
 
 @Component({
@@ -13,10 +13,12 @@ export class WorkManagementComponent implements OnInit {
 
   workItems: WorkDto[] = [];
   classes: ClassDto[] = [];
+  subjects: SubjectDto[] = [];
   searchTerm = '';
 
   loadingWork = false;
   loadingClasses = false;
+  loadingSubjects = false;
   creatingWork = false;
   updatingWork = false;
   archivingWorkId: number | null = null;
@@ -35,6 +37,7 @@ export class WorkManagementComponent implements OnInit {
   ngOnInit(): void {
     this.loadWorkItems();
     this.loadClasses();
+    this.loadSubjects();
   }
 
   get workTypeOptions(): string[] {
@@ -86,6 +89,20 @@ export class WorkManagementComponent implements OnInit {
     });
   }
 
+  loadSubjects(): void {
+    this.loadingSubjects = true;
+    this.learnerService.getSubjectsForCurriculum().subscribe({
+      next: subjects => {
+        this.subjects = subjects.filter(subject => subject.isActive);
+        this.loadingSubjects = false;
+      },
+      error: err => {
+        this.loadingSubjects = false;
+        this.errorMessage = this.mapHttpError(err, 'Failed to load subjects.');
+      }
+    });
+  }
+
   openAddWork(): void {
     this.clearMessages();
     this.isEditMode = false;
@@ -99,7 +116,7 @@ export class WorkManagementComponent implements OnInit {
     this.isEditMode = true;
     this.editingWorkId = work.id;
     this.workForm = {
-      title: work.title,
+      subjectId: work.subjectId,
       description: work.description,
       workType: work.workType,
       classId: work.classId,
@@ -185,8 +202,8 @@ export class WorkManagementComponent implements OnInit {
   }
 
   private validateWorkForm(): string {
-    if (!this.workForm.title?.trim()) {
-      return 'Title is required.';
+    if (!Number.isFinite(this.workForm.subjectId) || this.workForm.subjectId <= 0) {
+      return 'Subject is required.';
     }
 
     if (!this.workForm.workType?.trim()) {
@@ -210,7 +227,7 @@ export class WorkManagementComponent implements OnInit {
 
   private getEmptyWorkForm(): WorkUpsertRequestDto {
     return {
-      title: '',
+      subjectId: 0,
       description: '',
       workType: '',
       classId: 0,
