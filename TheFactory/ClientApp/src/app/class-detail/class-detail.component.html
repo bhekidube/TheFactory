@@ -106,7 +106,7 @@
           </thead>
           <tbody>
             <tr *ngFor="let work of workItems; trackBy: trackByWorkId">
-              <td>{{ work.title }}</td>
+              <td><a [routerLink]="['/school/admin/classes', classId, 'work', work.id]">{{ work.title }}</a></td>
               <td>{{ work.subjectName || '-' }}</td>
               <td>{{ work.workType || '-' }}</td>
               <td>{{ work.dueDate || '-' }}</td>

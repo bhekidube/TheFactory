@@ -1,0 +1,90 @@
+<section class="work-detail-page">
+  <app-logout-link></app-logout-link>
+
+  <div class="page-header">
+    <div>
+      <h2>Work Detail</h2>
+      <p *ngIf="workDetail">{{ workDetail.title }}</p>
+    </div>
+    <button type="button" class="secondary-btn" (click)="backToClassDetail()">Back to Class Detail</button>
+  </div>
+
+  <div class="message error" *ngIf="errorMessage">{{ errorMessage }}</div>
+  <div class="message success" *ngIf="successMessage">{{ successMessage }}</div>
+
+  <div class="state-card" *ngIf="loading">Loading work detail...</div>
+
+  <div *ngIf="!loading && workDetail">
+    <div class="summary-grid">
+      <div class="summary-card">
+        <span class="label">Title</span>
+        <strong>{{ workDetail.title }}</strong>
+      </div>
+      <div class="summary-card">
+        <span class="label">Subject</span>
+        <strong>{{ workDetail.subjectName || '-' }}</strong>
+      </div>
+      <div class="summary-card">
+        <span class="label">Work Type</span>
+        <strong>{{ workDetail.workType || '-' }}</strong>
+      </div>
+      <div class="summary-card">
+        <span class="label">Due Date</span>
+        <strong>{{ workDetail.dueDate || '-' }}</strong>
+      </div>
+      <div class="summary-card">
+        <span class="label">Total Mark</span>
+        <strong>{{ workDetail.totalMark }}</strong>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h3>Learner Marks</h3>
+      <div class="state-card" *ngIf="workDetail.learners.length === 0">No learners enrolled in this class.</div>
+
+      <div class="table-wrap" *ngIf="workDetail.learners.length > 0">
+        <table>
+          <thead>
+            <tr>
+              <th>Learner Name</th>
+              <th>Grade</th>
+              <th>Total Mark</th>
+              <th>Mark Obtained</th>
+              <th>Comment</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let learner of workDetail.learners; trackBy: trackByLearnerId">
+              <td>{{ learner.learnerName }}</td>
+              <td>{{ learner.grade }}</td>
+              <td>{{ learner.totalMark }}</td>
+              <td>
+                <input
+                  type="number"
+                  min="0"
+                  [max]="workDetail.totalMark"
+                  [(ngModel)]="learner.markObtained"
+                  [name]="'markObtained_' + learner.learnerId"
+                />
+              </td>
+              <td>
+                <input
+                  type="text"
+                  [(ngModel)]="learner.comment"
+                  [name]="'comment_' + learner.learnerId"
+                  placeholder="Optional comment"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel-actions">
+        <button type="button" class="primary-btn" [disabled]="saving || workDetail.learners.length === 0" (click)="saveMarks()">
+          {{ saving ? 'Saving...' : 'Save Marks' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

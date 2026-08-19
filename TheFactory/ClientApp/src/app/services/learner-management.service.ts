@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
   ClassAssignedSubjectDto,
@@ -16,6 +16,9 @@ import {
   TeacherLookupDto,
   SubjectDto,
   WorkDto,
+  WorkDetailDto,
+  WorkLearnerMarkDto,
+  SaveWorkMarksRequestDto,
   WorkUpsertRequestDto,
   WorkTypeLookupDto,
   SubjectScoreDto,
@@ -140,7 +143,8 @@ export class LearnerManagementService {
   }
 
   getWorkItems(): Observable<WorkDto[]> {
-    return this.http.get<WorkDto[]>(`${this.baseUrl}/work`, this.getRequestOptions());
+    return this.http.get<WorkDto[]>(`${this.baseUrl}/work`, this.getRequestOptions())
+      .pipe(map(items => this.normalizeWorkList(items)));
   }
 
   getWorkTypes(): Observable<WorkTypeLookupDto[]> {
@@ -148,11 +152,13 @@ export class LearnerManagementService {
   }
 
   createWorkItem(payload: WorkUpsertRequestDto): Observable<WorkDto> {
-    return this.http.post<WorkDto>(`${this.baseUrl}/work`, payload, this.getRequestOptions());
+    return this.http.post<WorkDto>(`${this.baseUrl}/work`, payload, this.getRequestOptions())
+      .pipe(map(item => this.normalizeWorkItem(item)));
   }
 
   updateWorkItem(id: number, payload: WorkUpsertRequestDto): Observable<WorkDto> {
-    return this.http.put<WorkDto>(`${this.baseUrl}/work/${id}`, payload, this.getRequestOptions());
+    return this.http.put<WorkDto>(`${this.baseUrl}/work/${id}`, payload, this.getRequestOptions())
+      .pipe(map(item => this.normalizeWorkItem(item)));
   }
 
   archiveWorkItem(id: number): Observable<unknown> {
@@ -160,19 +166,31 @@ export class LearnerManagementService {
   }
 
   getClassWorkItems(classId: number): Observable<WorkDto[]> {
-    return this.http.get<WorkDto[]>(`${this.baseUrl}/classes/${classId}/work`, this.getRequestOptions());
+    return this.http.get<WorkDto[]>(`${this.baseUrl}/classes/${classId}/work`, this.getRequestOptions())
+      .pipe(map(items => this.normalizeWorkList(items)));
   }
 
   createClassWorkItem(classId: number, payload: WorkUpsertRequestDto): Observable<WorkDto> {
-    return this.http.post<WorkDto>(`${this.baseUrl}/classes/${classId}/work`, payload, this.getRequestOptions());
+    return this.http.post<WorkDto>(`${this.baseUrl}/classes/${classId}/work`, payload, this.getRequestOptions())
+      .pipe(map(item => this.normalizeWorkItem(item)));
   }
 
   updateClassWorkItem(classId: number, workId: number, payload: WorkUpsertRequestDto): Observable<WorkDto> {
-    return this.http.put<WorkDto>(`${this.baseUrl}/classes/${classId}/work/${workId}`, payload, this.getRequestOptions());
+    return this.http.put<WorkDto>(`${this.baseUrl}/classes/${classId}/work/${workId}`, payload, this.getRequestOptions())
+      .pipe(map(item => this.normalizeWorkItem(item)));
   }
 
   archiveClassWorkItem(classId: number, workId: number): Observable<unknown> {
     return this.http.delete(`${this.baseUrl}/classes/${classId}/work/${workId}`, this.getRequestOptions());
+  }
+
+  getClassWorkDetail(classId: number, workId: number): Observable<WorkDetailDto> {
+    return this.http.get<WorkDetailDto>(`${this.baseUrl}/classes/${classId}/work/${workId}`, this.getRequestOptions())
+      .pipe(map(detail => this.normalizeWorkDetail(detail)));
+  }
+
+  saveClassWorkMarks(classId: number, workId: number, payload: SaveWorkMarksRequestDto): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.baseUrl}/classes/${classId}/work/${workId}/marks`, payload, this.getRequestOptions());
   }
 
   getLearner(id: number): Observable<LearnerDto> {
@@ -240,5 +258,54 @@ export class LearnerManagementService {
     return new HttpHeaders({
       'X-Tenant-Id': tenantId
     });
+  }
+
+  private normalizeWorkList(items: WorkDto[] | null | undefined): WorkDto[] {
+    if (!Array.isArray(items)) {
+      return [];
+    }
+
+    return items.map(item => this.normalizeWorkItem(item));
+  }
+
+  private normalizeWorkItem(item: WorkDto): WorkDto {
+    const raw = item as unknown as Record<string, unknown>;
+    const totalMarkRaw = raw.totalMark ?? raw.total_mark ?? raw.maxScore ?? 0;
+    const totalMark = Number(totalMarkRaw);
+
+    return {
+      ...item,
+      totalMark: Number.isFinite(totalMark) ? totalMark : 0
+    };
+  }
+
+  private normalizeWorkDetail(detail: WorkDetailDto): WorkDetailDto {
+    const raw = detail as unknown as Record<string, unknown>;
+    const totalMarkRaw = raw.totalMark ?? raw.total_mark ?? raw.maxScore ?? 0;
+    const totalMark = Number(totalMarkRaw);
+
+    const learners = Array.isArray(detail.learners)
+      ? detail.learners.map(learner => this.normalizeWorkDetailLearner(learner, totalMark))
+      : [];
+
+    return {
+      ...detail,
+      totalMark: Number.isFinite(totalMark) ? totalMark : 0,
+      learners
+    };
+  }
+
+  private normalizeWorkDetailLearner(learner: WorkLearnerMarkDto, parentTotalMark: number): WorkLearnerMarkDto {
+    const raw = learner as unknown as Record<string, unknown>;
+    const totalMarkRaw = raw.totalMark ?? raw.total_mark ?? parentTotalMark;
+    const markObtainedRaw = raw.markObtained ?? raw.mark_obtained;
+    const totalMark = Number(totalMarkRaw);
+    const markObtained = markObtainedRaw === null || markObtainedRaw === undefined ? null : Number(markObtainedRaw);
+
+    return {
+      ...learner,
+      totalMark: Number.isFinite(totalMark) ? totalMark : parentTotalMark,
+      markObtained: markObtained !== null && Number.isFinite(markObtained) ? markObtained : null
+    };
   }
 }

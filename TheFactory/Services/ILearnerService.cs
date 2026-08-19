@@ -20,6 +20,8 @@ public interface ILearnerService
     Task<IReadOnlyCollection<WorkDto>> GetWorkItemsForCurrentSchoolAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<WorkTypeLookupDto>> GetWorkTypesAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<WorkDto>> GetWorkItemsForClassAsync(int classId, CancellationToken cancellationToken = default);
+    Task<WorkDetailDto?> GetWorkDetailForClassAsync(int classId, int workId, CancellationToken cancellationToken = default);
+    Task<bool> SaveWorkMarksAsync(int classId, int workId, IReadOnlyCollection<WorkLearnerMarkUpsertDto> marks, CancellationToken cancellationToken = default);
     Task<WorkDto> CreateWorkItemForClassAsync(int classId, WorkUpsertRequestDto request, CancellationToken cancellationToken = default);
     Task<WorkDto?> UpdateWorkItemForClassAsync(int classId, int workId, WorkUpsertRequestDto request, CancellationToken cancellationToken = default);
     Task<bool> ArchiveWorkItemForClassAsync(int classId, int workId, CancellationToken cancellationToken = default);

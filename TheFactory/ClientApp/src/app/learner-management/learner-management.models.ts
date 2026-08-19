@@ -143,3 +143,33 @@ export interface WorkTypeLookupDto {
   id: number;
   name: string;
 }
+
+export interface WorkLearnerMarkDto {
+  learnerId: number;
+  learnerName: string;
+  grade: string;
+  totalMark: number;
+  markObtained: number | null;
+  comment: string;
+}
+
+export interface WorkDetailDto {
+  workId: number;
+  classId: number;
+  title: string;
+  subjectName: string;
+  workType: string;
+  dueDate: string;
+  totalMark: number;
+  learners: WorkLearnerMarkDto[];
+}
+
+export interface WorkLearnerMarkUpsertDto {
+  learnerId: number;
+  markObtained: number | null;
+  comment: string;
+}
+
+export interface SaveWorkMarksRequestDto {
+  marks: WorkLearnerMarkUpsertDto[];
+}

@@ -172,3 +172,37 @@ public sealed class WorkTypeLookupDto
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
 }
+
+public sealed class WorkLearnerMarkDto
+{
+    public int LearnerId { get; set; }
+    public string LearnerName { get; set; } = string.Empty;
+    public string Grade { get; set; } = string.Empty;
+    public int TotalMark { get; set; }
+    public int? MarkObtained { get; set; }
+    public string Comment { get; set; } = string.Empty;
+}
+
+public sealed class WorkDetailDto
+{
+    public int WorkId { get; set; }
+    public int ClassId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string SubjectName { get; set; } = string.Empty;
+    public string WorkType { get; set; } = string.Empty;
+    public string DueDate { get; set; } = string.Empty;
+    public int TotalMark { get; set; }
+    public IReadOnlyCollection<WorkLearnerMarkDto> Learners { get; set; } = Array.Empty<WorkLearnerMarkDto>();
+}
+
+public sealed class WorkLearnerMarkUpsertDto
+{
+    public int LearnerId { get; set; }
+    public int? MarkObtained { get; set; }
+    public string Comment { get; set; } = string.Empty;
+}
+
+public sealed class SaveWorkMarksRequestDto
+{
+    public IReadOnlyCollection<WorkLearnerMarkUpsertDto> Marks { get; set; } = Array.Empty<WorkLearnerMarkUpsertDto>();
+}

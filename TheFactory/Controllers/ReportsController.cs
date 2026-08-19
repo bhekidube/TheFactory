@@ -603,6 +603,47 @@ public class ReportsController : ControllerBase
         }
     }
 
+    [HttpGet("classes/{classId:int}/work/{workId:int}")]
+    [ProducesResponseType(typeof(WorkDetailDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<WorkDetailDto>> GetClassWorkDetail(int classId, int workId, CancellationToken cancellationToken)
+    {
+        var detail = await _learnerService.GetWorkDetailForClassAsync(classId, workId, cancellationToken);
+        if (detail is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(detail);
+    }
+
+    [HttpPost("classes/{classId:int}/work/{workId:int}/marks")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> SaveClassWorkMarks(int classId, int workId, [FromBody] SaveWorkMarksRequestDto request, CancellationToken cancellationToken)
+    {
+        if (!TryValidateSaveWorkMarksRequest(request, out var validationError))
+        {
+            return BadRequest(validationError);
+        }
+
+        try
+        {
+            var saved = await _learnerService.SaveWorkMarksAsync(classId, workId, request.Marks, cancellationToken);
+            if (!saved)
+            {
+                return NotFound();
+            }
+
+            return Ok(new { message = "Work marks saved successfully." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Failed to save work marks: {ex.Message}");
+        }
+    }
+
     [HttpGet("subjects")]
     [ProducesResponseType(typeof(IReadOnlyCollection<SubjectDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyCollection<SubjectDto>>> GetSubjectsForCurriculum(CancellationToken cancellationToken)
@@ -998,6 +1039,39 @@ public class ReportsController : ControllerBase
         {
             error = "TotalMark must be greater than zero.";
             return false;
+        }
+
+        error = string.Empty;
+        return true;
+    }
+
+    private static bool TryValidateSaveWorkMarksRequest(SaveWorkMarksRequestDto request, out string error)
+    {
+        if (request is null)
+        {
+            error = "Marks payload is required.";
+            return false;
+        }
+
+        if (request.Marks is null || request.Marks.Count == 0)
+        {
+            error = "At least one learner mark entry is required.";
+            return false;
+        }
+
+        foreach (var mark in request.Marks)
+        {
+            if (mark.LearnerId <= 0)
+            {
+                error = "LearnerId is required for each mark entry.";
+                return false;
+            }
+
+            if (mark.MarkObtained.HasValue && mark.MarkObtained.Value < 0)
+            {
+                error = "MarkObtained cannot be negative.";
+                return false;
+            }
         }
 
         error = string.Empty;
