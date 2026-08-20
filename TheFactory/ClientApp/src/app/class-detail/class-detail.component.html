@@ -51,6 +51,14 @@
             <tr *ngFor="let learner of classDetail.learners">
               <td><a [routerLink]="['/school/admin/learners', learner.learnerId]">{{ learner.learnerId }}</a></td>
               <td><a [routerLink]="['/school/admin/learners', learner.learnerId]">{{ learner.firstName }}</a></td>
+
+        <label>
+          Term <span class="required">*</span>
+          <select name="workTerm" [(ngModel)]="workForm.term" required>
+            <option value="">Select Term</option>
+            <option *ngFor="let term of termOptions" [value]="term">{{ term }}</option>
+          </select>
+        </label>
               <td><a [routerLink]="['/school/admin/learners', learner.learnerId]">{{ learner.surname }}</a></td>
               <td>{{ learner.grade }}</td>
             </tr>
@@ -99,6 +107,7 @@
               <th>Title</th>
               <th>Subject</th>
               <th>Work Type</th>
+              <th>Term</th>
               <th>Due Date</th>
               <th>Total Mark</th>
               <th class="actions-col">Actions</th>
@@ -109,6 +118,7 @@
               <td><a [routerLink]="['/school/admin/classes', classId, 'work', work.id]">{{ work.title }}</a></td>
               <td>{{ work.subjectName || '-' }}</td>
               <td>{{ work.workType || '-' }}</td>
+              <td>{{ work.term || '-' }}</td>
               <td>{{ work.dueDate || '-' }}</td>
               <td>{{ work.totalMark }}</td>
               <td class="actions-col">
@@ -185,6 +195,14 @@
           <select name="workTypeId" [(ngModel)]="workForm.workTypeId" required>
             <option [ngValue]="0">Select work type</option>
             <option *ngFor="let workType of workTypes" [ngValue]="workType.id">{{ workType.name }}</option>
+          </select>
+        </label>
+
+        <label>
+          Term <span class="required">*</span>
+          <select name="workTerm" [(ngModel)]="workForm.term" required>
+            <option value="">Select Term</option>
+            <option *ngFor="let term of termOptions" [value]="term">{{ term }}</option>
           </select>
         </label>
 

@@ -577,8 +577,11 @@ public sealed class LearnerService : ILearnerService
             return Array.Empty<WorkDto>();
         }
 
+        var hasWorkTermColumn = await HasColumnAsync(connection, "institution", "Work", "Term", cancellationToken);
+        var termProjection = hasWorkTermColumn ? "ISNULL(w.Term, '')" : "CAST('' AS NVARCHAR(20))";
+
         using var command = new SqlCommand(
-            @"SELECT w.Id,
+            $@"SELECT w.Id,
                      w.SchoolId,
                      ISNULL(w.Title, ''),
                                          ISNULL(w.SubjectId, 0),
@@ -586,6 +589,7 @@ public sealed class LearnerService : ILearnerService
                      ISNULL(w.Description, ''),
                                          ISNULL(w.WorkTypeId, 0),
                                          ISNULL(wt.Name, ''),
+                     {termProjection},
                      w.ClassId,
                      ISNULL(c.Name, ''),
                      ISNULL(CONVERT(NVARCHAR(10), w.DueDate, 23), ''),
@@ -615,11 +619,12 @@ public sealed class LearnerService : ILearnerService
                 Description = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
                 WorkTypeId = reader.IsDBNull(6) ? 0 : reader.GetInt32(6),
                 WorkType = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
-                ClassId = reader.GetInt32(8),
-                ClassName = reader.IsDBNull(9) ? string.Empty : reader.GetString(9),
-                DueDate = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
-                TotalMark = reader.IsDBNull(11) ? 0 : reader.GetInt32(11),
-                IsArchived = !reader.IsDBNull(12) && reader.GetBoolean(12)
+                Term = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
+                ClassId = reader.GetInt32(9),
+                ClassName = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
+                DueDate = reader.IsDBNull(11) ? string.Empty : reader.GetString(11),
+                TotalMark = reader.IsDBNull(12) ? 0 : reader.GetInt32(12),
+                IsArchived = !reader.IsDBNull(13) && reader.GetBoolean(13)
             });
         }
 
@@ -658,8 +663,11 @@ public sealed class LearnerService : ILearnerService
             return Array.Empty<WorkDto>();
         }
 
+        var hasWorkTermColumn = await HasColumnAsync(connection, "institution", "Work", "Term", cancellationToken);
+        var termProjection = hasWorkTermColumn ? "ISNULL(w.Term, '')" : "CAST('' AS NVARCHAR(20))";
+
         using var command = new SqlCommand(
-            @"SELECT w.Id,
+            $@"SELECT w.Id,
                      w.SchoolId,
                      ISNULL(w.Title, ''),
                      ISNULL(w.SubjectId, 0),
@@ -667,6 +675,7 @@ public sealed class LearnerService : ILearnerService
                      ISNULL(w.Description, ''),
                                          ISNULL(w.WorkTypeId, 0),
                                          ISNULL(wt.Name, ''),
+                     {termProjection},
                      w.ClassId,
                      ISNULL(c.Name, ''),
                      ISNULL(CONVERT(NVARCHAR(10), w.DueDate, 23), ''),
@@ -698,11 +707,12 @@ public sealed class LearnerService : ILearnerService
                 Description = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
                 WorkTypeId = reader.IsDBNull(6) ? 0 : reader.GetInt32(6),
                 WorkType = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
-                ClassId = reader.GetInt32(8),
-                ClassName = reader.IsDBNull(9) ? string.Empty : reader.GetString(9),
-                DueDate = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
-                TotalMark = reader.IsDBNull(11) ? 0 : reader.GetInt32(11),
-                IsArchived = !reader.IsDBNull(12) && reader.GetBoolean(12)
+                Term = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
+                ClassId = reader.GetInt32(9),
+                ClassName = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
+                DueDate = reader.IsDBNull(11) ? string.Empty : reader.GetString(11),
+                TotalMark = reader.IsDBNull(12) ? 0 : reader.GetInt32(12),
+                IsArchived = !reader.IsDBNull(13) && reader.GetBoolean(13)
             });
         }
 
@@ -993,6 +1003,7 @@ public sealed class LearnerService : ILearnerService
         using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
         try
         {
+            var hasWorkTermColumn = await HasColumnAsync(connection, "institution", "Work", "Term", cancellationToken, transaction);
             var className = await ResolveClassNameAsync(connection, transaction, tenantId.Value, classId, cancellationToken);
             if (string.IsNullOrWhiteSpace(className))
             {
@@ -1012,9 +1023,15 @@ public sealed class LearnerService : ILearnerService
                         }
 
             var nextId = await GetNextIdAsync(connection, transaction, "institution.Work", cancellationToken);
+            var insertColumns = hasWorkTermColumn
+                ? "Id, SchoolId, Title, SubjectId, Description, WorkTypeId, WorkType, Term, ClassId, DueDate, TotalMark, MaxScore, IsArchived"
+                : "Id, SchoolId, Title, SubjectId, Description, WorkTypeId, WorkType, ClassId, DueDate, TotalMark, MaxScore, IsArchived";
+            var insertValues = hasWorkTermColumn
+                ? "@Id, @SchoolId, @Title, @SubjectId, @Description, @WorkTypeId, @WorkType, @Term, @ClassId, @DueDate, @TotalMark, @TotalMark, 0"
+                : "@Id, @SchoolId, @Title, @SubjectId, @Description, @WorkTypeId, @WorkType, @ClassId, @DueDate, @TotalMark, @TotalMark, 0";
             using var command = new SqlCommand(
-                                @"INSERT INTO institution.Work (Id, SchoolId, Title, SubjectId, Description, WorkTypeId, WorkType, ClassId, DueDate, TotalMark, MaxScore, IsArchived)
-                                    VALUES (@Id, @SchoolId, @Title, @SubjectId, @Description, @WorkTypeId, @WorkType, @ClassId, @DueDate, @TotalMark, @TotalMark, 0);",
+                                $@"INSERT INTO institution.Work ({insertColumns})
+                                    VALUES ({insertValues});",
                 connection,
                 transaction);
             command.Parameters.AddWithValue("@Id", nextId);
@@ -1024,6 +1041,10 @@ public sealed class LearnerService : ILearnerService
             command.Parameters.AddWithValue("@Description", string.IsNullOrWhiteSpace(request.Description) ? DBNull.Value : request.Description.Trim());
             command.Parameters.AddWithValue("@WorkTypeId", request.WorkTypeId);
             command.Parameters.AddWithValue("@WorkType", workTypeName);
+            if (hasWorkTermColumn)
+            {
+                command.Parameters.AddWithValue("@Term", request.Term.Trim());
+            }
             command.Parameters.AddWithValue("@ClassId", classId);
             command.Parameters.AddWithValue("@DueDate", string.IsNullOrWhiteSpace(request.DueDate) ? DBNull.Value : request.DueDate.Trim());
             command.Parameters.AddWithValue("@TotalMark", request.TotalMark);
@@ -1041,6 +1062,7 @@ public sealed class LearnerService : ILearnerService
                 Description = request.Description?.Trim() ?? string.Empty,
                 WorkTypeId = request.WorkTypeId,
                 WorkType = workTypeName,
+                Term = hasWorkTermColumn ? request.Term.Trim() : string.Empty,
                 ClassId = classId,
                 ClassName = className,
                 DueDate = request.DueDate?.Trim() ?? string.Empty,
@@ -1082,13 +1104,17 @@ public sealed class LearnerService : ILearnerService
             return null;
         }
 
+        var hasWorkTermColumn = await HasColumnAsync(connection, "institution", "Work", "Term", cancellationToken);
+        var termSetClause = hasWorkTermColumn ? "Term = @Term," : string.Empty;
+
         using var command = new SqlCommand(
-            @"UPDATE institution.Work
+            $@"UPDATE institution.Work
               SET Title = @Title,
                   SubjectId = @SubjectId,
                   Description = @Description,
                   WorkTypeId = @WorkTypeId,
                   WorkType = @WorkType,
+                  {termSetClause}
                   DueDate = @DueDate,
                                     TotalMark = @TotalMark,
                                     MaxScore = @TotalMark
@@ -1105,6 +1131,10 @@ public sealed class LearnerService : ILearnerService
         command.Parameters.AddWithValue("@Description", string.IsNullOrWhiteSpace(request.Description) ? DBNull.Value : request.Description.Trim());
         command.Parameters.AddWithValue("@WorkTypeId", request.WorkTypeId);
         command.Parameters.AddWithValue("@WorkType", workTypeName);
+        if (hasWorkTermColumn)
+        {
+            command.Parameters.AddWithValue("@Term", request.Term.Trim());
+        }
         command.Parameters.AddWithValue("@DueDate", string.IsNullOrWhiteSpace(request.DueDate) ? DBNull.Value : request.DueDate.Trim());
         command.Parameters.AddWithValue("@TotalMark", request.TotalMark);
 
@@ -1124,6 +1154,7 @@ public sealed class LearnerService : ILearnerService
             Description = request.Description?.Trim() ?? string.Empty,
             WorkTypeId = request.WorkTypeId,
             WorkType = workTypeName,
+            Term = hasWorkTermColumn ? request.Term.Trim() : string.Empty,
             ClassId = classId,
             ClassName = className,
             DueDate = request.DueDate?.Trim() ?? string.Empty,
@@ -1169,6 +1200,7 @@ public sealed class LearnerService : ILearnerService
         using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
         try
         {
+            var hasWorkTermColumn = await HasColumnAsync(connection, "institution", "Work", "Term", cancellationToken, transaction);
             var className = await ResolveClassNameAsync(connection, transaction, tenantId.Value, request.ClassId, cancellationToken);
             if (string.IsNullOrWhiteSpace(className))
             {
@@ -1188,9 +1220,15 @@ public sealed class LearnerService : ILearnerService
                         }
 
             var nextId = await GetNextIdAsync(connection, transaction, "institution.Work", cancellationToken);
+            var insertColumns = hasWorkTermColumn
+                ? "Id, SchoolId, Title, SubjectId, Description, WorkTypeId, WorkType, Term, ClassId, DueDate, TotalMark, MaxScore, IsArchived"
+                : "Id, SchoolId, Title, SubjectId, Description, WorkTypeId, WorkType, ClassId, DueDate, TotalMark, MaxScore, IsArchived";
+            var insertValues = hasWorkTermColumn
+                ? "@Id, @SchoolId, @Title, @SubjectId, @Description, @WorkTypeId, @WorkType, @Term, @ClassId, @DueDate, @TotalMark, @TotalMark, 0"
+                : "@Id, @SchoolId, @Title, @SubjectId, @Description, @WorkTypeId, @WorkType, @ClassId, @DueDate, @TotalMark, @TotalMark, 0";
             using var command = new SqlCommand(
-                                @"INSERT INTO institution.Work (Id, SchoolId, Title, SubjectId, Description, WorkTypeId, WorkType, ClassId, DueDate, TotalMark, MaxScore, IsArchived)
-                                    VALUES (@Id, @SchoolId, @Title, @SubjectId, @Description, @WorkTypeId, @WorkType, @ClassId, @DueDate, @TotalMark, @TotalMark, 0);",
+                                $@"INSERT INTO institution.Work ({insertColumns})
+                                    VALUES ({insertValues});",
                 connection,
                 transaction);
             command.Parameters.AddWithValue("@Id", nextId);
@@ -1200,6 +1238,10 @@ public sealed class LearnerService : ILearnerService
             command.Parameters.AddWithValue("@Description", string.IsNullOrWhiteSpace(request.Description) ? DBNull.Value : request.Description.Trim());
                         command.Parameters.AddWithValue("@WorkTypeId", request.WorkTypeId);
                         command.Parameters.AddWithValue("@WorkType", workTypeName);
+            if (hasWorkTermColumn)
+            {
+                command.Parameters.AddWithValue("@Term", request.Term.Trim());
+            }
             command.Parameters.AddWithValue("@ClassId", request.ClassId);
             command.Parameters.AddWithValue("@DueDate", string.IsNullOrWhiteSpace(request.DueDate) ? DBNull.Value : request.DueDate.Trim());
             command.Parameters.AddWithValue("@TotalMark", request.TotalMark);
@@ -1217,6 +1259,7 @@ public sealed class LearnerService : ILearnerService
                 Description = request.Description?.Trim() ?? string.Empty,
                 WorkTypeId = request.WorkTypeId,
                 WorkType = workTypeName,
+                Term = hasWorkTermColumn ? request.Term.Trim() : string.Empty,
                 ClassId = request.ClassId,
                 ClassName = className,
                 DueDate = request.DueDate?.Trim() ?? string.Empty,
@@ -1258,13 +1301,17 @@ public sealed class LearnerService : ILearnerService
             return null;
         }
 
+        var hasWorkTermColumn = await HasColumnAsync(connection, "institution", "Work", "Term", cancellationToken);
+        var termSetClause = hasWorkTermColumn ? "Term = @Term," : string.Empty;
+
         using var command = new SqlCommand(
-            @"UPDATE institution.Work
+            $@"UPDATE institution.Work
               SET Title = @Title,
                   SubjectId = @SubjectId,
                   Description = @Description,
                   WorkTypeId = @WorkTypeId,
                   WorkType = @WorkType,
+                  {termSetClause}
                   ClassId = @ClassId,
                   DueDate = @DueDate,
                                     TotalMark = @TotalMark,
@@ -1280,6 +1327,10 @@ public sealed class LearnerService : ILearnerService
         command.Parameters.AddWithValue("@Description", string.IsNullOrWhiteSpace(request.Description) ? DBNull.Value : request.Description.Trim());
         command.Parameters.AddWithValue("@WorkTypeId", request.WorkTypeId);
         command.Parameters.AddWithValue("@WorkType", workTypeName);
+        if (hasWorkTermColumn)
+        {
+            command.Parameters.AddWithValue("@Term", request.Term.Trim());
+        }
         command.Parameters.AddWithValue("@ClassId", request.ClassId);
         command.Parameters.AddWithValue("@DueDate", string.IsNullOrWhiteSpace(request.DueDate) ? DBNull.Value : request.DueDate.Trim());
         command.Parameters.AddWithValue("@TotalMark", request.TotalMark);
@@ -1300,6 +1351,7 @@ public sealed class LearnerService : ILearnerService
             Description = request.Description?.Trim() ?? string.Empty,
             WorkTypeId = request.WorkTypeId,
             WorkType = workTypeName,
+            Term = hasWorkTermColumn ? request.Term.Trim() : string.Empty,
             ClassId = request.ClassId,
             ClassName = className,
             DueDate = request.DueDate?.Trim() ?? string.Empty,
@@ -1839,6 +1891,111 @@ public sealed class LearnerService : ILearnerService
         }
 
         return results;
+    }
+
+    public async Task<IReadOnlyCollection<TermAssessmentReportItemDto>> GetLearnerTermAssessmentMarksAsync(int learnerId, string selectedTerm, int? year = null, CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        var tenantId = await ResolveTenantIdAsync(connection, cancellationToken);
+        if (!tenantId.HasValue)
+        {
+            return Array.Empty<TermAssessmentReportItemDto>();
+        }
+
+        var hasWorkTermColumn = await HasColumnAsync(connection, "institution", "Work", "Term", cancellationToken);
+        if (!hasWorkTermColumn)
+        {
+            return Array.Empty<TermAssessmentReportItemDto>();
+        }
+
+        var yearFilter = year.HasValue
+            ? "AND YEAR(TRY_CONVERT(date, w.DueDate)) = @Year"
+            : string.Empty;
+
+        var results = new List<TermAssessmentReportItemDto>();
+        using var command = new SqlCommand(
+            $@"SELECT ISNULL(w.Title, ''),
+                     ISNULL(COALESCE(wt.Name, w.WorkType), ''),
+                     ISNULL(wlm.MarkObtained, 0),
+                     ISNULL(w.TotalMark, ISNULL(w.MaxScore, 0))
+              FROM institution.WorkLearnerMark AS wlm
+              INNER JOIN institution.Work AS w ON w.Id = wlm.WorkId
+              LEFT JOIN institution.WorkTypes AS wt ON wt.Id = w.WorkTypeId
+              WHERE wlm.LearnerId = @LearnerId
+                AND w.SchoolId = @SchoolId
+                AND w.IsArchived = 0
+                AND w.Term = @SelectedTerm
+                                {yearFilter}
+                AND (ISNULL(wt.Name, w.WorkType) = 'Assessment / Test' OR w.WorkType = 'Assessment / Test')
+              ORDER BY w.DueDate ASC, w.Id DESC;",
+            connection);
+        command.Parameters.AddWithValue("@LearnerId", learnerId);
+        command.Parameters.AddWithValue("@SchoolId", tenantId.Value);
+        command.Parameters.AddWithValue("@SelectedTerm", selectedTerm.Trim());
+                if (year.HasValue)
+                {
+                        command.Parameters.AddWithValue("@Year", year.Value);
+                }
+
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            results.Add(new TermAssessmentReportItemDto
+            {
+                Title = reader.IsDBNull(0) ? string.Empty : reader.GetString(0),
+                WorkType = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                Mark = reader.IsDBNull(2) ? 0 : reader.GetInt32(2),
+                TotalMark = reader.IsDBNull(3) ? 0 : reader.GetInt32(3)
+            });
+        }
+
+        return results;
+    }
+
+    public async Task<IReadOnlyCollection<LearnerReportPreviewDto>> GetLearnerReportPreviewsAsync(int learnerId, CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        var tenantId = await ResolveTenantIdAsync(connection, cancellationToken);
+        if (!tenantId.HasValue)
+        {
+            return Array.Empty<LearnerReportPreviewDto>();
+        }
+
+        var hasWorkTermColumn = await HasColumnAsync(connection, "institution", "Work", "Term", cancellationToken);
+        if (!hasWorkTermColumn)
+        {
+            return Array.Empty<LearnerReportPreviewDto>();
+        }
+
+        var previews = new List<LearnerReportPreviewDto>();
+        using var command = new SqlCommand(
+            @"SELECT DISTINCT
+                     w.Term,
+                     COALESCE(YEAR(TRY_CONVERT(date, w.DueDate)), YEAR(GETDATE())) AS ReportYear
+              FROM institution.WorkLearnerMark AS wlm
+              INNER JOIN institution.Work AS w ON w.Id = wlm.WorkId
+              LEFT JOIN institution.WorkTypes AS wt ON wt.Id = w.WorkTypeId
+              WHERE wlm.LearnerId = @LearnerId
+                AND w.SchoolId = @SchoolId
+                AND w.IsArchived = 0
+                AND ISNULL(LTRIM(RTRIM(w.Term)), '') <> ''
+                AND (ISNULL(wt.Name, w.WorkType) = 'Assessment / Test' OR w.WorkType = 'Assessment / Test')
+              ORDER BY ReportYear DESC, w.Term ASC;",
+            connection);
+        command.Parameters.AddWithValue("@LearnerId", learnerId);
+        command.Parameters.AddWithValue("@SchoolId", tenantId.Value);
+
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            previews.Add(new LearnerReportPreviewDto
+            {
+                Term = reader.IsDBNull(0) ? string.Empty : reader.GetString(0),
+                Year = reader.IsDBNull(1) ? DateTime.UtcNow.Year : reader.GetInt32(1)
+            });
+        }
+
+        return previews;
     }
 
     private static void AddMarkCommandParameters(

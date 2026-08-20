@@ -37,6 +37,7 @@
           <th>Work ID</th>
           <th>Title</th>
           <th>Work Type</th>
+          <th>Term</th>
           <th>Class</th>
           <th>Due Date</th>
           <th>Total Mark</th>
@@ -48,6 +49,7 @@
           <td>{{ work.id }}</td>
           <td>{{ work.title }}</td>
           <td>{{ work.workType }}</td>
+          <td>{{ work.term || '-' }}</td>
           <td>{{ work.className || ('Class #' + work.classId) }}</td>
           <td>{{ work.dueDate || '-' }}</td>
           <td>{{ work.totalMark }}</td>
@@ -94,6 +96,14 @@
           <select name="workTypeId" [(ngModel)]="workForm.workTypeId" [disabled]="loadingWorkTypes" required>
             <option [ngValue]="0">Select work type</option>
             <option *ngFor="let workType of workTypes" [ngValue]="workType.id">{{ workType.name }}</option>
+          </select>
+        </label>
+
+        <label>
+          Term
+          <select name="workTerm" [(ngModel)]="workForm.term" required>
+            <option value="">Select Term</option>
+            <option *ngFor="let term of termOptions" [value]="term">{{ term }}</option>
           </select>
         </label>
 

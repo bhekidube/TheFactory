@@ -38,6 +38,27 @@ public sealed class ReportService : IReportService
         };
     }
 
+    public async Task<LearnerTermReportPreviewDto?> GetLearnerTermReportPreviewAsync(int learnerId, string term, int year, CancellationToken cancellationToken = default)
+    {
+        var learner = await _learnerService.GetLearnerByIdAsync(learnerId, cancellationToken);
+        if (learner is null)
+        {
+            return null;
+        }
+
+        var assessments = await _learnerService.GetLearnerTermAssessmentMarksAsync(learnerId, term, year, cancellationToken);
+
+        return new LearnerTermReportPreviewDto
+        {
+            LearnerId = learner.Id,
+            LearnerName = $"{learner.FirstName} {learner.Surname}".Trim(),
+            Grade = learner.Grade,
+            Term = term,
+            Year = year,
+            Assessments = assessments
+        };
+    }
+
     private async Task<string> GetSchoolNameAsync(int learnerId, CancellationToken cancellationToken)
     {
         using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);

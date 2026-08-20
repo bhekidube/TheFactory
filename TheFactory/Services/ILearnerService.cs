@@ -35,4 +35,6 @@ public interface ILearnerService
     Task<IReadOnlyCollection<SubjectDto>> GetSubjectsForCurrentTenantAsync(CancellationToken cancellationToken = default);
     Task<SubjectScoreDto?> UpsertSubjectScoreAsync(int learnerId, SubjectScoreDto subjectScore, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<SubjectScoreDto>> GetSubjectScoresAsync(int learnerId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<TermAssessmentReportItemDto>> GetLearnerTermAssessmentMarksAsync(int learnerId, string selectedTerm, int? year = null, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<LearnerReportPreviewDto>> GetLearnerReportPreviewsAsync(int learnerId, CancellationToken cancellationToken = default);
 }

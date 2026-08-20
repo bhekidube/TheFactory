@@ -151,6 +151,7 @@ public sealed class WorkDto
     public string Description { get; set; } = string.Empty;
     public int WorkTypeId { get; set; }
     public string WorkType { get; set; } = string.Empty;
+    public string Term { get; set; } = string.Empty;
     public int ClassId { get; set; }
     public string ClassName { get; set; } = string.Empty;
     public string DueDate { get; set; } = string.Empty;
@@ -164,9 +165,34 @@ public sealed class WorkUpsertRequestDto
     public int SubjectId { get; set; }
     public string Description { get; set; } = string.Empty;
     public int WorkTypeId { get; set; }
+    public string Term { get; set; } = string.Empty;
     public int ClassId { get; set; }
     public string DueDate { get; set; } = string.Empty;
     public int TotalMark { get; set; }
+}
+
+public sealed class TermAssessmentReportItemDto
+{
+    public string Title { get; set; } = string.Empty;
+    public string WorkType { get; set; } = string.Empty;
+    public int Mark { get; set; }
+    public int TotalMark { get; set; }
+}
+
+public sealed class LearnerReportPreviewDto
+{
+    public string Term { get; set; } = string.Empty;
+    public int Year { get; set; }
+}
+
+public sealed class LearnerTermReportPreviewDto
+{
+    public int LearnerId { get; set; }
+    public string LearnerName { get; set; } = string.Empty;
+    public string Grade { get; set; } = string.Empty;
+    public string Term { get; set; } = string.Empty;
+    public int Year { get; set; }
+    public IReadOnlyCollection<TermAssessmentReportItemDto> Assessments { get; set; } = Array.Empty<TermAssessmentReportItemDto>();
 }
 
 public sealed class WorkTypeLookupDto

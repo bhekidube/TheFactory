@@ -48,5 +48,49 @@
         </table>
       </div>
     </div>
+
+    <div class="section-card">
+      <h3>Reports</h3>
+      <div class="state-card" *ngIf="loadingReports">Loading reports...</div>
+      <div class="state-card" *ngIf="!loadingReports && reportPreviews.length === 0">No reports available for preview yet.</div>
+      <div class="table-wrap" *ngIf="!loadingReports && reportPreviews.length > 0">
+        <table>
+          <thead>
+            <tr>
+              <th>Term</th>
+              <th>Year</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of reportPreviews">
+              <td>{{ item.term }}</td>
+              <td>{{ item.year }}</td>
+              <td>
+                <button type="button" class="secondary-btn" (click)="openReportPreview(item)">Preview</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" *ngIf="previewVisible">
+    <div class="panel preview-panel">
+      <div class="preview-header">
+        <h3>Report Preview - {{ previewTerm }} {{ previewYear }}</h3>
+      </div>
+
+      <div class="preview-body">
+        <iframe #previewFrame *ngIf="previewUrl" [src]="previewUrl" title="Learner report preview" class="preview-frame"></iframe>
+      </div>
+
+      <div class="panel-actions">
+        <button type="button" class="primary-btn" (click)="downloadPreviewReport()">Download PDF</button>
+        <button type="button" class="secondary-btn" (click)="printPreviewReport()">Print</button>
+        <button type="button" class="secondary-btn" (click)="closeReportPreview()">Close</button>
+      </div>
+    </div>
   </div>
 </section>

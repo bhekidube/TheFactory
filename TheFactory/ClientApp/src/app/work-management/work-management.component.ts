@@ -9,6 +9,7 @@ import { LearnerManagementService } from '../services/learner-management.service
   styleUrls: ['./work-management.component.css']
 })
 export class WorkManagementComponent implements OnInit {
+  readonly termOptions = ['Term 1', 'Term 2', 'Term 3', 'Term 4'];
   workItems: WorkDto[] = [];
   classes: ClassDto[] = [];
   subjects: SubjectDto[] = [];
@@ -50,6 +51,7 @@ export class WorkManagementComponent implements OnInit {
     return this.workItems.filter(work =>
       work.title.toLowerCase().includes(term)
       || work.workType.toLowerCase().includes(term)
+      || (work.term || '').toLowerCase().includes(term)
       || work.className.toLowerCase().includes(term)
       || work.id.toString().includes(term)
       || work.dueDate.toLowerCase().includes(term)
@@ -131,6 +133,7 @@ export class WorkManagementComponent implements OnInit {
       subjectId: work.subjectId,
       description: work.description,
       workTypeId: work.workTypeId,
+      term: work.term,
       classId: work.classId,
       dueDate: work.dueDate,
       totalMark: work.totalMark
@@ -231,6 +234,10 @@ export class WorkManagementComponent implements OnInit {
       return 'Work type is invalid.';
     }
 
+    if (!this.termOptions.includes((this.workForm.term || '').trim())) {
+      return 'A valid term is required.';
+    }
+
     if (!Number.isFinite(this.workForm.classId) || this.workForm.classId <= 0) {
       return 'Class is required.';
     }
@@ -248,6 +255,7 @@ export class WorkManagementComponent implements OnInit {
       subjectId: 0,
       description: '',
       workTypeId: 0,
+      term: '',
       classId: 0,
       dueDate: '',
       totalMark: 100

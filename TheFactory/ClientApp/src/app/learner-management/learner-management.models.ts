@@ -115,6 +115,11 @@ export interface LearnerDetailDto {
   academicRecords: LearnerAcademicRecordDto[];
 }
 
+export interface LearnerReportPreviewDto {
+  term: string;
+  year: number;
+}
+
 export interface WorkDto {
   id: number;
   schoolId: number;
@@ -124,6 +129,7 @@ export interface WorkDto {
   description: string;
   workTypeId: number;
   workType: string;
+  term: string;
   classId: number;
   className: string;
   dueDate: string;
@@ -136,8 +142,16 @@ export interface WorkUpsertRequestDto {
   subjectId: number;
   description: string;
   workTypeId: number;
+  term: string;
   classId: number;
   dueDate: string;
+  totalMark: number;
+}
+
+export interface TermAssessmentReportItemDto {
+  title: string;
+  workType: string;
+  mark: number;
   totalMark: number;
 }
 

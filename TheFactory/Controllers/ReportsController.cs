@@ -879,6 +879,89 @@ public class ReportsController : ControllerBase
         return File(pdfBytes, "application/pdf", fileName);
     }
 
+    [HttpGet("reports/{learnerId:int}/term-assessments")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<TermAssessmentReportItemDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<IReadOnlyCollection<TermAssessmentReportItemDto>>> GetLearnerTermAssessmentReport(
+        int learnerId,
+        [FromQuery] string term,
+        CancellationToken cancellationToken)
+    {
+        var normalizedTerm = (term ?? string.Empty).Trim();
+        if (!IsValidTerm(normalizedTerm))
+        {
+            return BadRequest("A valid term is required (Term 1, Term 2, Term 3, or Term 4).");
+        }
+
+        var results = await _learnerService.GetLearnerTermAssessmentMarksAsync(learnerId, normalizedTerm, null, cancellationToken);
+        return Ok(results);
+    }
+
+    [HttpGet("learners/{learnerId:int}/reports")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<LearnerReportPreviewDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<LearnerReportPreviewDto>>> GetLearnerReportPreviews(int learnerId, CancellationToken cancellationToken)
+    {
+        var previews = await _learnerService.GetLearnerReportPreviewsAsync(learnerId, cancellationToken);
+        return Ok(previews);
+    }
+
+    [HttpGet("learners/{learnerId:int}/reports/preview")]
+    [ProducesResponseType(typeof(FileResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> PreviewLearnerReport(int learnerId, [FromQuery] string term, [FromQuery] int year, CancellationToken cancellationToken)
+    {
+        var normalizedTerm = (term ?? string.Empty).Trim();
+        if (!IsValidTerm(normalizedTerm))
+        {
+            return BadRequest("A valid term is required (Term 1, Term 2, Term 3, or Term 4).");
+        }
+
+        if (year < 2000 || year > 2100)
+        {
+            return BadRequest("A valid year is required.");
+        }
+
+        var report = await _reportService.GetLearnerTermReportPreviewAsync(learnerId, normalizedTerm, year, cancellationToken);
+        if (report is null)
+        {
+            return NotFound();
+        }
+
+        var pdfBytes = await _pdfGeneratorService.GenerateLearnerTermReportPdfAsync(report, cancellationToken);
+        var fileName = $"Learner_{learnerId}_{normalizedTerm.Replace(' ', '_')}_{year}.pdf";
+        Response.Headers.ContentDisposition = $"inline; filename=\"{fileName}\"";
+        return File(pdfBytes, "application/pdf");
+    }
+
+    [HttpGet("learners/{learnerId:int}/reports/download")]
+    [ProducesResponseType(typeof(FileResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> DownloadLearnerReport(int learnerId, [FromQuery] string term, [FromQuery] int year, CancellationToken cancellationToken)
+    {
+        var normalizedTerm = (term ?? string.Empty).Trim();
+        if (!IsValidTerm(normalizedTerm))
+        {
+            return BadRequest("A valid term is required (Term 1, Term 2, Term 3, or Term 4).");
+        }
+
+        if (year < 2000 || year > 2100)
+        {
+            return BadRequest("A valid year is required.");
+        }
+
+        var report = await _reportService.GetLearnerTermReportPreviewAsync(learnerId, normalizedTerm, year, cancellationToken);
+        if (report is null)
+        {
+            return NotFound();
+        }
+
+        var pdfBytes = await _pdfGeneratorService.GenerateLearnerTermReportPdfAsync(report, cancellationToken);
+        var fileName = $"Learner_{learnerId}_{normalizedTerm.Replace(' ', '_')}_{year}.pdf";
+        return File(pdfBytes, "application/pdf", fileName);
+    }
+
     private static bool TryValidateLearnerDto(LearnerDto learnerDto, out string error)
     {
         if (learnerDto is null)
@@ -1029,6 +1112,12 @@ public class ReportsController : ControllerBase
             return false;
         }
 
+        if (!IsValidTerm(request.Term))
+        {
+            error = "Term is required and must be one of: Term 1, Term 2, Term 3, Term 4.";
+            return false;
+        }
+
         if (request.ClassId <= 0)
         {
             error = "ClassId is required.";
@@ -1043,6 +1132,20 @@ public class ReportsController : ControllerBase
 
         error = string.Empty;
         return true;
+    }
+
+    private static bool IsValidTerm(string? term)
+    {
+        if (string.IsNullOrWhiteSpace(term))
+        {
+            return false;
+        }
+
+        var normalized = term.Trim();
+        return normalized.Equals("Term 1", StringComparison.OrdinalIgnoreCase)
+            || normalized.Equals("Term 2", StringComparison.OrdinalIgnoreCase)
+            || normalized.Equals("Term 3", StringComparison.OrdinalIgnoreCase)
+            || normalized.Equals("Term 4", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool TryValidateSaveWorkMarksRequest(SaveWorkMarksRequestDto request, out string error)

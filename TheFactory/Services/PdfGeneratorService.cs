@@ -131,6 +131,77 @@ public sealed class PdfGeneratorService : IPdfGeneratorService
         return Task.FromResult(stream.ToArray());
     }
 
+    public Task<byte[]> GenerateLearnerTermReportPdfAsync(LearnerTermReportPreviewDto report, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        using var document = new PdfDocument();
+        var page = document.AddPage();
+        page.Size = PageSize.A4;
+        page.Orientation = PageOrientation.Portrait;
+
+        using var graphics = XGraphics.FromPdfPage(page);
+        var titleFont = new XFont("Helvetica", 14, XFontStyle.Bold);
+        var headerFont = new XFont("Helvetica", 9, XFontStyle.Bold);
+        var bodyFont = new XFont("Helvetica", 9, XFontStyle.Regular);
+        var brush = XBrushes.Black;
+        var borderPen = new XPen(XColor.FromArgb(75, 75, 75), 0.7);
+
+        var margin = 40d;
+        var width = page.Width - (margin * 2);
+        var y = 50d;
+
+        graphics.DrawString("Learner Term Report", titleFont, brush, new XRect(margin, y, width, 24), XStringFormats.TopCenter);
+        y += 34d;
+
+        graphics.DrawString($"Learner: {report.LearnerName}", headerFont, brush, new XPoint(margin, y));
+        y += 16d;
+        graphics.DrawString($"Grade: {report.Grade}", headerFont, brush, new XPoint(margin, y));
+        y += 16d;
+        graphics.DrawString($"Term: {report.Term}", headerFont, brush, new XPoint(margin, y));
+        y += 16d;
+        graphics.DrawString($"Year: {report.Year}", headerFont, brush, new XPoint(margin, y));
+        y += 22d;
+
+        var titleW = width * 0.45;
+        var typeW = width * 0.2;
+        var markW = width * 0.15;
+        var totalW = width * 0.2;
+        var headerH = 26d;
+        var rowH = 24d;
+
+        DrawCell(graphics, borderPen, XBrushes.LightGray, margin, y, titleW, headerH, "TITLE", headerFont, XStringFormats.CenterLeft, 4d);
+        DrawCell(graphics, borderPen, XBrushes.LightGray, margin + titleW, y, typeW, headerH, "WORK TYPE", headerFont, XStringFormats.CenterLeft, 4d);
+        DrawCell(graphics, borderPen, XBrushes.LightGray, margin + titleW + typeW, y, markW, headerH, "MARK", headerFont, XStringFormats.Center, 0d);
+        DrawCell(graphics, borderPen, XBrushes.LightGray, margin + titleW + typeW + markW, y, totalW, headerH, "TOTAL MARK", headerFont, XStringFormats.Center, 0d);
+        y += headerH;
+
+        foreach (var item in report.Assessments)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            DrawCell(graphics, borderPen, XBrushes.White, margin, y, titleW, rowH, item.Title, bodyFont, XStringFormats.CenterLeft, 4d);
+            DrawCell(graphics, borderPen, XBrushes.White, margin + titleW, y, typeW, rowH, item.WorkType, bodyFont, XStringFormats.CenterLeft, 4d);
+            DrawCell(graphics, borderPen, XBrushes.White, margin + titleW + typeW, y, markW, rowH, item.Mark.ToString(), bodyFont, XStringFormats.Center, 0d);
+            DrawCell(graphics, borderPen, XBrushes.White, margin + titleW + typeW + markW, y, totalW, rowH, item.TotalMark.ToString(), bodyFont, XStringFormats.Center, 0d);
+            y += rowH;
+
+            if (y > page.Height - 50d)
+            {
+                break;
+            }
+        }
+
+        if (report.Assessments.Count == 0)
+        {
+            DrawCell(graphics, borderPen, XBrushes.WhiteSmoke, margin, y, width, rowH, "No assessment records found for this term/year.", bodyFont, XStringFormats.CenterLeft, 4d);
+        }
+
+        using var stream = new MemoryStream();
+        document.Save(stream, false);
+        return Task.FromResult(stream.ToArray());
+    }
+
     private static IReadOnlyList<AssessmentRow> BuildAssessmentRows(LearnerReportDto report)
     {
         var reportSubjects = report.Subjects.ToList();

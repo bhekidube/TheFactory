@@ -10,6 +10,7 @@ import { LearnerManagementService } from '../services/learner-management.service
   styleUrls: ['./class-detail.component.css']
 })
 export class ClassDetailComponent implements OnInit {
+  readonly termOptions = ['Term 1', 'Term 2', 'Term 3', 'Term 4'];
   classId = 0;
   classDetail: ClassDetailDto | null = null;
   loading = false;
@@ -191,6 +192,7 @@ export class ClassDetailComponent implements OnInit {
       subjectId: work.subjectId,
       description: work.description,
       workTypeId: work.workTypeId,
+      term: work.term,
       classId: this.classId,
       dueDate: work.dueDate,
       totalMark: work.totalMark
@@ -284,6 +286,10 @@ export class ClassDetailComponent implements OnInit {
       return 'A valid work type is required.';
     }
 
+    if (!this.termOptions.includes((this.workForm.term || '').trim())) {
+      return 'A valid term is required.';
+    }
+
     const validSubjectIds = new Set((this.classDetail?.subjects || []).map(subject => subject.subjectId));
     if (!Number.isFinite(this.workForm.subjectId) || !validSubjectIds.has(this.workForm.subjectId)) {
       return 'A valid class subject is required.';
@@ -302,6 +308,7 @@ export class ClassDetailComponent implements OnInit {
       subjectId: 0,
       description: '',
       workTypeId: 0,
+      term: '',
       classId: this.classId,
       dueDate: '',
       totalMark: 100

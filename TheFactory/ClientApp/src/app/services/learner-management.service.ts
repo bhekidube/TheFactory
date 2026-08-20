@@ -11,6 +11,7 @@ import {
   LearnerDto,
   LearnerDetailDto,
   LearnerAcademicRecordDto,
+  LearnerReportPreviewDto,
   LearnerReportResponseDto,
   SubjectUpsertRequestDto,
   TeacherLookupDto,
@@ -21,6 +22,7 @@ import {
   SaveWorkMarksRequestDto,
   WorkUpsertRequestDto,
   WorkTypeLookupDto,
+  TermAssessmentReportItemDto,
   SubjectScoreDto,
   SubjectScoreUpsertRequest
 } from '../learner-management/learner-management.models';
@@ -205,6 +207,25 @@ export class LearnerManagementService {
     return this.http.get<LearnerAcademicRecordDto[]>(`${this.baseUrl}/learners/${id}/academic-records`, this.getRequestOptions());
   }
 
+  getLearnerReportPreviews(learnerId: number): Observable<LearnerReportPreviewDto[]> {
+    return this.http.get<LearnerReportPreviewDto[]>(`${this.baseUrl}/learners/${learnerId}/reports`, this.getRequestOptions());
+  }
+
+  getLearnerReportPreviewUrl(learnerId: number, term: string, year: number): string {
+    return `${this.baseUrl}/learners/${learnerId}/reports/preview?term=${encodeURIComponent(term)}&year=${year}`;
+  }
+
+  downloadLearnerTermReportPdf(learnerId: number, term: string, year: number): Observable<HttpResponse<Blob>> {
+    return this.http.get(
+      `${this.baseUrl}/learners/${learnerId}/reports/download?term=${encodeURIComponent(term)}&year=${year}`,
+      {
+        observe: 'response',
+        responseType: 'blob',
+        headers: this.getHeaders()
+      }
+    );
+  }
+
   createLearner(payload: LearnerDto): Observable<LearnerDto> {
     return this.http.post<LearnerDto>(`${this.baseUrl}/learners`, payload, this.getRequestOptions());
   }
@@ -219,6 +240,13 @@ export class LearnerManagementService {
 
   getReport(learnerId: number): Observable<LearnerReportResponseDto> {
     return this.http.get<LearnerReportResponseDto>(`${this.baseUrl}/reports/${learnerId}`, this.getRequestOptions());
+  }
+
+  getTermAssessmentReport(learnerId: number, term: string): Observable<TermAssessmentReportItemDto[]> {
+    return this.http.get<TermAssessmentReportItemDto[]>(
+      `${this.baseUrl}/reports/${learnerId}/term-assessments?term=${encodeURIComponent(term)}`,
+      this.getRequestOptions()
+    );
   }
 
   getSubjects(): Observable<SubjectDto[]> {
@@ -272,9 +300,12 @@ export class LearnerManagementService {
     const raw = item as unknown as Record<string, unknown>;
     const totalMarkRaw = raw.totalMark ?? raw.total_mark ?? raw.maxScore ?? 0;
     const totalMark = Number(totalMarkRaw);
+    const termRaw = raw.term ?? raw.termOrPeriod ?? '';
+    const term = typeof termRaw === 'string' ? termRaw.trim() : String(termRaw ?? '').trim();
 
     return {
       ...item,
+      term,
       totalMark: Number.isFinite(totalMark) ? totalMark : 0
     };
   }
