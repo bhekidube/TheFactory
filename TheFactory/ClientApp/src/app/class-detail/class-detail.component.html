@@ -51,14 +51,6 @@
             <tr *ngFor="let learner of classDetail.learners">
               <td><a [routerLink]="['/school/admin/learners', learner.learnerId]">{{ learner.learnerId }}</a></td>
               <td><a [routerLink]="['/school/admin/learners', learner.learnerId]">{{ learner.firstName }}</a></td>
-
-        <label>
-          Term <span class="required">*</span>
-          <select name="workTerm" [(ngModel)]="workForm.term" required>
-            <option value="">Select Term</option>
-            <option *ngFor="let term of termOptions" [value]="term">{{ term }}</option>
-          </select>
-        </label>
               <td><a [routerLink]="['/school/admin/learners', learner.learnerId]">{{ learner.surname }}</a></td>
               <td>{{ learner.grade }}</td>
             </tr>

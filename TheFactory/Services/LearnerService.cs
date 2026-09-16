@@ -1908,25 +1908,41 @@ public sealed class LearnerService : ILearnerService
             return Array.Empty<TermAssessmentReportItemDto>();
         }
 
+        var hasWorkTypesTable = await HasTableAsync(connection, "institution", "WorkTypes", cancellationToken);
+        var hasWorkTypeIdColumn = await HasColumnAsync(connection, "institution", "Work", "WorkTypeId", cancellationToken);
+        var hasLegacyWorkTypeColumn = await HasColumnAsync(connection, "institution", "Work", "WorkType", cancellationToken);
+
+        var workTypeJoin = hasWorkTypesTable && hasWorkTypeIdColumn
+            ? "LEFT JOIN institution.WorkTypes AS wt ON wt.Id = w.WorkTypeId"
+            : string.Empty;
+
+        var workTypeSelect = hasLegacyWorkTypeColumn
+            ? "ISNULL(COALESCE(wt.Name, w.WorkType), '')"
+            : "ISNULL(wt.Name, '')";
+
+        var workTypeFilter = hasLegacyWorkTypeColumn
+            ? "(ISNULL(wt.Name, w.WorkType) = 'Assessment / Test' OR w.WorkType = 'Assessment / Test')"
+            : "ISNULL(wt.Name, '') = 'Assessment / Test'";
+
         var yearFilter = year.HasValue
             ? "AND YEAR(TRY_CONVERT(date, w.DueDate)) = @Year"
             : string.Empty;
 
         var results = new List<TermAssessmentReportItemDto>();
         using var command = new SqlCommand(
-            $@"SELECT ISNULL(w.Title, ''),
-                     ISNULL(COALESCE(wt.Name, w.WorkType), ''),
+                        $@"SELECT ISNULL(w.Title, ''),
+                                         {workTypeSelect},
                      ISNULL(wlm.MarkObtained, 0),
                      ISNULL(w.TotalMark, ISNULL(w.MaxScore, 0))
               FROM institution.WorkLearnerMark AS wlm
               INNER JOIN institution.Work AS w ON w.Id = wlm.WorkId
-              LEFT JOIN institution.WorkTypes AS wt ON wt.Id = w.WorkTypeId
+                            {workTypeJoin}
               WHERE wlm.LearnerId = @LearnerId
                 AND w.SchoolId = @SchoolId
                 AND w.IsArchived = 0
                 AND w.Term = @SelectedTerm
                                 {yearFilter}
-                AND (ISNULL(wt.Name, w.WorkType) = 'Assessment / Test' OR w.WorkType = 'Assessment / Test')
+                                AND {workTypeFilter}
               ORDER BY w.DueDate ASC, w.Id DESC;",
             connection);
         command.Parameters.AddWithValue("@LearnerId", learnerId);
@@ -1967,21 +1983,33 @@ public sealed class LearnerService : ILearnerService
             return Array.Empty<LearnerReportPreviewDto>();
         }
 
+        var hasWorkTypesTable = await HasTableAsync(connection, "institution", "WorkTypes", cancellationToken);
+        var hasWorkTypeIdColumn = await HasColumnAsync(connection, "institution", "Work", "WorkTypeId", cancellationToken);
+        var hasLegacyWorkTypeColumn = await HasColumnAsync(connection, "institution", "Work", "WorkType", cancellationToken);
+
+        var workTypeJoin = hasWorkTypesTable && hasWorkTypeIdColumn
+            ? "LEFT JOIN institution.WorkTypes AS wt ON wt.Id = w.WorkTypeId"
+            : string.Empty;
+
+        var workTypeFilter = hasLegacyWorkTypeColumn
+            ? "(ISNULL(wt.Name, w.WorkType) = 'Assessment / Test' OR w.WorkType = 'Assessment / Test')"
+            : "ISNULL(wt.Name, '') = 'Assessment / Test'";
+
         var previews = new List<LearnerReportPreviewDto>();
-        using var command = new SqlCommand(
-            @"SELECT DISTINCT
-                     w.Term,
-                     COALESCE(YEAR(TRY_CONVERT(date, w.DueDate)), YEAR(GETDATE())) AS ReportYear
-              FROM institution.WorkLearnerMark AS wlm
-              INNER JOIN institution.Work AS w ON w.Id = wlm.WorkId
-              LEFT JOIN institution.WorkTypes AS wt ON wt.Id = w.WorkTypeId
-              WHERE wlm.LearnerId = @LearnerId
-                AND w.SchoolId = @SchoolId
-                AND w.IsArchived = 0
-                AND ISNULL(LTRIM(RTRIM(w.Term)), '') <> ''
-                AND (ISNULL(wt.Name, w.WorkType) = 'Assessment / Test' OR w.WorkType = 'Assessment / Test')
-              ORDER BY ReportYear DESC, w.Term ASC;",
-            connection);
+                using var command = new SqlCommand(
+                        $@"SELECT DISTINCT
+                                         w.Term,
+                                         COALESCE(YEAR(TRY_CONVERT(date, w.DueDate)), YEAR(GETDATE())) AS ReportYear
+                            FROM institution.WorkLearnerMark AS wlm
+                            INNER JOIN institution.Work AS w ON w.Id = wlm.WorkId
+                            {workTypeJoin}
+                            WHERE wlm.LearnerId = @LearnerId
+                                AND w.SchoolId = @SchoolId
+                                AND w.IsArchived = 0
+                                AND ISNULL(LTRIM(RTRIM(w.Term)), '') <> ''
+                                AND {workTypeFilter}
+                            ORDER BY ReportYear DESC, w.Term ASC;",
+                        connection);
         command.Parameters.AddWithValue("@LearnerId", learnerId);
         command.Parameters.AddWithValue("@SchoolId", tenantId.Value);
 
@@ -2234,6 +2262,35 @@ public sealed class LearnerService : ILearnerService
         command.Parameters.AddWithValue("@SchemaName", schemaName);
         command.Parameters.AddWithValue("@TableName", tableName);
         command.Parameters.AddWithValue("@ColumnName", columnName);
+
+        var value = await command.ExecuteScalarAsync(cancellationToken);
+        return value is int intValue ? intValue == 1 : Convert.ToInt32(value) == 1;
+    }
+
+    private static async Task<bool> HasTableAsync(
+        SqlConnection connection,
+        string schemaName,
+        string tableName,
+        CancellationToken cancellationToken,
+        SqlTransaction? transaction = null)
+    {
+        using var command = new SqlCommand(
+            @"SELECT CASE WHEN EXISTS (
+                    SELECT 1
+                    FROM sys.tables t
+                    INNER JOIN sys.schemas s ON s.schema_id = t.schema_id
+                    WHERE s.name = @SchemaName
+                      AND t.name = @TableName)
+                THEN 1 ELSE 0 END;",
+            connection);
+
+        if (transaction is not null)
+        {
+            command.Transaction = transaction;
+        }
+
+        command.Parameters.AddWithValue("@SchemaName", schemaName);
+        command.Parameters.AddWithValue("@TableName", tableName);
 
         var value = await command.ExecuteScalarAsync(cancellationToken);
         return value is int intValue ? intValue == 1 : Convert.ToInt32(value) == 1;

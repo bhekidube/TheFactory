@@ -167,9 +167,33 @@ export class LearnerDetailComponent implements OnInit {
     }
 
     if (httpError.status >= 500) {
-      return 'Server error. Please try again in a moment.';
+      const serverMessage = this.extractServerMessage(httpError);
+      return serverMessage || 'Server error. Please try again in a moment.';
     }
 
-    return fallback;
+    return this.extractServerMessage(httpError) || fallback;
+  }
+
+  private extractServerMessage(error: HttpErrorResponse): string {
+    if (!error) {
+      return '';
+    }
+
+    const payload = error.error;
+    if (typeof payload === 'string') {
+      const trimmed = payload.trim();
+      return trimmed.length > 0 ? trimmed : '';
+    }
+
+    if (payload && typeof payload === 'object') {
+      const asRecord = payload as Record<string, unknown>;
+      const message = asRecord['message'] ?? asRecord['error'] ?? asRecord['title'] ?? '';
+      if (typeof message === 'string') {
+        const trimmed = message.trim();
+        return trimmed.length > 0 ? trimmed : '';
+      }
+    }
+
+    return '';
   }
 }
