@@ -15,7 +15,7 @@
         </button>
       <p>School administration dashboard for active learner profiles and reports.</p>
       </div>
-      <button type="button" class="primary-btn" (click)="openAddLearner()">+ Add Learner</button>
+      <button type="button" class="primary-btn" *ngIf="isLearnerSectionExpanded" (click)="openAddLearner()">+ Add Learner</button>
     </div>
 
     <div id="learner-management-panel" *ngIf="isLearnerSectionExpanded">
