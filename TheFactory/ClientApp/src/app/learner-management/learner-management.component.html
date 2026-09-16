@@ -62,7 +62,7 @@
             <th>First Name</th>
             <th>Surname</th>
             <th>Grade</th>
-            <th class="actions-col">Actions</th>
+            <th class="actions-col text-end">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -71,8 +71,8 @@
             <td>{{ learner.firstName }}</td>
             <td>{{ learner.surname }}</td>
             <td>{{ learner.grade }}</td>
-            <td class="actions-col">
-              <div class="actions-row">
+            <td class="actions-col text-end">
+              <div class="actions-row d-flex justify-content-end gap-2">
                 <button type="button" class="link-btn" (click)="viewReport(learner)">View Report</button>
                 <button type="button" class="link-btn" (click)="openEditLearner(learner)">Edit</button>
                 <button
