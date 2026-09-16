@@ -73,7 +73,7 @@
             <td>{{ learner.grade }}</td>
             <td class="actions-col text-end">
               <div class="actions-row d-flex justify-content-end gap-2">
-                <button type="button" class="link-btn" (click)="viewReport(learner)">View Report</button>
+                <button type="button" class="link-btn" *ngIf="isReportsRoute" (click)="viewReport(learner)">View Report</button>
                 <button type="button" class="link-btn" (click)="openEditLearner(learner)">Edit</button>
                 <button
                   type="button"

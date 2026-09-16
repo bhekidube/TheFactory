@@ -64,7 +64,7 @@ export class LearnerManagementComponent implements OnInit {
 
   errorMessage = '';
   successMessage = '';
-  currentSection: 'learners' | 'classes' = 'learners';
+  currentSection: 'learners' | 'reports' | 'classes' = 'learners';
 
   private routeSubscription?: Subscription;
 
@@ -88,7 +88,11 @@ export class LearnerManagementComponent implements OnInit {
   }
 
   get isLearnersRoute(): boolean {
-    return this.currentSection === 'learners';
+    return this.currentSection === 'learners' || this.currentSection === 'reports';
+  }
+
+  get isReportsRoute(): boolean {
+    return this.currentSection === 'reports';
   }
 
   get isClassesRoute(): boolean {
@@ -127,7 +131,17 @@ export class LearnerManagementComponent implements OnInit {
 
   private setCurrentSectionFromRoute(): void {
     const path = this.router.url.split('?')[0].toLowerCase();
-    this.currentSection = /\/learning\/schools\/\d+\/classes$/.test(path) ? 'classes' : 'learners';
+    if (/\/learning\/schools\/\d+\/classes$/.test(path)) {
+      this.currentSection = 'classes';
+      return;
+    }
+
+    if (/\/learning\/schools\/\d+\/reports$/.test(path)) {
+      this.currentSection = 'reports';
+      return;
+    }
+
+    this.currentSection = 'learners';
   }
 
   loadLearners(): void {
