@@ -31,17 +31,19 @@
       </div>
     </div>
 
-    <div class="toolbar">
-      <input
-        type="text"
-        [(ngModel)]="searchTerm"
-        (ngModelChange)="applySearch()"
-        placeholder="Search learners..."
-        aria-label="Search learners"
-      />
-      <button type="button" class="secondary-btn" (click)="loadLearners()" [disabled]="loadingLearners">
-        {{ loadingLearners ? 'Refreshing...' : 'Refresh' }}
-      </button>
+    <div class="toolbar search-controls-row">
+      <div class="search-controls-group">
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="applySearch()"
+          placeholder="Search learners..."
+          aria-label="Search learners"
+        />
+        <button type="button" class="secondary-btn" (click)="loadLearners()" [disabled]="loadingLearners">
+          {{ loadingLearners ? 'Refreshing...' : 'Refresh' }}
+        </button>
+      </div>
     </div>
 
     <div *ngIf="loadingLearners" class="state-card">Loading learners...</div>
