@@ -74,10 +74,11 @@
             <td class="actions-col text-end">
               <div class="actions-row d-flex justify-content-end gap-2">
                 <button type="button" class="link-btn" *ngIf="isReportsRoute" (click)="viewReport(learner)">View Report</button>
-                <button type="button" class="link-btn" (click)="openEditLearner(learner)">Edit</button>
+                <button type="button" class="link-btn" *ngIf="!isReportsRoute" (click)="openEditLearner(learner)">Edit</button>
                 <button
                   type="button"
                   class="danger-link-btn"
+                  *ngIf="!isReportsRoute"
                   [disabled]="archivingLearnerId === learner.id"
                   (click)="archiveLearner(learner)">
                   {{ archivingLearnerId === learner.id ? 'Archiving...' : 'Archive' }}
