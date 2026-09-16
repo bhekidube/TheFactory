@@ -10,18 +10,24 @@
       <button type="button" class="primary-btn" (click)="openAddLearner()">+ Add Learner</button>
     </div>
 
-    <div class="summary-grid">
-      <div class="summary-card">
-        <span class="label">Active Learners</span>
-        <strong>{{ activeLearnersCount }}</strong>
+    <div class="summary-grid row g-3">
+      <div class="col-md-4 summary-card-col">
+        <div class="summary-card">
+          <span class="label">Active Learners</span>
+          <strong>{{ activeLearnersCount }}</strong>
+        </div>
       </div>
-      <div class="summary-card">
-        <span class="label">Learners Loaded</span>
-        <strong>{{ filteredLearners.length }}</strong>
+      <div class="col-md-4 summary-card-col">
+        <div class="summary-card">
+          <span class="label">Learners Loaded</span>
+          <strong>{{ filteredLearners.length }}</strong>
+        </div>
       </div>
-      <div class="summary-card">
-        <span class="label">Current Report Average</span>
-        <strong>{{ overallAverage | number: '1.1-1' }}</strong>
+      <div class="col-md-4 summary-card-col">
+        <div class="summary-card">
+          <span class="label">Current Report Average</span>
+          <strong>{{ overallAverage | number: '1.1-1' }}</strong>
+        </div>
       </div>
     </div>
 
