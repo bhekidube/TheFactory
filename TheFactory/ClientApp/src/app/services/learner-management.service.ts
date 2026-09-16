@@ -48,6 +48,10 @@ export interface UserLookupDto {
   email: string;
 }
 
+export interface ActiveClassCountDto {
+  totalClasses: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -93,6 +97,13 @@ export class LearnerManagementService {
 
   getClasses(): Observable<ClassDto[]> {
     return this.http.get<ClassDto[]>(`${this.baseUrl}/classes`, this.getRequestOptions());
+  }
+
+  getActiveClassCountForSchool(schoolId: number): Observable<ActiveClassCountDto> {
+    return this.http.get<ActiveClassCountDto>(
+      `${this.baseUrl}/schools/${schoolId}/classes/active-count`,
+      this.getRequestOptions()
+    );
   }
 
   createClass(payload: CreateClassRequestDto): Observable<ClassDto> {

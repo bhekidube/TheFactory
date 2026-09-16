@@ -6,6 +6,7 @@ public interface ILearnerService
 {
     Task<IReadOnlyCollection<LearnerDto>> GetLearnersForCurrentSchoolAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<ClassDto>> GetClassesForCurrentSchoolAsync(CancellationToken cancellationToken = default);
+    Task<int> GetActiveClassCountForSchoolAsync(int schoolId, CancellationToken cancellationToken = default);
     Task<ClassDetailDto?> GetClassByIdAsync(int classId, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<TeacherLookupDto>> SearchTeachersAsync(string query, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<LearnerLookupDto>> SearchLearnersAsync(string query, CancellationToken cancellationToken = default);

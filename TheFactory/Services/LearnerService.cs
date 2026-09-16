@@ -75,6 +75,31 @@ public sealed class LearnerService : ILearnerService
         return classes;
     }
 
+    public async Task<int> GetActiveClassCountForSchoolAsync(int schoolId, CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+
+        var hasIsArchivedColumn = await HasColumnAsync(connection, "institution", "Class", "IsArchived", cancellationToken);
+        var hasIsActiveColumn = await HasColumnAsync(connection, "institution", "Class", "IsActive", cancellationToken);
+
+        var activeFilter = hasIsArchivedColumn
+            ? "AND ISNULL(c.IsArchived, 0) = 0"
+            : hasIsActiveColumn
+                ? "AND ISNULL(c.IsActive, 1) = 1"
+                : string.Empty;
+
+        using var command = new SqlCommand(
+            $@"SELECT COUNT(1)
+               FROM institution.Class AS c
+               WHERE c.SchoolId = @SchoolId
+                 {activeFilter};",
+            connection);
+        command.Parameters.AddWithValue("@SchoolId", schoolId);
+
+        var value = await command.ExecuteScalarAsync(cancellationToken);
+        return value is null || value == DBNull.Value ? 0 : Convert.ToInt32(value);
+    }
+
     public async Task<ClassDetailDto?> GetClassByIdAsync(int classId, CancellationToken cancellationToken = default)
     {
         using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);

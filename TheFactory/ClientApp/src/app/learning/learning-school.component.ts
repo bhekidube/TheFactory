@@ -11,7 +11,7 @@ export class LearningSchoolComponent implements OnInit {
   schoolId = '';
   activeSection = 'learners';
   schoolName = '';
-  schoolsCount = 0;
+  classesCount = 0;
   learnersCount = 0;
   loading = false;
   errorMessage = '';
@@ -48,11 +48,11 @@ export class LearningSchoolComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
     this.schoolName = '';
+    this.classesCount = 0;
+    this.learnersCount = 0;
 
     this.learnerService.getSchools().subscribe({
       next: schools => {
-        this.schoolsCount = schools.length;
-
         const selectedSchool = schools.find(school => school.id.toString() === this.schoolId);
         if (!selectedSchool) {
           this.loading = false;
@@ -62,10 +62,27 @@ export class LearningSchoolComponent implements OnInit {
 
         this.schoolName = selectedSchool.name;
 
-        this.learnerService.getLearners().subscribe({
-          next: learners => {
-            this.learnersCount = learners.length;
-            this.loading = false;
+        const schoolIdNumber = Number(this.schoolId);
+        if (!Number.isFinite(schoolIdNumber) || schoolIdNumber <= 0) {
+          this.loading = false;
+          this.errorMessage = 'Selected school was not found.';
+          return;
+        }
+
+        this.learnerService.getActiveClassCountForSchool(schoolIdNumber).subscribe({
+          next: classCountResponse => {
+            this.classesCount = classCountResponse?.totalClasses ?? 0;
+
+            this.learnerService.getLearners().subscribe({
+              next: learners => {
+                this.learnersCount = learners.length;
+                this.loading = false;
+              },
+              error: () => {
+                this.loading = false;
+                this.errorMessage = 'Unable to load school context right now.';
+              }
+            });
           },
           error: () => {
             this.loading = false;

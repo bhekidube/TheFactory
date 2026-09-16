@@ -352,6 +352,14 @@ public class ReportsController : ControllerBase
         return Ok(classes);
     }
 
+    [HttpGet("schools/{schoolId:int}/classes/active-count")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    public async Task<ActionResult<object>> GetActiveClassCountForSchool(int schoolId, CancellationToken cancellationToken)
+    {
+        var classesCount = await _learnerService.GetActiveClassCountForSchoolAsync(schoolId, cancellationToken);
+        return Ok(new { totalClasses = classesCount });
+    }
+
     [HttpGet("classes/{id:int}")]
     [ProducesResponseType(typeof(ClassDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
