@@ -62,7 +62,5 @@
     <p><strong>Learner records available:</strong> {{ learnersCount }}</p>
   </div>
 
-  <app-curriculum-view *ngIf="!loading && schoolName && isCurriculumView"></app-curriculum-view>
-  <app-work-management *ngIf="!loading && schoolName && isWorkView"></app-work-management>
-  <app-learner-management *ngIf="!loading && schoolName && !isCurriculumView && !isWorkView"></app-learner-management>
+  <router-outlet *ngIf="!loading && schoolName"></router-outlet>
 </section>

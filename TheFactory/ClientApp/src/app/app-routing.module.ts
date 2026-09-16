@@ -19,12 +19,18 @@ const routes: Routes = [
   { path: '', component: BusSearchComponent, pathMatch: 'full' },
   { path: 'auth', component: AuthComponent },
   { path: 'learning', component: LearningComponent },
-  { path: 'learning/schools/:schoolId', redirectTo: 'learning/schools/:schoolId/learners', pathMatch: 'full' },
-  { path: 'learning/schools/:schoolId/learners', component: LearningSchoolComponent },
-  { path: 'learning/schools/:schoolId/reports', component: LearningSchoolComponent },
-  { path: 'learning/schools/:schoolId/classes', component: LearningSchoolComponent },
-  { path: 'learning/schools/:schoolId/curriculum', component: LearningSchoolComponent },
-  { path: 'learning/schools/:schoolId/work', component: LearningSchoolComponent },
+  {
+    path: 'learning/schools/:schoolId',
+    component: LearningSchoolComponent,
+    children: [
+      { path: '', redirectTo: 'learners', pathMatch: 'full' },
+      { path: 'learners', component: LearnerManagementComponent },
+      { path: 'reports', component: LearnerManagementComponent },
+      { path: 'classes', component: LearnerManagementComponent },
+      { path: 'curriculum', component: CurriculumViewComponent },
+      { path: 'work', component: WorkManagementComponent }
+    ]
+  },
   { path: 'admin-screen', component: AdminScreenComponent },
   { path: 'school/admin/learners', component: LearnerManagementComponent },
   { path: 'school/admin/learners/:id', component: LearnerDetailComponent },
