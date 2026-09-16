@@ -109,7 +109,7 @@
         </button>
       <p>Manage crèche classes, assigned teachers, and learner enrolments.</p>
       </div>
-      <button type="button" class="primary-btn" (click)="openAddClass()">+ Add Class</button>
+      <button type="button" class="primary-btn" *ngIf="isClassesSectionExpanded" (click)="openAddClass()">+ Add Class</button>
     </div>
 
     <div id="classes-panel" *ngIf="isClassesSectionExpanded">
