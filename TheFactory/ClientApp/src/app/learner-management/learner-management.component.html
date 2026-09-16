@@ -66,15 +66,17 @@
           <td>{{ learner.surname }}</td>
           <td>{{ learner.grade }}</td>
           <td class="actions-col">
-            <button type="button" class="link-btn" (click)="viewReport(learner)">View Report</button>
-            <button type="button" class="link-btn" (click)="openEditLearner(learner)">Edit</button>
-            <button
-              type="button"
-              class="danger-link-btn"
-              [disabled]="archivingLearnerId === learner.id"
-              (click)="archiveLearner(learner)">
-              {{ archivingLearnerId === learner.id ? 'Archiving...' : 'Archive' }}
-            </button>
+            <div class="actions-row">
+              <button type="button" class="link-btn" (click)="viewReport(learner)">View Report</button>
+              <button type="button" class="link-btn" (click)="openEditLearner(learner)">Edit</button>
+              <button
+                type="button"
+                class="danger-link-btn"
+                [disabled]="archivingLearnerId === learner.id"
+                (click)="archiveLearner(learner)">
+                {{ archivingLearnerId === learner.id ? 'Archiving...' : 'Archive' }}
+              </button>
+            </div>
           </td>
         </tr>
       </tbody>
