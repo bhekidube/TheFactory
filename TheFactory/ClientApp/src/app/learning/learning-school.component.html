@@ -4,10 +4,13 @@
   <app-logout-link></app-logout-link>
 
   <div class="learning-header">
+    <a [routerLink]="['/learning']" class="back-to-learning-link text-decoration-none text-secondary mb-3 d-inline-block">
+      <span aria-hidden="true">&larr;</span>
+      <span>Back to Learning</span>
+    </a>
     <h2>School</h2>
     <p *ngIf="!loading && schoolName">{{ schoolName }}</p>
     <p *ngIf="!loading && !schoolName && !errorMessage">No school selected.</p>
-    <a [routerLink]="['/learning']">Back to Learning</a>
   </div>
 
   <nav class="school-nav" *ngIf="!loading && schoolName" aria-label="School learning navigation">
