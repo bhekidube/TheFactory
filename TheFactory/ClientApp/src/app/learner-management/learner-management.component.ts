@@ -64,8 +64,7 @@ export class LearnerManagementComponent implements OnInit {
 
   errorMessage = '';
   successMessage = '';
-  isLearnerSectionExpanded = true;
-  isClassesSectionExpanded = false;
+  currentSection: 'learners' | 'classes' = 'learners';
 
   private routeSubscription?: Subscription;
 
@@ -75,10 +74,10 @@ export class LearnerManagementComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.setAccordionDefaultsFromRoute();
+    this.setCurrentSectionFromRoute();
     this.routeSubscription = this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
-      .subscribe(() => this.setAccordionDefaultsFromRoute());
+      .subscribe(() => this.setCurrentSectionFromRoute());
 
     this.loadLearners();
     this.loadClasses();
@@ -88,12 +87,12 @@ export class LearnerManagementComponent implements OnInit {
     this.routeSubscription?.unsubscribe();
   }
 
-  toggleLearnerSection(): void {
-    this.isLearnerSectionExpanded = !this.isLearnerSectionExpanded;
+  get isLearnersRoute(): boolean {
+    return this.currentSection === 'learners';
   }
 
-  toggleClassesSection(): void {
-    this.isClassesSectionExpanded = !this.isClassesSectionExpanded;
+  get isClassesRoute(): boolean {
+    return this.currentSection === 'classes';
   }
 
   get activeLearnersCount(): number {
@@ -126,25 +125,9 @@ export class LearnerManagementComponent implements OnInit {
     return this.selectedReport.average;
   }
 
-  private setAccordionDefaultsFromRoute(): void {
+  private setCurrentSectionFromRoute(): void {
     const path = this.router.url.split('?')[0].toLowerCase();
-    const isClassesRoute = /\/learning\/schools\/\d+\/classes$/.test(path);
-    const isLearnersRoute = /\/learning\/schools\/\d+\/learners$/.test(path);
-
-    if (isClassesRoute) {
-      this.isLearnerSectionExpanded = false;
-      this.isClassesSectionExpanded = true;
-      return;
-    }
-
-    if (isLearnersRoute) {
-      this.isLearnerSectionExpanded = true;
-      this.isClassesSectionExpanded = false;
-      return;
-    }
-
-    this.isLearnerSectionExpanded = true;
-    this.isClassesSectionExpanded = false;
+    this.currentSection = /\/learning\/schools\/\d+\/classes$/.test(path) ? 'classes' : 'learners';
   }
 
   loadLearners(): void {
