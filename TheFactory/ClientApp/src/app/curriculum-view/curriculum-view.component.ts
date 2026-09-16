@@ -10,6 +10,7 @@ import { LearnerManagementService } from '../services/learner-management.service
 })
 export class CurriculumViewComponent implements OnInit {
   subjects: SubjectDto[] = [];
+  searchTerm = '';
   loading = false;
   saving = false;
 
@@ -30,6 +31,19 @@ export class CurriculumViewComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadSubjects();
+  }
+
+  get filteredSubjects(): SubjectDto[] {
+    const term = this.searchTerm.trim().toLowerCase();
+    if (!term) {
+      return this.subjects;
+    }
+
+    return this.subjects.filter(subject =>
+      subject.name.toLowerCase().includes(term)
+      || subject.code.toLowerCase().includes(term)
+      || (subject.isActive ? 'active' : 'inactive').includes(term)
+    );
   }
 
   loadSubjects(): void {

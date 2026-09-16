@@ -1,14 +1,28 @@
 <section class="curriculum-page">
-  <div class="page-header">
+  <div class="page-header d-flex justify-content-between align-items-center mb-4">
     <div>
       <h2>Curriculum</h2>
       <p>Manage school subjects for this tenant.</p>
     </div>
-    <button type="button" class="primary-btn" (click)="openAddSubject()">+ Add Subject</button>
+    <button type="button" class="primary-btn w-auto" (click)="openAddSubject()">+ Add Subject</button>
   </div>
 
   <div class="message error" *ngIf="errorMessage">{{ errorMessage }}</div>
   <div class="message success" *ngIf="successMessage">{{ successMessage }}</div>
+
+  <div class="toolbar d-flex align-items-center mb-3" *ngIf="!loading">
+    <div class="search-controls-group d-flex gap-2 flex-grow-1">
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        placeholder="Search subjects..."
+        aria-label="Search subjects"
+      />
+      <button type="button" class="secondary-btn w-auto" (click)="loadSubjects()" [disabled]="loading || saving">
+        {{ loading ? 'Refreshing...' : 'Refresh' }}
+      </button>
+    </div>
+  </div>
 
   <div class="state-card" *ngIf="loading">Loading subjects...</div>
 
@@ -23,7 +37,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let subject of subjects">
+        <tr *ngFor="let subject of filteredSubjects">
           <td>{{ subject.code }}</td>
           <td>{{ subject.name }}</td>
           <td>{{ subject.isActive ? 'Active' : 'Inactive' }}</td>
