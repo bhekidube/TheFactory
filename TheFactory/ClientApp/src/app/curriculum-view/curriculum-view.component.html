@@ -28,10 +28,16 @@
           <td>{{ subject.name }}</td>
           <td>{{ subject.isActive ? 'Active' : 'Inactive' }}</td>
           <td class="actions-col">
-            <button type="button" class="link-btn" [disabled]="saving" (click)="openEditSubject(subject)">Edit</button>
-            <button type="button" class="link-btn" [disabled]="saving" (click)="toggleActive(subject)">
-              {{ subject.isActive ? 'Deactivate' : 'Activate' }}
-            </button>
+            <div class="actions-row">
+              <button type="button" class="link-btn" [disabled]="saving" (click)="openEditSubject(subject)">Edit</button>
+              <button
+                type="button"
+                [class]="subject.isActive ? 'danger-link-btn' : 'link-btn'"
+                [disabled]="saving"
+                (click)="toggleActive(subject)">
+                {{ subject.isActive ? 'Deactivate' : 'Activate' }}
+              </button>
+            </div>
           </td>
         </tr>
       </tbody>
