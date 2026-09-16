@@ -1,140 +1,164 @@
 <div class="learner-admin-page">
   <app-logout-link></app-logout-link>
 
-  <div class="page-header">
-    <div>
-      <h2>Learner Management</h2>
+  <section class="accordion-section">
+    <div class="page-header">
+      <div>
+        <button
+          type="button"
+          class="accordion-toggle"
+          (click)="toggleLearnerSection()"
+          [attr.aria-expanded]="isLearnerSectionExpanded"
+          aria-controls="learner-management-panel">
+          <span class="accordion-caret" aria-hidden="true">{{ isLearnerSectionExpanded ? '▲' : '▼' }}</span>
+          <h2>Learner Management</h2>
+        </button>
       <p>School administration dashboard for active learner profiles and reports.</p>
+      </div>
+      <button type="button" class="primary-btn" (click)="openAddLearner()">+ Add Learner</button>
     </div>
-    <button type="button" class="primary-btn" (click)="openAddLearner()">+ Add Learner</button>
-  </div>
+
+    <div id="learner-management-panel" *ngIf="isLearnerSectionExpanded">
+      <div class="summary-grid">
+        <div class="summary-card">
+          <span class="label">Active Learners</span>
+          <strong>{{ activeLearnersCount }}</strong>
+        </div>
+        <div class="summary-card">
+          <span class="label">Learners Loaded</span>
+          <strong>{{ filteredLearners.length }}</strong>
+        </div>
+        <div class="summary-card">
+          <span class="label">Current Report Average</span>
+          <strong>{{ overallAverage | number: '1.1-1' }}</strong>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="applySearch()"
+          placeholder="Search learners..."
+          aria-label="Search learners"
+        />
+        <button type="button" class="secondary-btn" (click)="loadLearners()" [disabled]="loadingLearners">
+          {{ loadingLearners ? 'Refreshing...' : 'Refresh' }}
+        </button>
+      </div>
+
+      <div *ngIf="loadingLearners" class="state-card">Loading learners...</div>
+
+      <div *ngIf="!loadingLearners && filteredLearners.length === 0" class="state-card empty">
+        <strong>No learners yet</strong>
+        <p>Add your first learner to begin managing school records and reports.</p>
+        <button type="button" class="primary-btn" (click)="openAddLearner()">Add Learner</button>
+      </div>
+
+      <div class="table-wrap" *ngIf="!loadingLearners && filteredLearners.length > 0">
+        <table>
+          <thead>
+            <tr>
+              <th>Learner ID</th>
+              <th>First Name</th>
+              <th>Surname</th>
+              <th>Grade</th>
+              <th class="actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let learner of filteredLearners; trackBy: trackByLearnerId">
+              <td>{{ learner.id }}</td>
+              <td>{{ learner.firstName }}</td>
+              <td>{{ learner.surname }}</td>
+              <td>{{ learner.grade }}</td>
+              <td class="actions-col">
+                <div class="actions-row">
+                  <button type="button" class="link-btn" (click)="viewReport(learner)">View Report</button>
+                  <button type="button" class="link-btn" (click)="openEditLearner(learner)">Edit</button>
+                  <button
+                    type="button"
+                    class="danger-link-btn"
+                    [disabled]="archivingLearnerId === learner.id"
+                    (click)="archiveLearner(learner)">
+                    {{ archivingLearnerId === learner.id ? 'Archiving...' : 'Archive' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
 
   <div class="message error" *ngIf="errorMessage">{{ errorMessage }}</div>
   <div class="message success" *ngIf="successMessage">{{ successMessage }}</div>
 
-  <div class="summary-grid">
-    <div class="summary-card">
-      <span class="label">Active Learners</span>
-      <strong>{{ activeLearnersCount }}</strong>
-    </div>
-    <div class="summary-card">
-      <span class="label">Learners Loaded</span>
-      <strong>{{ filteredLearners.length }}</strong>
-    </div>
-    <div class="summary-card">
-      <span class="label">Current Report Average</span>
-      <strong>{{ overallAverage | number: '1.1-1' }}</strong>
-    </div>
-  </div>
-
-  <div class="toolbar">
-    <input
-      type="text"
-      [(ngModel)]="searchTerm"
-      (ngModelChange)="applySearch()"
-      placeholder="Search learners..."
-      aria-label="Search learners"
-    />
-    <button type="button" class="secondary-btn" (click)="loadLearners()" [disabled]="loadingLearners">
-      {{ loadingLearners ? 'Refreshing...' : 'Refresh' }}
-    </button>
-  </div>
-
-  <div *ngIf="loadingLearners" class="state-card">Loading learners...</div>
-
-  <div *ngIf="!loadingLearners && filteredLearners.length === 0" class="state-card empty">
-    <strong>No learners yet</strong>
-    <p>Add your first learner to begin managing school records and reports.</p>
-    <button type="button" class="primary-btn" (click)="openAddLearner()">Add Learner</button>
-  </div>
-
-  <div class="table-wrap" *ngIf="!loadingLearners && filteredLearners.length > 0">
-    <table>
-      <thead>
-        <tr>
-          <th>Learner ID</th>
-          <th>First Name</th>
-          <th>Surname</th>
-          <th>Grade</th>
-          <th class="actions-col">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let learner of filteredLearners; trackBy: trackByLearnerId">
-          <td>{{ learner.id }}</td>
-          <td>{{ learner.firstName }}</td>
-          <td>{{ learner.surname }}</td>
-          <td>{{ learner.grade }}</td>
-          <td class="actions-col">
-            <div class="actions-row">
-              <button type="button" class="link-btn" (click)="viewReport(learner)">View Report</button>
-              <button type="button" class="link-btn" (click)="openEditLearner(learner)">Edit</button>
-              <button
-                type="button"
-                class="danger-link-btn"
-                [disabled]="archivingLearnerId === learner.id"
-                (click)="archiveLearner(learner)">
-                {{ archivingLearnerId === learner.id ? 'Archiving...' : 'Archive' }}
-              </button>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="page-header classes-header">
-    <div>
-      <h2>Classes</h2>
+  <section class="accordion-section classes-header">
+    <div class="page-header">
+      <div>
+        <button
+          type="button"
+          class="accordion-toggle"
+          (click)="toggleClassesSection()"
+          [attr.aria-expanded]="isClassesSectionExpanded"
+          aria-controls="classes-panel">
+          <span class="accordion-caret" aria-hidden="true">{{ isClassesSectionExpanded ? '▲' : '▼' }}</span>
+          <h2>Classes</h2>
+        </button>
       <p>Manage crèche classes, assigned teachers, and learner enrolments.</p>
+      </div>
+      <button type="button" class="primary-btn" (click)="openAddClass()">+ Add Class</button>
     </div>
-    <button type="button" class="primary-btn" (click)="openAddClass()">+ Add Class</button>
-  </div>
 
-  <div class="toolbar">
-    <input
-      type="text"
-      [(ngModel)]="classSearchTerm"
-      placeholder="Search classes..."
-      aria-label="Search classes"
-    />
-    <button type="button" class="secondary-btn" (click)="loadClasses()" [disabled]="loadingClasses">
-      {{ loadingClasses ? 'Refreshing...' : 'Refresh Classes' }}
-    </button>
-  </div>
+    <div id="classes-panel" *ngIf="isClassesSectionExpanded">
+      <div class="toolbar">
+        <input
+          type="text"
+          [(ngModel)]="classSearchTerm"
+          placeholder="Search classes..."
+          aria-label="Search classes"
+        />
+        <button type="button" class="secondary-btn" (click)="loadClasses()" [disabled]="loadingClasses">
+          {{ loadingClasses ? 'Refreshing...' : 'Refresh Classes' }}
+        </button>
+      </div>
 
-  <div *ngIf="loadingClasses" class="state-card">Loading classes...</div>
+      <div *ngIf="loadingClasses" class="state-card">Loading classes...</div>
 
-  <div *ngIf="!loadingClasses && filteredClasses.length === 0" class="state-card empty">
-    <strong>No classes yet</strong>
-    <p>Create the first class for this school.</p>
-    <button type="button" class="primary-btn" (click)="openAddClass()">Add Class</button>
-  </div>
+      <div *ngIf="!loadingClasses && filteredClasses.length === 0" class="state-card empty">
+        <strong>No classes yet</strong>
+        <p>Create the first class for this school.</p>
+        <button type="button" class="primary-btn" (click)="openAddClass()">Add Class</button>
+      </div>
 
-  <div class="table-wrap" *ngIf="!loadingClasses && filteredClasses.length > 0">
-    <table class="classes-table">
-      <thead>
-        <tr>
-          <th>Class ID</th>
-          <th>Class Name</th>
-          <th>Grade</th>
-          <th>Teacher</th>
-          <th>Learners</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let schoolClass of filteredClasses; trackBy: trackByClassId">
-          <td>{{ schoolClass.id }}</td>
-          <td>
-            <a [routerLink]="['/school/admin/classes', schoolClass.id]">{{ schoolClass.name }}</a>
-          </td>
-          <td>{{ schoolClass.grade }}</td>
-          <td>{{ schoolClass.teacherName || ('User #' + schoolClass.teacherId) }}</td>
-          <td>{{ schoolClass.learnerIds.length }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+      <div class="table-wrap" *ngIf="!loadingClasses && filteredClasses.length > 0">
+        <table class="classes-table">
+          <thead>
+            <tr>
+              <th>Class ID</th>
+              <th>Class Name</th>
+              <th>Grade</th>
+              <th>Teacher</th>
+              <th>Learners</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let schoolClass of filteredClasses; trackBy: trackByClassId">
+              <td>{{ schoolClass.id }}</td>
+              <td>
+                <a [routerLink]="['/school/admin/classes', schoolClass.id]">{{ schoolClass.name }}</a>
+              </td>
+              <td>{{ schoolClass.grade }}</td>
+              <td>{{ schoolClass.teacherName || ('User #' + schoolClass.teacherId) }}</td>
+              <td>{{ schoolClass.learnerIds.length }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
 
   <div class="overlay" *ngIf="showLearnerForm">
     <div class="panel">

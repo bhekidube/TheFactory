@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
-import { forkJoin } from 'rxjs';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
+import { filter, forkJoin, Subscription } from 'rxjs';
 import {
   ClassDto,
   CreateClassRequestDto,
@@ -63,12 +64,36 @@ export class LearnerManagementComponent implements OnInit {
 
   errorMessage = '';
   successMessage = '';
+  isLearnerSectionExpanded = true;
+  isClassesSectionExpanded = false;
 
-  constructor(private readonly learnerService: LearnerManagementService) {}
+  private routeSubscription?: Subscription;
+
+  constructor(
+    private readonly learnerService: LearnerManagementService,
+    private readonly router: Router
+  ) {}
 
   ngOnInit(): void {
+    this.setAccordionDefaultsFromRoute();
+    this.routeSubscription = this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe(() => this.setAccordionDefaultsFromRoute());
+
     this.loadLearners();
     this.loadClasses();
+  }
+
+  ngOnDestroy(): void {
+    this.routeSubscription?.unsubscribe();
+  }
+
+  toggleLearnerSection(): void {
+    this.isLearnerSectionExpanded = !this.isLearnerSectionExpanded;
+  }
+
+  toggleClassesSection(): void {
+    this.isClassesSectionExpanded = !this.isClassesSectionExpanded;
   }
 
   get activeLearnersCount(): number {
@@ -99,6 +124,27 @@ export class LearnerManagementComponent implements OnInit {
     }
 
     return this.selectedReport.average;
+  }
+
+  private setAccordionDefaultsFromRoute(): void {
+    const path = this.router.url.split('?')[0].toLowerCase();
+    const isClassesRoute = /\/learning\/schools\/\d+\/classes$/.test(path);
+    const isLearnersRoute = /\/learning\/schools\/\d+\/learners$/.test(path);
+
+    if (isClassesRoute) {
+      this.isLearnerSectionExpanded = false;
+      this.isClassesSectionExpanded = true;
+      return;
+    }
+
+    if (isLearnersRoute) {
+      this.isLearnerSectionExpanded = true;
+      this.isClassesSectionExpanded = false;
+      return;
+    }
+
+    this.isLearnerSectionExpanded = true;
+    this.isClassesSectionExpanded = false;
   }
 
   loadLearners(): void {
