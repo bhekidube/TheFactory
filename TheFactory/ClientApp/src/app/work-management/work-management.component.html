@@ -1,25 +1,27 @@
 <section class="work-page">
-  <div class="page-header">
+  <div class="page-header d-flex justify-content-between align-items-center mb-3">
     <div>
       <h2>Work Management</h2>
       <p>Create and manage work items assigned to classes.</p>
     </div>
-    <button type="button" class="primary-btn" (click)="openAddWork()">+ Add Work</button>
+    <button type="button" class="primary-btn w-auto" (click)="openAddWork()">+ Add Work</button>
   </div>
 
   <div class="message error" *ngIf="errorMessage">{{ errorMessage }}</div>
   <div class="message success" *ngIf="successMessage">{{ successMessage }}</div>
 
-  <div class="toolbar">
-    <input
-      type="text"
-      [(ngModel)]="searchTerm"
-      placeholder="Search work..."
-      aria-label="Search work"
-    />
-    <button type="button" class="secondary-btn" (click)="loadWorkItems()" [disabled]="loadingWork">
-      {{ loadingWork ? 'Refreshing...' : 'Refresh Work' }}
-    </button>
+  <div class="toolbar d-flex align-items-center mb-3">
+    <div class="work-search-group d-flex gap-2 w-auto">
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        placeholder="Search work..."
+        aria-label="Search work"
+      />
+      <button type="button" class="secondary-btn" (click)="loadWorkItems()" [disabled]="loadingWork">
+        {{ loadingWork ? 'Refreshing...' : 'Refresh Work' }}
+      </button>
+    </div>
   </div>
 
   <div *ngIf="loadingWork" class="state-card">Loading work items...</div>
