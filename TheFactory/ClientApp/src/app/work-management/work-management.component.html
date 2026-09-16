@@ -54,14 +54,16 @@
           <td>{{ work.dueDate || '-' }}</td>
           <td>{{ work.totalMark }}</td>
           <td class="actions-col">
-            <button type="button" class="link-btn" (click)="openEditWork(work)">Edit</button>
-            <button
-              type="button"
-              class="danger-link-btn"
-              [disabled]="archivingWorkId === work.id"
-              (click)="archiveWork(work)">
-              {{ archivingWorkId === work.id ? 'Archiving...' : 'Archive' }}
-            </button>
+            <div class="actions-row">
+              <button type="button" class="link-btn" (click)="openEditWork(work)">Edit</button>
+              <button
+                type="button"
+                class="danger-link-btn"
+                [disabled]="archivingWorkId === work.id"
+                (click)="archiveWork(work)">
+                {{ archivingWorkId === work.id ? 'Archiving...' : 'Archive' }}
+              </button>
+            </div>
           </td>
         </tr>
       </tbody>
