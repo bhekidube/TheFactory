@@ -32,7 +32,7 @@
           <h2 class="search-heading">Where are you travelling?</h2>
 
       <form (ngSubmit)="onSearch()" #busForm="ngForm" class="search-form" aria-label="Bus search form">
-        <div class="field-group" style="position:relative;">
+        <div class="field-group">
           <label class="field-label" for="fromInputField">From</label>
           <i class="bi bi-geo-alt field-icon" aria-hidden="true"></i>
         <input
@@ -66,7 +66,7 @@
           </button>
         </div>
 
-        <div class="field-group" style="position:relative;">
+        <div class="field-group">
           <label class="field-label" for="toInputField">To</label>
           <i class="bi bi-flag field-icon" aria-hidden="true"></i>
         <input
@@ -94,7 +94,7 @@
         </ul>
         </div>
 
-        <div class="field-group" style="position:relative;">
+        <div class="field-group">
           <label class="field-label" for="dateInputField">Departure Date</label>
           <i class="bi bi-calendar3 field-icon" aria-hidden="true"></i>
           <input
@@ -147,8 +147,8 @@
         </tbody>
       </table>
       <div class="screenshot-tip"></div>
-      <div style="text-align: center; margin-top: 16px;">
-        <button type="button" (click)="postToFacebook()" style="background-color: #4267B2; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-size: 16px; cursor: pointer;">
+      <div class="facebook-share-wrap">
+        <button type="button" (click)="postToFacebook()" class="facebook-share-btn">
           Post to Facebook
         </button>
       </div>
@@ -157,7 +157,7 @@
 
   <aside class="auth-column">
     <section class="auth-card-section">
-      <div class="auth-card-shell">
+      <div class="auth-card-shell login-card-container">
         <app-auth></app-auth>
       </div>
     </section>
