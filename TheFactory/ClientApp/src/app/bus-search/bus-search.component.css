@@ -48,10 +48,10 @@
 .header-search-section {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  align-items: center;
   width: 100%;
   position: relative;
-  margin: 0;
+  margin: 0 auto;
   max-width: none;
   padding: 0;
   background: transparent;
@@ -61,8 +61,21 @@
 
 .search-float-shell {
   position: static;
-  width: 100%;
+  width: min(100%, 720px);
+  margin: 0 auto;
   max-width: 720px;
+}
+
+.auth-card-section {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0 0;
+}
+
+.auth-card-shell {
+  width: min(100%, 720px);
+  margin: 0 auto;
 }
 
 .search-card {
