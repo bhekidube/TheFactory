@@ -1,4 +1,4 @@
-  <section class="search-section header-search-section" [class.is-collapsed]="hasSearched && !showForm">
+  <section class="header-search-section" [class.is-collapsed]="hasSearched && !showForm">
     <div class="search-float-shell">
       <div *ngIf="hasSearched && !showForm" class="search-summary-banner">
         <div class="search-summary-context">
@@ -115,46 +115,53 @@
       </div>
     </div>
   </section>
-<!-- Search Results -->
-<div *ngIf="searchResults && searchResults.length" class="search-results screenshot-table-container">
-  <table class="screenshot-table">
-    <thead>
-      <tr>
-        <th scope="col" class="col-bus">BUS</th>
-        <th scope="col" class="col-departure">DEPARTURE</th>
-        <th scope="col" class="col-price">PRICE</th>
-        <th scope="col" class="col-action">ACTION</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let row of searchResults; let i = index" [class.alt-row]="i % 2 === 1">
-        <td class="col-bus">{{ row.operatorName }}</td>
-        <td class="col-departure">{{ row.departureDateTime | date:'EEE, d MMM' }}<br>{{ row.departureDateTime | date:'HH:mm' }}</td>
-        <td class="col-price">{{ getPriceDisplay(row) }}</td>
-        <td class="col-action">
-          <button
-            type="button"
-            class="trip-action-btn"
-            [class.is-disabled]="isTripUnavailable(row)"
-            [disabled]="isTripUnavailable(row)"
-            (click)="onSelectSeat(row)">
-            {{ getActionLabel(row) }}
-          </button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-  <div class="screenshot-tip"></div>
-  <div style="text-align: center; margin-top: 16px;">
-    <button type="button" (click)="postToFacebook()" style="background-color: #4267B2; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-size: 16px; cursor: pointer;">
-      Post to Facebook
-    </button>
+<section class="results-auth-layout">
+  <div class="results-column">
+    <!-- Search Results -->
+    <div *ngIf="searchResults && searchResults.length" class="search-results screenshot-table-container">
+      <table class="screenshot-table">
+        <thead>
+          <tr>
+            <th scope="col" class="col-bus">BUS</th>
+            <th scope="col" class="col-departure">DEPARTURE</th>
+            <th scope="col" class="col-price">PRICE</th>
+            <th scope="col" class="col-action">ACTION</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of searchResults; let i = index" [class.alt-row]="i % 2 === 1">
+            <td class="col-bus">{{ row.operatorName }}</td>
+            <td class="col-departure">{{ row.departureDateTime | date:'EEE, d MMM' }}<br>{{ row.departureDateTime | date:'HH:mm' }}</td>
+            <td class="col-price">{{ getPriceDisplay(row) }}</td>
+            <td class="col-action">
+              <button
+                type="button"
+                class="trip-action-btn"
+                [class.is-disabled]="isTripUnavailable(row)"
+                [disabled]="isTripUnavailable(row)"
+                (click)="onSelectSeat(row)">
+                {{ getActionLabel(row) }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="screenshot-tip"></div>
+      <div style="text-align: center; margin-top: 16px;">
+        <button type="button" (click)="postToFacebook()" style="background-color: #4267B2; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-size: 16px; cursor: pointer;">
+          Post to Facebook
+        </button>
+      </div>
+    </div>
   </div>
-</div> 
-<section class="auth-card-section">
-  <div class="auth-card-shell">
-    <app-auth></app-auth>
-  </div>
+
+  <aside class="auth-column">
+    <section class="auth-card-section">
+      <div class="auth-card-shell">
+        <app-auth></app-auth>
+      </div>
+    </section>
+  </aside>
 </section>
 <section class="features">
   <div class="feature">
