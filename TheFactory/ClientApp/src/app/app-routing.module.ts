@@ -14,14 +14,17 @@ import { CurriculumViewComponent } from './curriculum-view/curriculum-view.compo
 import { LearnerDetailComponent } from './learner-detail/learner-detail.component';
 import { WorkManagementComponent } from './work-management/work-management.component';
 import { WorkDetailComponent } from './work-detail/work-detail.component';
+import { LearningAccessGuard } from './guards/learning-access.guard';
 
 const routes: Routes = [
   { path: '', component: BusSearchComponent, pathMatch: 'full' },
   { path: 'auth', component: AuthComponent },
-  { path: 'learning', component: LearningComponent },
+  { path: 'learning', component: LearningComponent, canActivate: [LearningAccessGuard] },
   {
     path: 'learning/schools/:schoolId',
     component: LearningSchoolComponent,
+    canActivate: [LearningAccessGuard],
+    canActivateChild: [LearningAccessGuard],
     children: [
       { path: '', redirectTo: 'learners', pathMatch: 'full' },
       { path: 'learners', component: LearnerManagementComponent },

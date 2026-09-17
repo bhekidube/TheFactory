@@ -16,6 +16,7 @@
       Transport
     </a>
     <a
+      *ngIf="canAccessLearning"
       class="hamba-nav-link"
       [routerLink]="['/learning']"
       [routerLinkActive]="['is-active']">
