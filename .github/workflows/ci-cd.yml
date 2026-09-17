@@ -109,8 +109,34 @@ jobs:
 
           az account show --query "{name:name,id:id,tenantId:tenantId}" -o table
 
-      - name: Deploy To Azure
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: AzureLinuxAppService
-          package: ./artifact/TheFactory.zip
+      - name: Resolve Web App resource group
+        id: resolve-rg
+        run: |
+          APP_NAME="AzureLinuxAppService"
+          RG_FROM_SECRET="${{ secrets.AZURE_RESOURCE_GROUP }}"
+
+          if [ -n "$RG_FROM_SECRET" ]; then
+            RG="$RG_FROM_SECRET"
+          else
+            RG=$(az webapp list --query "[?name=='${APP_NAME}'].resourceGroup | [0]" -o tsv)
+          fi
+
+          if [ -z "$RG" ]; then
+            echo "::error::Could not determine resource group for app '${APP_NAME}'."
+            echo "::error::Set AZURE_RESOURCE_GROUP secret or ensure the app exists in subscription '${{ secrets.AZURE_SUBSCRIPTION_ID }}'."
+            exit 1
+          fi
+
+          if ! az webapp show --name "$APP_NAME" --resource-group "$RG" --query "{name:name,resourceGroup:resourceGroup,state:state}" -o table; then
+            echo "::error::Web App '${APP_NAME}' was not found in resource group '${RG}'."
+            exit 1
+          fi
+
+          echo "resource_group=$RG" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy To Azure (zip deploy)
+        run: |
+          az webapp deployment source config-zip \
+            --resource-group "${{ steps.resolve-rg.outputs.resource_group }}" \
+            --name "AzureLinuxAppService" \
+            --src "./artifact/TheFactory.zip"
