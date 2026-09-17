@@ -86,28 +86,6 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           allow-no-subscriptions: true
 
-      - name: Verify Azure context
-        run: |
-          if [ -z "${{ secrets.AZURE_CLIENT_ID }}" ] || [ -z "${{ secrets.AZURE_TENANT_ID }}" ] || [ -z "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ]; then
-            echo "::error::Missing one or more required secrets: AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID."
-            exit 1
-          fi
-
-          echo "Authenticated account details:"
-          az account show --query "{tenantId:tenantId,user:user.name}" -o table || true
-
-          echo "Visible subscriptions for this principal:"
-          az account list --query "[].{name:name,id:id,state:state}" -o table || true
-
-          if ! az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"; then
-            echo "::error::OIDC login succeeded but this principal cannot access subscription '${{ secrets.AZURE_SUBSCRIPTION_ID }}'."
-            echo "::error::Grant the App Registration/Service Principal an RBAC role (for example Contributor) at subscription or resource-group scope."
-            echo "::error::Also confirm AZURE_TENANT_ID and AZURE_SUBSCRIPTION_ID belong to the same tenant as the federated credential."
-            exit 1
-          fi
-
-          az account show --query "{name:name,id:id,tenantId:tenantId}" -o table
-
       - name: Deploy To Azure
         uses: azure/webapps-deploy@v2
         with:
