@@ -5,10 +5,11 @@
 	flex-direction: column;
 	gap: 0.9rem;
 	padding: 1.25rem;
+	padding-bottom: 1.5rem;
 	border-radius: 10px;
 	background: #fff;
 	height: auto;
-	min-height: 0;
+	min-height: fit-content;
 	overflow: visible;
 }
 
@@ -26,12 +27,15 @@
 .auth-actions {
 	display: flex;
 	flex-direction: column;
-	align-items: flex-start;
+	align-items: stretch;
 	gap: 0.65rem;
 	margin-top: 0.2rem;
+	width: 100%;
 }
 
 .forgot-password {
+	display: inline-block;
+	width: fit-content;
 	color: #0366d6;
 	text-decoration: none;
 	font-weight: 600;
@@ -44,6 +48,7 @@
 
 .subscribe-btn,
 .close-btn {
+	display: block;
 	width: 100%;
 	max-width: 280px;
 	border: none;
