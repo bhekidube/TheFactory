@@ -1,17 +1,17 @@
 <div class="auth-container">
-  <h2>Member login</h2>
+  <h2>Log into Hambaonline</h2>
   <form #loginForm="ngForm" (ngSubmit)="login()" novalidate>
     <input type="email" [(ngModel)]="loginModel.email" name="loginEmail" placeholder="Email" required #loginEmail="ngModel" />
     <div *ngIf="loginEmail.invalid && loginEmail.touched" class="error">Valid email is required.</div>
     <input type="password" [(ngModel)]="loginModel.password" name="loginPassword" placeholder="Password" required minlength="6" #loginPassword="ngModel" />
     <div *ngIf="loginPassword.invalid && loginPassword.touched" class="error">Password is required (min 6 chars).</div>
-    <button type="submit" [disabled]="loginForm.invalid">Login</button>
+    <button type="submit" [disabled]="loginForm.invalid">Log in</button>
   </form>
 
   <div class="auth-actions">
     <a class="forgot-password" (click)="forgotPassword()">Forgot password?</a>
     <button type="button" (click)="toggleRegister()" [ngClass]="showRegister ? 'close-btn' : 'subscribe-btn'">
-      {{ showRegister ? 'Don\'t Join Hamba' : 'Join Hamba' }}
+      {{ showRegister ? 'Don\'t create account' : 'Create new account' }}
     </button>
   </div>
 
