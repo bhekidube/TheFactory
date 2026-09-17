@@ -130,10 +130,10 @@
         </thead>
         <tbody>
           <tr *ngFor="let row of searchResults; let i = index" [class.alt-row]="i % 2 === 1">
-            <td class="col-bus">{{ row.operatorName }}</td>
-            <td class="col-departure">{{ row.departureDateTime | date:'EEE, d MMM' }}<br>{{ row.departureDateTime | date:'HH:mm' }}</td>
-            <td class="col-price">{{ getPriceDisplay(row) }}</td>
-            <td class="col-action">
+            <td class="col-bus" data-label="Bus">{{ row.operatorName }}</td>
+            <td class="col-departure" data-label="Departure">{{ row.departureDateTime | date:'EEE, d MMM' }}<br>{{ row.departureDateTime | date:'HH:mm' }}</td>
+            <td class="col-price" data-label="Price">{{ getPriceDisplay(row) }}</td>
+            <td class="col-action" data-label="Action">
               <button
                 type="button"
                 class="trip-action-btn"
