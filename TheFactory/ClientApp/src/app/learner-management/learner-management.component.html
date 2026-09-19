@@ -161,15 +161,18 @@
         </label>
         <label>
           Grade
-          <input type="text" name="grade" [(ngModel)]="learnerForm.grade" required />
+          <select name="grade" [(ngModel)]="learnerForm.grade" required>
+            <option value="">Select a grade</option>
+            <option *ngFor="let grade of gradeOptions" [value]="grade">{{ grade }}</option>
+          </select>
           <div class="field-error" *ngIf="learnerFormSubmitted && !learnerForm.grade.trim()">
             Grade is required.
           </div>
         </label>
 
-        <div *ngIf="!isEditMode" class="form-section-title">Parent / Guardian Details</div>
+        <div class="form-section-title">Parent / Guardian Details</div>
 
-        <label *ngIf="!isEditMode">
+        <label>
           Parent First Name
           <input type="text" name="parentFirstName" [(ngModel)]="parentGuardianForm.firstName" required />
           <div class="field-error" *ngIf="learnerFormSubmitted && !parentGuardianForm.firstName.trim()">
@@ -177,7 +180,7 @@
           </div>
         </label>
 
-        <label *ngIf="!isEditMode">
+        <label>
           Parent Surname
           <input type="text" name="parentSurname" [(ngModel)]="parentGuardianForm.surname" required />
           <div class="field-error" *ngIf="learnerFormSubmitted && !parentGuardianForm.surname.trim()">
@@ -185,7 +188,7 @@
           </div>
         </label>
 
-        <label *ngIf="!isEditMode">
+        <label>
           Parent Phone Number
           <input type="tel" name="parentPhoneNumber" [(ngModel)]="parentGuardianForm.phoneNumber" placeholder="e.g. 0771234567" required />
           <div class="field-error" *ngIf="learnerFormSubmitted && !isParentPhoneValid">
@@ -193,7 +196,7 @@
           </div>
         </label>
 
-        <label *ngIf="!isEditMode">
+        <label>
           Parent Email Address (optional)
           <input type="email" name="parentEmailAddress" [(ngModel)]="parentGuardianForm.emailAddress" placeholder="name@example.com" />
           <div class="field-error" *ngIf="learnerFormSubmitted && !isParentEmailValid">
@@ -201,7 +204,7 @@
           </div>
         </label>
 
-        <label *ngIf="!isEditMode">
+        <label>
           Relationship to Learner
           <select name="relationshipToLearner" [(ngModel)]="parentGuardianForm.relationshipToLearner" required>
             <option value="">Select relationship</option>

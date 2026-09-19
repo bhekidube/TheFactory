@@ -1,6 +1,7 @@
 using Microsoft.Data.SqlClient;
 using System.Data;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using TheFactory.Contracts;
 
@@ -1626,12 +1627,33 @@ public sealed class LearnerService : ILearnerService
                         return null;
                 }
 
+        var hasParentGuardianContact = await HasColumnAsync(connection, "institution", "Learner", "ParentGuardianContact", cancellationToken);
+        var hasParentUserId = await HasColumnAsync(connection, "institution", "Learner", "ParentUserId", cancellationToken);
+        var parentContactSelect = hasParentGuardianContact
+            ? "ParentGuardianContact"
+            : "CAST(NULL AS NVARCHAR(MAX)) AS ParentGuardianContact";
+        var parentUserIdSelect = hasParentUserId
+            ? "l.ParentUserId"
+            : "CAST(NULL AS INT) AS ParentUserId";
+        var parentJoin = hasParentUserId
+            ? "LEFT JOIN [User] pu ON pu.UserId = l.ParentUserId"
+            : string.Empty;
+
         using var command = new SqlCommand(
-            @"SELECT Id, FirstName, Surname, Grade
-              FROM institution.Learner
-                            WHERE Id = @LearnerId
-                                AND TenantId = @TenantId
-                                AND IsArchived = 0;",
+            $@"SELECT l.Id,
+                      l.FirstName,
+                      l.Surname,
+                      l.Grade,
+                      {parentContactSelect},
+                      {parentUserIdSelect},
+                      ISNULL(pu.Name, ''),
+                      ISNULL(pu.Email, ''),
+                      ISNULL(pu.CellPhoneNo, '')
+               FROM institution.Learner l
+               {parentJoin}
+               WHERE l.Id = @LearnerId
+                 AND l.TenantId = @TenantId
+                 AND l.IsArchived = 0;",
             connection);
         command.Parameters.AddWithValue("@LearnerId", learnerId);
                 command.Parameters.AddWithValue("@TenantId", tenantId.Value);
@@ -1642,12 +1664,19 @@ public sealed class LearnerService : ILearnerService
             return null;
         }
 
+        var parentGuardian = DeserializeParentGuardian(reader.IsDBNull(4) ? string.Empty : reader.GetString(4));
+        var parentUserName = reader.IsDBNull(6) ? string.Empty : reader.GetString(6);
+        var parentUserEmail = reader.IsDBNull(7) ? string.Empty : reader.GetString(7);
+        var parentUserPhone = reader.IsDBNull(8) ? string.Empty : reader.GetString(8);
+        parentGuardian = MergeParentGuardianFromLinkedUser(parentGuardian, parentUserName, parentUserEmail, parentUserPhone);
+
         return new LearnerDto
         {
             Id = reader.GetInt32(0),
             FirstName = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
             Surname = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
-            Grade = reader.IsDBNull(3) ? string.Empty : reader.GetString(3)
+            Grade = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+            ParentGuardian = parentGuardian
         };
     }
 
@@ -1769,6 +1798,131 @@ public sealed class LearnerService : ILearnerService
     {
         var normalized = NormalizeParentGuardian(parentGuardian);
         return JsonSerializer.Serialize(normalized);
+    }
+
+    private static ParentGuardianDto DeserializeParentGuardian(string rawValue)
+    {
+        if (string.IsNullOrWhiteSpace(rawValue))
+        {
+            return new ParentGuardianDto();
+        }
+
+        try
+        {
+            var parsed = JsonSerializer.Deserialize<ParentGuardianDto>(rawValue);
+            var normalized = NormalizeParentGuardian(parsed);
+            if (string.IsNullOrWhiteSpace(normalized.FirstName)
+                && string.IsNullOrWhiteSpace(normalized.Surname)
+                && string.IsNullOrWhiteSpace(normalized.PhoneNumber)
+                && string.IsNullOrWhiteSpace(normalized.EmailAddress))
+            {
+                return ParseLegacyParentGuardianContact(rawValue);
+            }
+
+            return normalized;
+        }
+        catch
+        {
+            return ParseLegacyParentGuardianContact(rawValue);
+        }
+    }
+
+    private static ParentGuardianDto ParseLegacyParentGuardianContact(string rawValue)
+    {
+        var value = (rawValue ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return new ParentGuardianDto();
+        }
+
+        var emailMatch = Regex.Match(value, @"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", RegexOptions.IgnoreCase);
+        var email = emailMatch.Success ? emailMatch.Value.Trim() : string.Empty;
+
+        var phoneMatch = Regex.Match(value, @"(?:\+?2637\d{8}|07\d{8})");
+        var phone = phoneMatch.Success ? phoneMatch.Value.Trim() : string.Empty;
+
+        // Remove known labels and extracted values to isolate an optional person name fragment.
+        var nameCandidate = value;
+        nameCandidate = Regex.Replace(nameCandidate, @"(?i)parent\s*/?\s*guardian", " ");
+        nameCandidate = Regex.Replace(nameCandidate, @"(?i)name|contact|phone|mobile|cell|email|relationship", " ");
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            nameCandidate = nameCandidate.Replace(email, " ", StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (!string.IsNullOrWhiteSpace(phone))
+        {
+            nameCandidate = nameCandidate.Replace(phone, " ", StringComparison.OrdinalIgnoreCase);
+        }
+
+        nameCandidate = Regex.Replace(nameCandidate, @"[,:;|()\[\]\-]+", " ");
+        nameCandidate = Regex.Replace(nameCandidate, @"\s+", " ").Trim();
+
+        var firstName = string.Empty;
+        var surname = string.Empty;
+        var nameParts = nameCandidate
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        if (nameParts.Length > 0)
+        {
+            firstName = nameParts[0];
+            if (nameParts.Length > 1)
+            {
+                surname = string.Join(' ', nameParts.Skip(1));
+            }
+        }
+
+        return NormalizeParentGuardian(new ParentGuardianDto
+        {
+            FirstName = firstName,
+            Surname = surname,
+            PhoneNumber = phone,
+            EmailAddress = email,
+            RelationshipToLearner = string.Empty
+        });
+    }
+
+    private static ParentGuardianDto MergeParentGuardianFromLinkedUser(
+        ParentGuardianDto baseParentGuardian,
+        string linkedUserName,
+        string linkedUserEmail,
+        string linkedUserPhone)
+    {
+        var merged = NormalizeParentGuardian(baseParentGuardian);
+        if (string.IsNullOrWhiteSpace(linkedUserName)
+            && string.IsNullOrWhiteSpace(linkedUserEmail)
+            && string.IsNullOrWhiteSpace(linkedUserPhone))
+        {
+            return merged;
+        }
+
+        if (string.IsNullOrWhiteSpace(merged.FirstName) || string.IsNullOrWhiteSpace(merged.Surname))
+        {
+            var nameParts = (linkedUserName ?? string.Empty)
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            if (nameParts.Length > 0 && string.IsNullOrWhiteSpace(merged.FirstName))
+            {
+                merged.FirstName = nameParts[0];
+            }
+
+            if (nameParts.Length > 1 && string.IsNullOrWhiteSpace(merged.Surname))
+            {
+                merged.Surname = string.Join(' ', nameParts.Skip(1));
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(merged.EmailAddress))
+        {
+            merged.EmailAddress = (linkedUserEmail ?? string.Empty).Trim();
+        }
+
+        if (string.IsNullOrWhiteSpace(merged.PhoneNumber))
+        {
+            merged.PhoneNumber = (linkedUserPhone ?? string.Empty).Trim();
+        }
+
+        return merged;
     }
 
     private static string BuildCreateLearnerInsertSql(bool hasParentGuardianContact, bool hasParentUserId)

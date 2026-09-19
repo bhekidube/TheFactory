@@ -358,8 +358,14 @@ export class LearnerManagementComponent implements OnInit {
 
     this.learnerService.getLearner(learner.id).subscribe({
       next: detail => {
-        this.learnerForm = { ...detail };
-        this.parentGuardianForm = this.getEmptyParentGuardian();
+        this.learnerForm = {
+          ...detail,
+          parentGuardian: detail.parentGuardian || this.getEmptyParentGuardian()
+        };
+        this.parentGuardianForm = {
+          ...this.getEmptyParentGuardian(),
+          ...(detail.parentGuardian || {})
+        };
         this.loadingLearnerDetail = false;
       },
       error: err => {
@@ -384,7 +390,7 @@ export class LearnerManagementComponent implements OnInit {
     this.learnerFormSubmitted = true;
     this.clearMessages();
 
-    const validationMessage = this.validateLearner(this.learnerForm, this.parentGuardianForm, this.isEditMode);
+    const validationMessage = this.validateLearner(this.learnerForm, this.parentGuardianForm);
     if (validationMessage) {
       return;
     }
@@ -393,7 +399,14 @@ export class LearnerManagementComponent implements OnInit {
       id: this.learnerForm.id,
       firstName: this.learnerForm.firstName.trim(),
       surname: this.learnerForm.surname.trim(),
-      grade: this.learnerForm.grade.trim()
+      grade: this.learnerForm.grade.trim(),
+      parentGuardian: {
+        firstName: this.parentGuardianForm.firstName.trim(),
+        surname: this.parentGuardianForm.surname.trim(),
+        phoneNumber: this.normalizePhoneDigits(this.parentGuardianForm.phoneNumber),
+        emailAddress: this.parentGuardianForm.emailAddress.trim(),
+        relationshipToLearner: this.parentGuardianForm.relationshipToLearner.trim()
+      }
     };
 
     const createPayload: CreateLearnerRequestDto = {
@@ -642,7 +655,7 @@ export class LearnerManagementComponent implements OnInit {
     return /^(07\d{8}|2637\d{8})$/.test(digitsOnly);
   }
 
-  private validateLearner(learner: LearnerDto, parentGuardian: ParentGuardianDto, isEditMode: boolean): string {
+  private validateLearner(learner: LearnerDto, parentGuardian: ParentGuardianDto): string {
     if (!learner.firstName?.trim()) {
       return 'First name is required.';
     }
@@ -653,10 +666,6 @@ export class LearnerManagementComponent implements OnInit {
 
     if (!learner.grade?.trim()) {
       return 'Grade is required.';
-    }
-
-    if (isEditMode) {
-      return '';
     }
 
     if (!parentGuardian.firstName?.trim()) {
@@ -723,7 +732,8 @@ export class LearnerManagementComponent implements OnInit {
       id: 0,
       firstName: '',
       surname: '',
-      grade: ''
+      grade: '',
+      parentGuardian: this.getEmptyParentGuardian()
     };
   }
 

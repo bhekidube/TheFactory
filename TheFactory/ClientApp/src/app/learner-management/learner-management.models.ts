@@ -3,6 +3,7 @@ export interface LearnerDto {
   firstName: string;
   surname: string;
   grade: string;
+  parentGuardian: ParentGuardianDto;
 }
 
 export interface ParentGuardianDto {
