@@ -184,7 +184,18 @@
       <form (ngSubmit)="saveClass()" class="score-form">
         <label>
           Class Name
-          <input type="text" name="className" [(ngModel)]="className" required />
+          <input
+            type="text"
+            name="className"
+            [(ngModel)]="className"
+            (blur)="markClassNameTouched()"
+            (ngModelChange)="markClassNameTouched()"
+            [attr.aria-invalid]="showClassNameValidationError"
+            required
+          />
+          <div class="field-error" *ngIf="showClassNameValidationError">
+            Class name is required.
+          </div>
         </label>
 
         <label>
@@ -250,7 +261,7 @@
         </div>
 
         <div class="panel-actions">
-          <button type="submit" class="primary-btn" [disabled]="creatingClass">
+          <button type="submit" class="primary-btn" [disabled]="!isClassFormSubmittable">
             {{ creatingClass ? 'Saving...' : 'Create Class' }}
           </button>
           <button type="button" class="secondary-btn" [disabled]="creatingClass" (click)="closeClassForm()">

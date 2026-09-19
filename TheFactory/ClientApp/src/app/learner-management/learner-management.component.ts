@@ -58,6 +58,8 @@ export class LearnerManagementComponent implements OnInit {
   showReportPanel = false;
   showClassForm = false;
   isEditMode = false;
+  classFormSubmitted = false;
+  classNameTouched = false;
 
   learnerForm: LearnerDto = this.getEmptyLearner();
   scoreForm: SubjectScoreDto = this.getEmptyScore();
@@ -127,6 +129,29 @@ export class LearnerManagementComponent implements OnInit {
     }
 
     return this.selectedReport.average;
+  }
+
+  get isClassNameValid(): boolean {
+    return this.className.trim().length > 0;
+  }
+
+  get showClassNameValidationError(): boolean {
+    return (this.classFormSubmitted || this.classNameTouched) && !this.isClassNameValid;
+  }
+
+  markClassNameTouched(): void {
+    this.classNameTouched = true;
+  }
+
+  get isClassFormSubmittable(): boolean {
+    if (this.creatingClass) {
+      return false;
+    }
+
+    return this.isClassNameValid
+      && this.selectedGrade.trim().length > 0
+      && !!this.selectedTeacher
+      && this.selectedTeacher.teacherId > 0;
   }
 
   private setCurrentSectionFromRoute(): void {
@@ -281,6 +306,7 @@ export class LearnerManagementComponent implements OnInit {
   }
 
   saveClass(): void {
+    this.classFormSubmitted = true;
     this.clearMessages();
 
     const validationError = this.validateClassForm();
@@ -726,6 +752,8 @@ export class LearnerManagementComponent implements OnInit {
   }
 
   private resetClassForm(): void {
+    this.classFormSubmitted = false;
+    this.classNameTouched = false;
     this.className = '';
     this.selectedGrade = '';
     this.teacherSearchTerm = '';
