@@ -7,6 +7,7 @@ import {
   ClassDetailDto,
   ClassDto,
   CreateClassRequestDto,
+  CreateLearnerRequestDto,
   LearnerLookupDto,
   LearnerDto,
   LearnerDetailDto,
@@ -237,7 +238,7 @@ export class LearnerManagementService {
     );
   }
 
-  createLearner(payload: LearnerDto): Observable<LearnerDto> {
+  createLearner(payload: CreateLearnerRequestDto): Observable<LearnerDto> {
     return this.http.post<LearnerDto>(`${this.baseUrl}/learners`, payload, this.getRequestOptions());
   }
 

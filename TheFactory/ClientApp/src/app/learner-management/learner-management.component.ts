@@ -5,8 +5,10 @@ import { filter, forkJoin, Subscription } from 'rxjs';
 import {
   ClassDto,
   CreateClassRequestDto,
+  CreateLearnerRequestDto,
   LearnerLookupDto,
   LearnerDto,
+  ParentGuardianDto,
   LearnerReportResponseDto,
   SubjectDto,
   SubjectScoreDto,
@@ -60,9 +62,12 @@ export class LearnerManagementComponent implements OnInit {
   isEditMode = false;
   classFormSubmitted = false;
   classNameTouched = false;
+  learnerFormSubmitted = false;
 
   learnerForm: LearnerDto = this.getEmptyLearner();
+  parentGuardianForm: ParentGuardianDto = this.getEmptyParentGuardian();
   scoreForm: SubjectScoreDto = this.getEmptyScore();
+  relationshipOptions = ['Mother', 'Father', 'Guardian', 'Other'];
 
   errorMessage = '';
   successMessage = '';
@@ -225,7 +230,9 @@ export class LearnerManagementComponent implements OnInit {
   openAddLearner(): void {
     this.clearMessages();
     this.isEditMode = false;
+    this.learnerFormSubmitted = false;
     this.learnerForm = this.getEmptyLearner();
+    this.parentGuardianForm = this.getEmptyParentGuardian();
     this.showLearnerForm = true;
   }
 
@@ -345,12 +352,14 @@ export class LearnerManagementComponent implements OnInit {
   openEditLearner(learner: LearnerDto): void {
     this.clearMessages();
     this.isEditMode = true;
+    this.learnerFormSubmitted = false;
     this.showLearnerForm = true;
     this.loadingLearnerDetail = true;
 
     this.learnerService.getLearner(learner.id).subscribe({
       next: detail => {
         this.learnerForm = { ...detail };
+        this.parentGuardianForm = this.getEmptyParentGuardian();
         this.loadingLearnerDetail = false;
       },
       error: err => {
@@ -366,31 +375,47 @@ export class LearnerManagementComponent implements OnInit {
     }
 
     this.showLearnerForm = false;
+    this.learnerFormSubmitted = false;
     this.learnerForm = this.getEmptyLearner();
+    this.parentGuardianForm = this.getEmptyParentGuardian();
   }
 
   saveLearner(): void {
+    this.learnerFormSubmitted = true;
     this.clearMessages();
 
-    const validationMessage = this.validateLearner(this.learnerForm);
+    const validationMessage = this.validateLearner(this.learnerForm, this.parentGuardianForm, this.isEditMode);
     if (validationMessage) {
-      this.errorMessage = validationMessage;
       return;
     }
 
-    const payload: LearnerDto = {
+    const updatePayload: LearnerDto = {
       id: this.learnerForm.id,
       firstName: this.learnerForm.firstName.trim(),
       surname: this.learnerForm.surname.trim(),
       grade: this.learnerForm.grade.trim()
     };
 
+    const createPayload: CreateLearnerRequestDto = {
+      firstName: this.learnerForm.firstName.trim(),
+      surname: this.learnerForm.surname.trim(),
+      grade: this.learnerForm.grade.trim(),
+      parentGuardian: {
+        firstName: this.parentGuardianForm.firstName.trim(),
+        surname: this.parentGuardianForm.surname.trim(),
+        phoneNumber: this.normalizePhoneDigits(this.parentGuardianForm.phoneNumber),
+        emailAddress: this.parentGuardianForm.emailAddress.trim(),
+        relationshipToLearner: this.parentGuardianForm.relationshipToLearner.trim()
+      }
+    };
+
     if (!this.isEditMode) {
       this.creatingLearner = true;
-      this.learnerService.createLearner(payload).subscribe({
+      this.learnerService.createLearner(createPayload).subscribe({
         next: () => {
           this.creatingLearner = false;
           this.showLearnerForm = false;
+          this.learnerFormSubmitted = false;
           this.successMessage = 'Learner created successfully.';
           this.loadLearners();
         },
@@ -404,14 +429,15 @@ export class LearnerManagementComponent implements OnInit {
     }
 
     this.updatingLearner = true;
-    this.learnerService.updateLearner(payload.id, payload).subscribe({
+    this.learnerService.updateLearner(updatePayload.id, updatePayload).subscribe({
       next: () => {
         this.updatingLearner = false;
         this.showLearnerForm = false;
+        this.learnerFormSubmitted = false;
         this.successMessage = 'Learner updated successfully.';
         this.loadLearners();
-        if (this.selectedLearner?.id === payload.id) {
-          this.selectedLearner = { ...payload };
+        if (this.selectedLearner?.id === updatePayload.id) {
+          this.selectedLearner = { ...updatePayload };
         }
       },
       error: err => {
@@ -602,7 +628,21 @@ export class LearnerManagementComponent implements OnInit {
     return schoolClass.id;
   }
 
-  private validateLearner(learner: LearnerDto): string {
+  get isParentEmailValid(): boolean {
+    const value = this.parentGuardianForm.emailAddress.trim();
+    if (!value) {
+      return true;
+    }
+
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  }
+
+  get isParentPhoneValid(): boolean {
+    const digitsOnly = this.normalizePhoneDigits(this.parentGuardianForm.phoneNumber);
+    return /^(07\d{8}|2637\d{8})$/.test(digitsOnly);
+  }
+
+  private validateLearner(learner: LearnerDto, parentGuardian: ParentGuardianDto, isEditMode: boolean): string {
     if (!learner.firstName?.trim()) {
       return 'First name is required.';
     }
@@ -613,6 +653,30 @@ export class LearnerManagementComponent implements OnInit {
 
     if (!learner.grade?.trim()) {
       return 'Grade is required.';
+    }
+
+    if (isEditMode) {
+      return '';
+    }
+
+    if (!parentGuardian.firstName?.trim()) {
+      return 'Parent first name is required.';
+    }
+
+    if (!parentGuardian.surname?.trim()) {
+      return 'Parent surname is required.';
+    }
+
+    if (!this.isParentPhoneValid) {
+      return 'Parent phone number must be a valid Zimbabwe mobile number (07XXXXXXXX or 2637XXXXXXXX).';
+    }
+
+    if (!this.isParentEmailValid) {
+      return 'Parent email address format is invalid.';
+    }
+
+    if (!parentGuardian.relationshipToLearner?.trim()) {
+      return 'Relationship to learner is required.';
     }
 
     return '';
@@ -661,6 +725,20 @@ export class LearnerManagementComponent implements OnInit {
       surname: '',
       grade: ''
     };
+  }
+
+  private getEmptyParentGuardian(): ParentGuardianDto {
+    return {
+      firstName: '',
+      surname: '',
+      phoneNumber: '',
+      emailAddress: '',
+      relationshipToLearner: ''
+    };
+  }
+
+  private normalizePhoneDigits(phoneNumber: string): string {
+    return (phoneNumber || '').replace(/\D/g, '');
   }
 
   private getEmptyScore(): SubjectScoreDto {

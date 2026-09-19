@@ -1,5 +1,6 @@
 using Microsoft.Data.SqlClient;
 using System.Data;
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using TheFactory.Contracts;
 
@@ -1662,10 +1663,12 @@ public sealed class LearnerService : ILearnerService
         using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
         try
         {
+            var hasParentGuardianContact = await HasColumnAsync(connection, "institution", "Learner", "ParentGuardianContact", cancellationToken);
+            var hasParentUserId = await HasColumnAsync(connection, "institution", "Learner", "ParentUserId", cancellationToken);
+            var linkedParentUserId = await TryFindExistingParentUserIdAsync(connection, transaction, learner.ParentGuardian, cancellationToken);
             var nextId = await GetNextIdAsync(connection, transaction, "institution.Learner", cancellationToken);
             using var command = new SqlCommand(
-                @"INSERT INTO institution.Learner (Id, TenantId, FirstName, Surname, Grade, IsArchived)
-                  VALUES (@Id, @TenantId, @FirstName, @Surname, @Grade, 0);",
+                BuildCreateLearnerInsertSql(hasParentGuardianContact, hasParentUserId),
                 connection,
                 transaction);
 
@@ -1674,6 +1677,14 @@ public sealed class LearnerService : ILearnerService
             command.Parameters.AddWithValue("@FirstName", learner.FirstName.Trim());
             command.Parameters.AddWithValue("@Surname", learner.Surname.Trim());
             command.Parameters.AddWithValue("@Grade", learner.Grade.Trim());
+            if (hasParentGuardianContact)
+            {
+                command.Parameters.AddWithValue("@ParentGuardianContact", SerializeParentGuardian(learner.ParentGuardian));
+            }
+            if (hasParentUserId)
+            {
+                command.Parameters.AddWithValue("@ParentUserId", (object?)linkedParentUserId ?? DBNull.Value);
+            }
 
             await command.ExecuteNonQueryAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
@@ -1683,7 +1694,8 @@ public sealed class LearnerService : ILearnerService
                 Id = nextId,
                 FirstName = learner.FirstName.Trim(),
                 Surname = learner.Surname.Trim(),
-                Grade = learner.Grade.Trim()
+                Grade = learner.Grade.Trim(),
+                ParentGuardian = NormalizeParentGuardian(learner.ParentGuardian)
             };
         }
         catch
@@ -1702,14 +1714,12 @@ public sealed class LearnerService : ILearnerService
             return null;
         }
 
+        var hasParentGuardianContact = await HasColumnAsync(connection, "institution", "Learner", "ParentGuardianContact", cancellationToken);
+        var hasParentUserId = await HasColumnAsync(connection, "institution", "Learner", "ParentUserId", cancellationToken);
+        var linkedParentUserId = await TryFindExistingParentUserIdAsync(connection, null, learner.ParentGuardian, cancellationToken);
+
         using var command = new SqlCommand(
-            @"UPDATE institution.Learner
-              SET FirstName = @FirstName,
-                  Surname = @Surname,
-                  Grade = @Grade
-              WHERE Id = @LearnerId
-                AND TenantId = @TenantId
-                AND IsArchived = 0;",
+            BuildUpdateLearnerSql(hasParentGuardianContact, hasParentUserId),
             connection);
 
         command.Parameters.AddWithValue("@LearnerId", learnerId);
@@ -1717,6 +1727,14 @@ public sealed class LearnerService : ILearnerService
         command.Parameters.AddWithValue("@FirstName", learner.FirstName.Trim());
         command.Parameters.AddWithValue("@Surname", learner.Surname.Trim());
         command.Parameters.AddWithValue("@Grade", learner.Grade.Trim());
+        if (hasParentGuardianContact)
+        {
+            command.Parameters.AddWithValue("@ParentGuardianContact", SerializeParentGuardian(learner.ParentGuardian));
+        }
+        if (hasParentUserId)
+        {
+            command.Parameters.AddWithValue("@ParentUserId", (object?)linkedParentUserId ?? DBNull.Value);
+        }
 
         var affected = await command.ExecuteNonQueryAsync(cancellationToken);
         if (affected == 0)
@@ -1729,8 +1747,143 @@ public sealed class LearnerService : ILearnerService
             Id = learnerId,
             FirstName = learner.FirstName.Trim(),
             Surname = learner.Surname.Trim(),
-            Grade = learner.Grade.Trim()
+            Grade = learner.Grade.Trim(),
+            ParentGuardian = NormalizeParentGuardian(learner.ParentGuardian)
         };
+    }
+
+    private static ParentGuardianDto NormalizeParentGuardian(ParentGuardianDto? parentGuardian)
+    {
+        var value = parentGuardian ?? new ParentGuardianDto();
+        return new ParentGuardianDto
+        {
+            FirstName = value.FirstName?.Trim() ?? string.Empty,
+            Surname = value.Surname?.Trim() ?? string.Empty,
+            PhoneNumber = value.PhoneNumber?.Trim() ?? string.Empty,
+            EmailAddress = value.EmailAddress?.Trim() ?? string.Empty,
+            RelationshipToLearner = value.RelationshipToLearner?.Trim() ?? string.Empty
+        };
+    }
+
+    private static string SerializeParentGuardian(ParentGuardianDto? parentGuardian)
+    {
+        var normalized = NormalizeParentGuardian(parentGuardian);
+        return JsonSerializer.Serialize(normalized);
+    }
+
+    private static string BuildCreateLearnerInsertSql(bool hasParentGuardianContact, bool hasParentUserId)
+    {
+        if (hasParentGuardianContact && hasParentUserId)
+        {
+            return @"INSERT INTO institution.Learner (Id, TenantId, FirstName, Surname, Grade, ParentGuardianContact, ParentUserId, IsArchived)
+                     VALUES (@Id, @TenantId, @FirstName, @Surname, @Grade, @ParentGuardianContact, @ParentUserId, 0);";
+        }
+
+        if (hasParentGuardianContact)
+        {
+            return @"INSERT INTO institution.Learner (Id, TenantId, FirstName, Surname, Grade, ParentGuardianContact, IsArchived)
+                     VALUES (@Id, @TenantId, @FirstName, @Surname, @Grade, @ParentGuardianContact, 0);";
+        }
+
+        if (hasParentUserId)
+        {
+            return @"INSERT INTO institution.Learner (Id, TenantId, FirstName, Surname, Grade, ParentUserId, IsArchived)
+                     VALUES (@Id, @TenantId, @FirstName, @Surname, @Grade, @ParentUserId, 0);";
+        }
+
+        return @"INSERT INTO institution.Learner (Id, TenantId, FirstName, Surname, Grade, IsArchived)
+                 VALUES (@Id, @TenantId, @FirstName, @Surname, @Grade, 0);";
+    }
+
+    private static string BuildUpdateLearnerSql(bool hasParentGuardianContact, bool hasParentUserId)
+    {
+        if (hasParentGuardianContact && hasParentUserId)
+        {
+            return @"UPDATE institution.Learner
+                     SET FirstName = @FirstName,
+                         Surname = @Surname,
+                         Grade = @Grade,
+                         ParentGuardianContact = @ParentGuardianContact,
+                         ParentUserId = @ParentUserId
+                     WHERE Id = @LearnerId
+                       AND TenantId = @TenantId
+                       AND IsArchived = 0;";
+        }
+
+        if (hasParentGuardianContact)
+        {
+            return @"UPDATE institution.Learner
+                     SET FirstName = @FirstName,
+                         Surname = @Surname,
+                         Grade = @Grade,
+                         ParentGuardianContact = @ParentGuardianContact
+                     WHERE Id = @LearnerId
+                       AND TenantId = @TenantId
+                       AND IsArchived = 0;";
+        }
+
+        if (hasParentUserId)
+        {
+            return @"UPDATE institution.Learner
+                     SET FirstName = @FirstName,
+                         Surname = @Surname,
+                         Grade = @Grade,
+                         ParentUserId = @ParentUserId
+                     WHERE Id = @LearnerId
+                       AND TenantId = @TenantId
+                       AND IsArchived = 0;";
+        }
+
+        return @"UPDATE institution.Learner
+                 SET FirstName = @FirstName,
+                     Surname = @Surname,
+                     Grade = @Grade
+                 WHERE Id = @LearnerId
+                   AND TenantId = @TenantId
+                   AND IsArchived = 0;";
+    }
+
+    private static async Task<int?> TryFindExistingParentUserIdAsync(
+        SqlConnection connection,
+        SqlTransaction? transaction,
+        ParentGuardianDto? parentGuardian,
+        CancellationToken cancellationToken)
+    {
+        var parent = NormalizeParentGuardian(parentGuardian);
+        if (string.IsNullOrWhiteSpace(parent.EmailAddress) && string.IsNullOrWhiteSpace(parent.PhoneNumber))
+        {
+            return null;
+        }
+
+        var normalizedPhone = NormalizePhoneForLookup(parent.PhoneNumber);
+        var commandText = @"SELECT TOP 1 UserId
+                            FROM [User]
+                            WHERE (@Email <> '' AND LOWER(Email) = LOWER(@Email))
+                               OR (@Phone <> '' AND REPLACE(REPLACE(REPLACE(REPLACE(CellPhoneNo, ' ', ''), '-', ''), '(', ''), ')', '') = @Phone)
+                            ORDER BY UserId ASC;";
+
+        using var command = new SqlCommand(commandText, connection, transaction);
+        command.Parameters.AddWithValue("@Email", parent.EmailAddress);
+        command.Parameters.AddWithValue("@Phone", normalizedPhone);
+
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        if (result is null || result == DBNull.Value)
+        {
+            return null;
+        }
+
+        return Convert.ToInt32(result);
+    }
+
+    private static string NormalizePhoneForLookup(string phone)
+    {
+        var digits = new string((phone ?? string.Empty).Where(char.IsDigit).ToArray());
+        if (digits.StartsWith("07", StringComparison.Ordinal) && digits.Length == 10)
+        {
+            return $"263{digits[1..]}";
+        }
+
+        return digits;
     }
 
     public async Task<bool> ArchiveLearnerAsync(int learnerId, CancellationToken cancellationToken = default)

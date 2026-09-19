@@ -13,4 +13,5 @@ table{width:100%;min-width:680px;border-collapse:collapse}th,td{padding:8px;bord
 .page-header>.primary-btn{flex:0 0 auto;width:auto;max-width:none;height:40px;padding:10px 20px;border-radius:6px;align-self:center;margin-left:auto;white-space:nowrap}
 .classes-header{margin-top:18px}.lookup-results{display:grid;gap:6px;margin-top:4px}.lookup-item{text-align:left;border:1px solid #d9e1ef;background:#f8fbff;color:#1f3557;border-radius:6px;padding:8px 10px;cursor:pointer}.lookup-item:hover{background:#edf4ff}.selected-learners{display:grid;gap:6px;background:#f8fbff;border:1px solid #d9e1ef;border-radius:8px;padding:8px 10px}.selected-learner-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .field-error{margin-top:2px;color:#b42318;font-size:12px;font-weight:600}
+.form-section-title{margin-top:8px;padding-top:8px;border-top:1px solid #edf2fa;font-weight:700;color:#1f3557}
 @media (max-width:700px){.page-header{flex-direction:column}.toolbar input{max-width:100%}.summary-grid,.report-meta{grid-template-columns:1fr}.report-section-header{align-items:flex-start;flex-direction:column}}

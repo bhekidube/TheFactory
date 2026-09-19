@@ -5,6 +5,21 @@ export interface LearnerDto {
   grade: string;
 }
 
+export interface ParentGuardianDto {
+  firstName: string;
+  surname: string;
+  phoneNumber: string;
+  emailAddress: string;
+  relationshipToLearner: string;
+}
+
+export interface CreateLearnerRequestDto {
+  firstName: string;
+  surname: string;
+  grade: string;
+  parentGuardian: ParentGuardianDto;
+}
+
 export interface SubjectDto {
   id: number;
   name: string;

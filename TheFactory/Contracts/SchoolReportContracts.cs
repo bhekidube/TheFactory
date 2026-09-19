@@ -6,6 +6,16 @@ public sealed class LearnerDto
     public string FirstName { get; set; } = string.Empty;
     public string Surname { get; set; } = string.Empty;
     public string Grade { get; set; } = string.Empty;
+    public ParentGuardianDto ParentGuardian { get; set; } = new();
+}
+
+public sealed class ParentGuardianDto
+{
+    public string FirstName { get; set; } = string.Empty;
+    public string Surname { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
+    public string EmailAddress { get; set; } = string.Empty;
+    public string RelationshipToLearner { get; set; } = string.Empty;
 }
 
 public sealed class SubjectScoreDto
