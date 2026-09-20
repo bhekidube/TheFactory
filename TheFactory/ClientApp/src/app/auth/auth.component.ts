@@ -10,6 +10,10 @@ import { environment } from '../../environments/environment';
 })
 export class AuthComponent implements OnInit {
   showRegister = false; // Controls register form visibility
+  loginPasswordVisible = false;
+  registerPasswordVisible = false;
+  loginSubmitted = false;
+  readonly emailPattern = '^[^\\s@]+@[^\\s@]+(?:\\.[^\\s@]+)+$';
 
   registerModel: any = {
     userRoleId: 3, // Default role->OperatorAdmin
@@ -50,6 +54,30 @@ export class AuthComponent implements OnInit {
     this.showRegister = !this.showRegister;
   }
 
+  toggleLoginPassword(): void {
+    this.loginPasswordVisible = !this.loginPasswordVisible;
+  }
+
+  toggleRegisterPassword(): void {
+    this.registerPasswordVisible = !this.registerPasswordVisible;
+  }
+
+  isLoginEmailValid(): boolean {
+    const email = this.loginModel.email.trim();
+    return email.length > 0
+      && !email.includes('..')
+      && new RegExp(this.emailPattern).test(email);
+  }
+
+  continueWithGoogle(): void {
+    this.error = 'Google sign-in is not configured yet. Please use your email and password.';
+  }
+
+  continueAsGuest(): void {
+    this.error = null;
+    this.router.navigate(['/']);
+  }
+
   register() {
     this.http.post(`${environment.apiBaseUrl}/api/User/Register`, this.registerModel).subscribe({
       next: () => {
@@ -65,6 +93,11 @@ export class AuthComponent implements OnInit {
   }
 
   login() {
+    this.loginSubmitted = true;
+    if (!this.isLoginEmailValid() || this.loginModel.password.length < 6) {
+      return;
+    }
+
     this.http.post<{ userName: string, userRole: string, userId: number }>(
       `${environment.apiBaseUrl}/api/User/Login`, this.loginModel
     ).subscribe({

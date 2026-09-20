@@ -1,12 +1,61 @@
 <div class="auth-container">
   <h2>Log into Hambaonline</h2>
+
+  <section class="social-login" aria-label="Social sign-in options">
+    <button type="button" class="google-btn" (click)="continueWithGoogle()" aria-label="Continue with Google">
+      <span class="google-mark" aria-hidden="true">G</span>
+      Continue with Google
+    </button>
+  </section>
+
+  <div class="auth-divider" role="separator"><span>OR</span></div>
+
   <form #loginForm="ngForm" (ngSubmit)="login()" novalidate>
-    <input type="email" [(ngModel)]="loginModel.email" name="loginEmail" placeholder="Email" required #loginEmail="ngModel" />
-    <div *ngIf="loginEmail.invalid && loginEmail.touched" class="error">Valid email is required.</div>
-    <input type="password" [(ngModel)]="loginModel.password" name="loginPassword" placeholder="Password" required minlength="6" #loginPassword="ngModel" />
-    <div *ngIf="loginPassword.invalid && loginPassword.touched" class="error">Password is required (min 6 chars).</div>
-    <button type="submit" [disabled]="loginForm.invalid">Log in</button>
+    <label for="loginEmail">Email</label>
+    <input
+      id="loginEmail"
+      type="email"
+      [(ngModel)]="loginModel.email"
+      name="loginEmail"
+      placeholder="you@example.com"
+      autocomplete="email"
+      [pattern]="emailPattern"
+      required
+      #loginEmail="ngModel" />
+    <div *ngIf="(loginEmail.touched || loginSubmitted) && !isLoginEmailValid()" class="error" id="login-email-error">
+      Enter a valid email address without consecutive dots.
+    </div>
+
+    <label for="loginPassword">Password</label>
+    <div class="password-field">
+      <input
+        id="loginPassword"
+        [type]="loginPasswordVisible ? 'text' : 'password'"
+        [(ngModel)]="loginModel.password"
+        name="loginPassword"
+        placeholder="Password"
+        autocomplete="current-password"
+        required
+        minlength="6"
+        [attr.aria-describedby]="loginPassword.invalid && (loginPassword.touched || loginSubmitted) ? 'login-password-error' : null"
+        #loginPassword="ngModel" />
+      <button
+        type="button"
+        class="password-toggle"
+        (click)="toggleLoginPassword()"
+        [attr.aria-label]="loginPasswordVisible ? 'Hide password' : 'Show password'"
+        [attr.aria-pressed]="loginPasswordVisible">
+        <span class="eye-icon" aria-hidden="true"></span>
+        <span class="sr-only">{{ loginPasswordVisible ? 'Hide password' : 'Show password' }}</span>
+      </button>
+    </div>
+    <div *ngIf="loginPassword.invalid && (loginPassword.touched || loginSubmitted)" class="error" id="login-password-error">
+      Password is required (min 6 chars).
+    </div>
+    <button type="submit" class="login-btn" [disabled]="loginForm.invalid || !isLoginEmailValid()">Log in</button>
   </form>
+
+  <button type="button" class="guest-btn" (click)="continueAsGuest()" aria-label="Continue as guest">Continue as Guest</button>
 
   <div class="auth-actions">
     <a class="forgot-password" (click)="forgotPassword()">Forgot password?</a>
@@ -32,7 +81,13 @@
       </select>
       <div *ngIf="registerOperatorId.invalid && registerOperatorId.touched" class="error">Operator is required.</div>
 
-      <input type="password" [(ngModel)]="registerModel.password" name="registerPassword" placeholder="Password" required minlength="6" #registerPassword="ngModel" />
+      <div class="password-field">
+        <input [type]="registerPasswordVisible ? 'text' : 'password'" [(ngModel)]="registerModel.password" name="registerPassword" placeholder="Password" autocomplete="new-password" required minlength="6" #registerPassword="ngModel" />
+        <button type="button" class="password-toggle" (click)="toggleRegisterPassword()" [attr.aria-label]="registerPasswordVisible ? 'Hide password' : 'Show password'" [attr.aria-pressed]="registerPasswordVisible">
+          <span class="eye-icon" aria-hidden="true"></span>
+          <span class="sr-only">{{ registerPasswordVisible ? 'Hide password' : 'Show password' }}</span>
+        </button>
+      </div>
       <div *ngIf="registerPassword.invalid && registerPassword.touched" class="error">Password is required (min 6 chars).</div>
       <button type="submit" [disabled]="registerForm.invalid" class="subscribe-btn">Join Hamba</button>
     </form>
