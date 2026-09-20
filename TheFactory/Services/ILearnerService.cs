@@ -14,6 +14,7 @@ public interface ILearnerService
     Task<ClassDto> CreateClassAsync(CreateClassRequestDto request, CancellationToken cancellationToken = default);
     Task<ClassAssignedSubjectDto?> AssignSubjectToClassAsync(int classId, int subjectId, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<SubjectDto>> GetAllSubjectsForCurrentTenantAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<GradeDto>> GetGradesAsync(CancellationToken cancellationToken = default);
     Task<SubjectDto> CreateSubjectAsync(SubjectUpsertRequestDto request, CancellationToken cancellationToken = default);
     Task<SubjectDto?> UpdateSubjectAsync(int subjectId, SubjectUpsertRequestDto request, CancellationToken cancellationToken = default);
     Task<LearnerDetailDto?> GetLearnerDetailByIdAsync(int learnerId, CancellationToken cancellationToken = default);

@@ -28,6 +28,11 @@ export interface SubjectDto {
   isActive: boolean;
 }
 
+export interface GradeDto {
+  id: number;
+  name: string;
+}
+
 export interface SubjectScoreDto {
   learnerId?: number;
   subjectId: number;

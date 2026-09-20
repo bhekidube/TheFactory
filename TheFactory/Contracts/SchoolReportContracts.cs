@@ -43,6 +43,12 @@ public sealed class SubjectDto
     public bool IsActive { get; set; }
 }
 
+public sealed class GradeDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+}
+
 public sealed class LearnerReportDto
 {
     public string SchoolName { get; set; } = string.Empty;

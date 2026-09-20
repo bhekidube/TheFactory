@@ -2297,6 +2297,30 @@ public sealed class LearnerService : ILearnerService
         return subjects;
     }
 
+    public async Task<IReadOnlyCollection<GradeDto>> GetGradesAsync(CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        using var command = new SqlCommand(
+            @"SELECT Id, Name
+              FROM institution.Grade
+              WHERE IsActive = 1
+              ORDER BY SortOrder ASC, Name ASC;",
+            connection);
+
+        var grades = new List<GradeDto>();
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            grades.Add(new GradeDto
+            {
+                Id = reader.GetInt32(0),
+                Name = reader.IsDBNull(1) ? string.Empty : reader.GetString(1)
+            });
+        }
+
+        return grades;
+    }
+
     public async Task<SubjectScoreDto?> UpsertSubjectScoreAsync(int learnerId, SubjectScoreDto subjectScore, CancellationToken cancellationToken = default)
     {
         using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);

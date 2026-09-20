@@ -6,6 +6,7 @@ import {
   ClassDto,
   CreateClassRequestDto,
   CreateLearnerRequestDto,
+  GradeDto,
   LearnerLookupDto,
   LearnerDto,
   ParentGuardianDto,
@@ -36,10 +37,11 @@ export class LearnerManagementComponent implements OnInit {
   selectedLearners: LearnerLookupDto[] = [];
   selectedGrade = '';
   className = '';
-  gradeOptions = ['Baby Class', 'Middle Class', 'ECD A', 'ECD B', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4'];
+  gradeOptions: string[] = [];
 
   loadingLearners = false;
   loadingClasses = false;
+  loadingGrades = false;
   loadingLearnerDetail = false;
   loadingReport = false;
   loadingSubjects = false;
@@ -89,6 +91,7 @@ export class LearnerManagementComponent implements OnInit {
 
     this.loadLearners();
     this.loadClasses();
+    this.loadGrades();
   }
 
   ngOnDestroy(): void {
@@ -204,6 +207,20 @@ export class LearnerManagementComponent implements OnInit {
       error: err => {
         this.loadingClasses = false;
         this.errorMessage = this.mapHttpError(err, 'Failed to load classes.');
+      }
+    });
+  }
+
+  loadGrades(): void {
+    this.loadingGrades = true;
+    this.learnerService.getGrades().subscribe({
+      next: (grades: GradeDto[]) => {
+        this.gradeOptions = grades.map(grade => grade.name);
+        this.loadingGrades = false;
+      },
+      error: err => {
+        this.loadingGrades = false;
+        this.errorMessage = this.mapHttpError(err, 'Failed to load grades.');
       }
     });
   }
