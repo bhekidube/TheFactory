@@ -9,6 +9,7 @@ public interface ILearnerService
     Task<int> GetActiveClassCountForSchoolAsync(int schoolId, CancellationToken cancellationToken = default);
     Task<ClassDetailDto?> GetClassByIdAsync(int classId, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<TeacherLookupDto>> SearchTeachersAsync(string query, CancellationToken cancellationToken = default);
+    Task<ClassDto?> UpdateClassAsync(int classId, UpdateClassRequestDto request, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<LearnerLookupDto>> SearchLearnersAsync(string query, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<ClassAssignedSubjectDto>> SearchSubjectsAsync(string query, CancellationToken cancellationToken = default);
     Task<ClassDto> CreateClassAsync(CreateClassRequestDto request, CancellationToken cancellationToken = default);

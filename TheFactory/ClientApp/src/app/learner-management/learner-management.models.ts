@@ -6,6 +6,30 @@ export interface LearnerDto {
   parentGuardian: ParentGuardianDto;
 }
 
+export interface StaffDto {
+  id: number;
+  schoolId: number;
+  userId?: number | null;
+  firstName: string;
+  surname: string;
+  role: string;
+  email: string;
+  phone: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StaffUpsertRequest {
+  userId?: number | null;
+  firstName: string;
+  surname: string;
+  role: string;
+  email: string;
+  phone: string;
+  status: string;
+}
+
 export interface ParentGuardianDto {
   firstName: string;
   surname: string;
@@ -91,6 +115,12 @@ export interface CreateClassRequestDto {
   grade: string;
   teacherId: number;
   learnerIds: number[];
+}
+
+export interface UpdateClassRequestDto {
+  name: string;
+  grade: string;
+  teacherId: number;
 }
 
 export interface ClassAssignedSubjectDto {

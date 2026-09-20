@@ -1,0 +1,112 @@
+<section class="staff-page">
+  <div class="page-header">
+    <div>
+      <h2>Staff Management</h2>
+      <p>School administration dashboard for active staff profiles.</p>
+    </div>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <span class="label">Active Staff</span>
+      <strong>{{ activeStaffCount }}</strong>
+    </div>
+    <div class="summary-card">
+      <span class="label">Staff Loaded</span>
+      <strong>{{ staff.length }}</strong>
+    </div>
+    <div class="summary-card">
+      <span class="label">Roles Registered</span>
+      <strong>{{ registeredRolesCount }}</strong>
+    </div>
+  </div>
+
+  <div class="toolbar action-bar">
+    <input
+      type="search"
+      [(ngModel)]="searchTerm"
+      (ngModelChange)="loadStaff()"
+      placeholder="Search staff..."
+      aria-label="Search staff" />
+    <button type="button" class="secondary-btn" (click)="loadStaff()" [disabled]="loading">
+      {{ loading ? 'Refreshing...' : 'Refresh' }}
+    </button>
+    <button type="button" class="primary-btn" (click)="openAddStaff()">+ Add Staff</button>
+  </div>
+
+  <div *ngIf="loading" class="state-card">Loading staff...</div>
+  <div *ngIf="!loading && staff.length === 0" class="state-card empty">
+    <strong>No staff found</strong>
+    <p>Add a staff member or adjust your search.</p>
+  </div>
+
+  <div class="table-wrap" *ngIf="!loading && staff.length > 0">
+    <table>
+      <thead>
+        <tr>
+          <th>STAFF ID</th>
+          <th>FIRST NAME</th>
+          <th>SURNAME</th>
+          <th>ROLE</th>
+          <th class="actions-col text-end">ACTIONS</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let member of staff; trackBy: trackByStaffId">
+          <td>{{ member.id }}</td>
+          <td>{{ member.firstName }}</td>
+          <td>{{ member.surname }}</td>
+          <td>{{ member.role }}</td>
+          <td class="actions-col text-end">
+            <div class="actions-row">
+              <button type="button" class="link-btn" (click)="openEditStaff(member)">Edit</button>
+              <button type="button" class="danger-link-btn" (click)="archiveStaff(member)">Archive</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="message error" *ngIf="errorMessage">{{ errorMessage }}</div>
+  <div class="message success" *ngIf="successMessage">{{ successMessage }}</div>
+
+  <div class="overlay" *ngIf="showForm">
+    <div class="panel">
+      <h3>{{ editingStaffId ? 'Edit Staff' : 'Add Staff' }}</h3>
+      <form (ngSubmit)="saveStaff()" novalidate>
+        <label>
+          First Name
+          <input type="text" name="firstName" [(ngModel)]="form.firstName" required />
+          <span class="field-error" *ngIf="formSubmitted && !form.firstName.trim()">First name is required.</span>
+        </label>
+        <label>
+          Surname
+          <input type="text" name="surname" [(ngModel)]="form.surname" required />
+          <span class="field-error" *ngIf="formSubmitted && !form.surname.trim()">Surname is required.</span>
+        </label>
+        <label>
+          Role
+          <select name="role" [(ngModel)]="form.role" required>
+            <option value="">Select role</option>
+            <option *ngFor="let role of roleOptions" [value]="role">{{ role }}</option>
+          </select>
+          <span class="field-error" *ngIf="formSubmitted && !form.role.trim()">Role is required.</span>
+        </label>
+        <label>
+          Email
+          <input type="email" name="email" [(ngModel)]="form.email" required />
+          <span class="field-error" *ngIf="formSubmitted && !isFormValid()">A valid email and all required fields are needed.</span>
+        </label>
+        <label>
+          Phone
+          <input type="tel" name="phone" [(ngModel)]="form.phone" />
+        </label>
+        <div class="panel-actions">
+          <button type="submit" class="primary-btn" [disabled]="saving">{{ saving ? 'Saving...' : 'Save Staff' }}</button>
+          <button type="button" class="secondary-btn" [disabled]="saving" (click)="closeForm()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>

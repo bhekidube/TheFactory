@@ -14,6 +14,7 @@ import { CurriculumViewComponent } from './curriculum-view/curriculum-view.compo
 import { LearnerDetailComponent } from './learner-detail/learner-detail.component';
 import { WorkManagementComponent } from './work-management/work-management.component';
 import { WorkDetailComponent } from './work-detail/work-detail.component';
+import { StaffManagementComponent } from './staff-management/staff-management.component';
 import { LearningAccessGuard } from './guards/learning-access.guard';
 
 const routes: Routes = [
@@ -31,7 +32,8 @@ const routes: Routes = [
       { path: 'reports', component: LearnerManagementComponent },
       { path: 'classes', component: LearnerManagementComponent },
       { path: 'curriculum', component: CurriculumViewComponent },
-      { path: 'work', component: WorkManagementComponent }
+      { path: 'work', component: WorkManagementComponent },
+      { path: 'staff', component: StaffManagementComponent }
     ]
   },
   { path: 'admin-screen', component: AdminScreenComponent },

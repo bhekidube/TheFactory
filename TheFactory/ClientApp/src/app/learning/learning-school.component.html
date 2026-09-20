@@ -51,6 +51,12 @@
     </a>
     <a
       class="school-nav-link"
+      [routerLink]="['/learning/schools', schoolId, 'staff']"
+      [routerLinkActive]="['is-active']">
+      Staff
+    </a>
+    <a
+      class="school-nav-link"
       [routerLink]="['/school/admin/learners']"
       [routerLinkActive]="['is-active']">
       Full Learner Admin

@@ -37,6 +37,7 @@ builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
     options.UseSqlServer(serviceProvider.GetRequiredService<SqlConnectionFactory>().CreateConnection()));
 builder.Services.AddScoped<SqlConnectionService>();
 builder.Services.AddScoped<ILearnerService, LearnerService>();
+builder.Services.AddScoped<IStaffService, StaffService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IPdfGeneratorService, PdfGeneratorService>();
 builder.Services.AddCors(options =>
@@ -74,6 +75,7 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseCors(); // <-- Move here
 app.UseAuthorization();
+app.MapControllers();
 
 if (app.Environment.IsDevelopment())
 {

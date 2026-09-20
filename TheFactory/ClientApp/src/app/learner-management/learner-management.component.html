@@ -120,6 +120,7 @@
             <th>Grade</th>
             <th>Teacher</th>
             <th>Learners</th>
+            <th class="actions-col text-end">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -133,6 +134,9 @@
             <td>{{ schoolClass.grade }}</td>
             <td>{{ schoolClass.teacherName || ('User #' + schoolClass.teacherId) }}</td>
             <td>{{ schoolClass.learnerIds.length }}</td>
+            <td class="actions-col text-end">
+              <button type="button" class="link-btn" (click)="openEditClass(schoolClass)">Edit</button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -236,7 +240,7 @@
 
   <div class="overlay" *ngIf="showClassForm">
     <div class="panel">
-      <h3>Add Class</h3>
+      <h3>{{ editingClassId ? 'Edit Class' : 'Add Class' }}</h3>
 
       <form (ngSubmit)="saveClass()" class="score-form">
         <label>
@@ -309,7 +313,7 @@
         </div>
         <div class="state-card" *ngIf="searchingLearnersLookup">Searching learners...</div>
 
-        <div class="selected-learners" *ngIf="selectedLearners.length > 0">
+        <div class="selected-learners" *ngIf="!editingClassId && selectedLearners.length > 0">
           <strong>Selected Learners</strong>
           <div class="selected-learner-row" *ngFor="let learner of selectedLearners">
             <span>{{ learner.firstName }} {{ learner.surname }} ({{ learner.grade }})</span>
@@ -319,7 +323,7 @@
 
         <div class="panel-actions">
           <button type="submit" class="primary-btn" [disabled]="!isClassFormSubmittable">
-            {{ creatingClass ? 'Saving...' : 'Create Class' }}
+            {{ creatingClass ? 'Saving...' : (editingClassId ? 'Save Changes' : 'Create Class') }}
           </button>
           <button type="button" class="secondary-btn" [disabled]="creatingClass" (click)="closeClassForm()">
             Cancel

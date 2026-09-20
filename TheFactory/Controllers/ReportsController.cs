@@ -419,6 +419,34 @@ public class ReportsController : ControllerBase
         }
     }
 
+    [HttpPut("classes/{id:int}")]
+    [ProducesResponseType(typeof(ClassDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ClassDto>> UpdateClass(
+        int id,
+        [FromBody] UpdateClassRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        if (request is null
+            || string.IsNullOrWhiteSpace(request.Name)
+            || string.IsNullOrWhiteSpace(request.Grade)
+            || request.TeacherId <= 0)
+        {
+            return BadRequest("Class name, grade, and teacher are required.");
+        }
+
+        try
+        {
+            var updatedClass = await _learnerService.UpdateClassAsync(id, request, cancellationToken);
+            return updatedClass is null ? NotFound() : Ok(updatedClass);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Failed to update class: {ex.Message}");
+        }
+    }
+
     [HttpPost("classes/{id:int}/subjects")]
     [ProducesResponseType(typeof(ClassAssignedSubjectDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

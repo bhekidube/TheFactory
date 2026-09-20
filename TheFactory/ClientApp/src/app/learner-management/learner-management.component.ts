@@ -14,7 +14,8 @@ import {
   SubjectDto,
   SubjectScoreDto,
   SubjectScoreUpsertRequest,
-  TeacherLookupDto
+  TeacherLookupDto,
+  UpdateClassRequestDto
 } from './learner-management.models';
 import { LearnerManagementService } from '../services/learner-management.service';
 
@@ -61,6 +62,7 @@ export class LearnerManagementComponent implements OnInit {
   showLearnerForm = false;
   showReportPanel = false;
   showClassForm = false;
+  editingClassId: number | null = null;
   isEditMode = false;
   editingLearnerId: number | null = null;
   classFormSubmitted = false;
@@ -261,6 +263,25 @@ export class LearnerManagementComponent implements OnInit {
     this.showClassForm = true;
   }
 
+  openEditClass(schoolClass: ClassDto): void {
+    this.clearMessages();
+    this.editingClassId = schoolClass.id;
+    this.classFormSubmitted = false;
+    this.classNameTouched = false;
+    this.className = schoolClass.name;
+    this.selectedGrade = schoolClass.grade;
+    this.selectedTeacher = {
+      teacherId: schoolClass.teacherId,
+      name: schoolClass.teacherName,
+      email: '',
+      role: 'Teacher'
+    };
+    this.teacherSearchTerm = schoolClass.teacherName || `Staff #${schoolClass.teacherId}`;
+    this.teacherLookupResults = [];
+    this.selectedLearners = [];
+    this.showClassForm = true;
+  }
+
   closeClassForm(): void {
     if (this.creatingClass || this.searchingTeachers || this.searchingLearnersLookup) {
       return;
@@ -354,11 +375,21 @@ export class LearnerManagementComponent implements OnInit {
     };
 
     this.creatingClass = true;
-    this.learnerService.createClass(payload).subscribe({
+    const request = this.editingClassId
+      ? this.learnerService.updateClass(this.editingClassId, {
+        name: payload.name,
+        grade: payload.grade,
+        teacherId: payload.teacherId
+      } as UpdateClassRequestDto)
+      : this.learnerService.createClass(payload);
+
+    request.subscribe({
       next: () => {
         this.creatingClass = false;
         this.showClassForm = false;
-        this.successMessage = 'Class created successfully.';
+        this.successMessage = this.editingClassId ? 'Class updated successfully.' : 'Class created successfully.';
+        this.editingClassId = null;
+        this.resetClassForm();
         this.loadClasses();
       },
       error: err => {
@@ -926,6 +957,7 @@ export class LearnerManagementComponent implements OnInit {
     this.classFormSubmitted = false;
     this.classNameTouched = false;
     this.className = '';
+    this.editingClassId = null;
     this.selectedGrade = '';
     this.teacherSearchTerm = '';
     this.learnerLookupSearchTerm = '';

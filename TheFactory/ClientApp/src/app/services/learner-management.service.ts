@@ -9,6 +9,9 @@ import {
   CreateClassRequestDto,
   CreateLearnerRequestDto,
   GradeDto,
+  StaffDto,
+  StaffUpsertRequest,
+  UpdateClassRequestDto,
   LearnerLookupDto,
   LearnerDto,
   LearnerDetailDto,
@@ -105,6 +108,23 @@ export class LearnerManagementService {
     return this.http.get<GradeDto[]>(`${this.baseUrl}/lookup/Grades`, this.getRequestOptions());
   }
 
+  getStaff(schoolId: number, search = ''): Observable<StaffDto[]> {
+    const query = search.trim() ? `?search=${encodeURIComponent(search.trim())}` : '';
+    return this.http.get<StaffDto[]>(`${this.baseUrl}/schools/${schoolId}/staff${query}`, this.getRequestOptions());
+  }
+
+  createStaff(schoolId: number, payload: StaffUpsertRequest): Observable<StaffDto> {
+    return this.http.post<StaffDto>(`${this.baseUrl}/schools/${schoolId}/staff`, payload, this.getRequestOptions());
+  }
+
+  updateStaff(schoolId: number, staffId: number, payload: StaffUpsertRequest): Observable<StaffDto> {
+    return this.http.put<StaffDto>(`${this.baseUrl}/schools/${schoolId}/staff/${staffId}`, payload, this.getRequestOptions());
+  }
+
+  archiveStaff(schoolId: number, staffId: number): Observable<void> {
+    return this.http.patch<void>(`${this.baseUrl}/schools/${schoolId}/staff/${staffId}/archive`, {}, this.getRequestOptions());
+  }
+
   getActiveClassCountForSchool(schoolId: number): Observable<ActiveClassCountDto> {
     return this.http.get<ActiveClassCountDto>(
       `${this.baseUrl}/schools/${schoolId}/classes/active-count`,
@@ -114,6 +134,10 @@ export class LearnerManagementService {
 
   createClass(payload: CreateClassRequestDto): Observable<ClassDto> {
     return this.http.post<ClassDto>(`${this.baseUrl}/classes`, payload, this.getRequestOptions());
+  }
+
+  updateClass(id: number, payload: UpdateClassRequestDto): Observable<ClassDto> {
+    return this.http.put<ClassDto>(`${this.baseUrl}/classes/${id}`, payload, this.getRequestOptions());
   }
 
   getClassById(id: number): Observable<ClassDetailDto> {

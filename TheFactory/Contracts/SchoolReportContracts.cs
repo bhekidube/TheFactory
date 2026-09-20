@@ -9,6 +9,32 @@ public sealed class LearnerDto
     public ParentGuardianDto ParentGuardian { get; set; } = new();
 }
 
+public sealed class StaffDto
+{
+    public int Id { get; set; }
+    public int SchoolId { get; set; }
+    public int? UserId { get; set; }
+    public string FirstName { get; set; } = string.Empty;
+    public string Surname { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
+    public string Status { get; set; } = "Active";
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+}
+
+public sealed class StaffUpsertRequest
+{
+    public int? UserId { get; set; }
+    public string FirstName { get; set; } = string.Empty;
+    public string Surname { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
+    public string Status { get; set; } = "Active";
+}
+
 public sealed class ParentGuardianDto
 {
     public string FirstName { get; set; } = string.Empty;
@@ -75,6 +101,13 @@ public sealed class CreateClassRequestDto
     public string Grade { get; set; } = string.Empty;
     public int TeacherId { get; set; }
     public IReadOnlyCollection<int> LearnerIds { get; set; } = Array.Empty<int>();
+}
+
+public sealed class UpdateClassRequestDto
+{
+    public string Name { get; set; } = string.Empty;
+    public string Grade { get; set; } = string.Empty;
+    public int TeacherId { get; set; }
 }
 
 public sealed class ClassDto
