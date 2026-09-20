@@ -1421,6 +1421,15 @@ public sealed class LearnerService : ILearnerService
 
         var hasDateOfBirth = await HasColumnAsync(connection, "institution", "Learner", "DateOfBirth", cancellationToken);
         var hasParentGuardianContact = await HasColumnAsync(connection, "institution", "Learner", "ParentGuardianContact", cancellationToken);
+        var hasParentUserId = await HasColumnAsync(connection, "institution", "Learner", "ParentUserId", cancellationToken);
+        var hasLearnerParentGuardianTable = await HasTableAsync(connection, "institution", "LearnerParentGuardian", cancellationToken);
+
+        var parentUserIdSelect = hasParentUserId
+            ? "l.ParentUserId"
+            : "CAST(NULL AS INT) AS ParentUserId";
+        var parentJoin = hasParentUserId
+            ? "LEFT JOIN [User] pu ON pu.UserId = l.ParentUserId"
+            : string.Empty;
 
         var learnerColumns = new List<string>
         {
@@ -1429,15 +1438,20 @@ public sealed class LearnerService : ILearnerService
             "Surname",
             "Grade",
             hasDateOfBirth ? "CONVERT(NVARCHAR(30), DateOfBirth, 23) AS DateOfBirth" : "CAST(NULL AS NVARCHAR(30)) AS DateOfBirth",
-            hasParentGuardianContact ? "ParentGuardianContact" : "CAST(NULL AS NVARCHAR(200)) AS ParentGuardianContact"
+            hasParentGuardianContact ? "ParentGuardianContact" : "CAST(NULL AS NVARCHAR(200)) AS ParentGuardianContact",
+            parentUserIdSelect,
+            "ISNULL(pu.Name, '') AS ParentUserName",
+            "ISNULL(pu.Email, '') AS ParentUserEmail",
+            "ISNULL(pu.CellPhoneNo, '') AS ParentUserPhone"
         };
 
         using var learnerCommand = new SqlCommand(
             $@"SELECT {string.Join(", ", learnerColumns)}
-               FROM institution.Learner
-               WHERE Id = @LearnerId
-                 AND TenantId = @TenantId
-                 AND IsArchived = 0;",
+               FROM institution.Learner l
+               {parentJoin}
+               WHERE l.Id = @LearnerId
+                 AND l.TenantId = @TenantId
+                 AND l.IsArchived = 0;",
             connection);
         learnerCommand.Parameters.AddWithValue("@LearnerId", learnerId);
         learnerCommand.Parameters.AddWithValue("@TenantId", tenantId.Value);
@@ -1448,14 +1462,38 @@ public sealed class LearnerService : ILearnerService
             return null;
         }
 
+        var learnerIdValue = reader.GetInt32(0);
+        var firstName = reader.IsDBNull(1) ? string.Empty : reader.GetString(1);
+        var surname = reader.IsDBNull(2) ? string.Empty : reader.GetString(2);
+        var grade = reader.IsDBNull(3) ? string.Empty : reader.GetString(3);
+        var dateOfBirth = reader.IsDBNull(4) ? string.Empty : reader.GetString(4);
+        var parentGuardianContact = reader.IsDBNull(5) ? string.Empty : reader.GetString(5);
+        var parentGuardian = DeserializeParentGuardian(parentGuardianContact);
+        var parentUserName = reader.IsDBNull(7) ? string.Empty : reader.GetString(7);
+        var parentUserEmail = reader.IsDBNull(8) ? string.Empty : reader.GetString(8);
+        var parentUserPhone = reader.IsDBNull(9) ? string.Empty : reader.GetString(9);
+        parentGuardian = MergeParentGuardianFromLinkedUser(parentGuardian, parentUserName, parentUserEmail, parentUserPhone);
+
+        reader.Close();
+
+        if (hasLearnerParentGuardianTable)
+        {
+            var tableParentGuardian = await TryGetParentGuardianFromFallbackTableAsync(connection, learnerId, cancellationToken);
+            if (tableParentGuardian is not null)
+            {
+                parentGuardian = MergeParentGuardianFromFallbackTable(parentGuardian, tableParentGuardian);
+            }
+        }
+
         var detail = new LearnerDetailDto
         {
-            LearnerId = reader.GetInt32(0),
-            FirstName = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
-            Surname = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
-            Grade = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
-            DateOfBirth = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
-            ParentGuardianContact = reader.IsDBNull(5) ? string.Empty : reader.GetString(5)
+            LearnerId = learnerIdValue,
+            FirstName = firstName,
+            Surname = surname,
+            Grade = grade,
+            DateOfBirth = dateOfBirth,
+            ParentGuardianContact = parentGuardianContact,
+            ParentGuardian = parentGuardian
         };
 
         detail.AcademicRecords = await GetLearnerAcademicRecordsAsync(learnerId, cancellationToken);
@@ -1629,6 +1667,7 @@ public sealed class LearnerService : ILearnerService
 
         var hasParentGuardianContact = await HasColumnAsync(connection, "institution", "Learner", "ParentGuardianContact", cancellationToken);
         var hasParentUserId = await HasColumnAsync(connection, "institution", "Learner", "ParentUserId", cancellationToken);
+        var hasLearnerParentGuardianTable = await HasTableAsync(connection, "institution", "LearnerParentGuardian", cancellationToken);
         var parentContactSelect = hasParentGuardianContact
             ? "ParentGuardianContact"
             : "CAST(NULL AS NVARCHAR(MAX)) AS ParentGuardianContact";
@@ -1664,18 +1703,34 @@ public sealed class LearnerService : ILearnerService
             return null;
         }
 
-        var parentGuardian = DeserializeParentGuardian(reader.IsDBNull(4) ? string.Empty : reader.GetString(4));
+        var learnerIdValue = reader.GetInt32(0);
+        var firstName = reader.IsDBNull(1) ? string.Empty : reader.GetString(1);
+        var surname = reader.IsDBNull(2) ? string.Empty : reader.GetString(2);
+        var grade = reader.IsDBNull(3) ? string.Empty : reader.GetString(3);
+        var parentGuardianContact = reader.IsDBNull(4) ? string.Empty : reader.GetString(4);
+        var parentGuardian = DeserializeParentGuardian(parentGuardianContact);
         var parentUserName = reader.IsDBNull(6) ? string.Empty : reader.GetString(6);
         var parentUserEmail = reader.IsDBNull(7) ? string.Empty : reader.GetString(7);
         var parentUserPhone = reader.IsDBNull(8) ? string.Empty : reader.GetString(8);
         parentGuardian = MergeParentGuardianFromLinkedUser(parentGuardian, parentUserName, parentUserEmail, parentUserPhone);
 
+        reader.Close();
+
+        if (hasLearnerParentGuardianTable)
+        {
+            var tableParentGuardian = await TryGetParentGuardianFromFallbackTableAsync(connection, learnerId, cancellationToken);
+            if (tableParentGuardian is not null)
+            {
+                parentGuardian = MergeParentGuardianFromFallbackTable(parentGuardian, tableParentGuardian);
+            }
+        }
+
         return new LearnerDto
         {
-            Id = reader.GetInt32(0),
-            FirstName = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
-            Surname = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
-            Grade = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+            Id = learnerIdValue,
+            FirstName = firstName,
+            Surname = surname,
+            Grade = grade,
             ParentGuardian = parentGuardian
         };
     }
@@ -1694,6 +1749,7 @@ public sealed class LearnerService : ILearnerService
         {
             var hasParentGuardianContact = await HasColumnAsync(connection, "institution", "Learner", "ParentGuardianContact", cancellationToken);
             var hasParentUserId = await HasColumnAsync(connection, "institution", "Learner", "ParentUserId", cancellationToken);
+            var hasLearnerParentGuardianTable = await HasTableAsync(connection, "institution", "LearnerParentGuardian", cancellationToken);
             var linkedParentUserId = await TryFindExistingParentUserIdAsync(connection, transaction, learner.ParentGuardian, cancellationToken);
             var nextId = await GetNextIdAsync(connection, transaction, "institution.Learner", cancellationToken);
             using var command = new SqlCommand(
@@ -1716,6 +1772,17 @@ public sealed class LearnerService : ILearnerService
             }
 
             await command.ExecuteNonQueryAsync(cancellationToken);
+
+            if (hasLearnerParentGuardianTable)
+            {
+                await UpsertParentGuardianFallbackAsync(
+                    connection,
+                    transaction,
+                    nextId,
+                    NormalizeParentGuardian(learner.ParentGuardian),
+                    cancellationToken);
+            }
+
             await transaction.CommitAsync(cancellationToken);
 
             return new LearnerDto
@@ -1745,6 +1812,7 @@ public sealed class LearnerService : ILearnerService
 
         var hasParentGuardianContact = await HasColumnAsync(connection, "institution", "Learner", "ParentGuardianContact", cancellationToken);
         var hasParentUserId = await HasColumnAsync(connection, "institution", "Learner", "ParentUserId", cancellationToken);
+        var hasLearnerParentGuardianTable = await HasTableAsync(connection, "institution", "LearnerParentGuardian", cancellationToken);
         var linkedParentUserId = await TryFindExistingParentUserIdAsync(connection, null, learner.ParentGuardian, cancellationToken);
 
         using var command = new SqlCommand(
@@ -1769,6 +1837,16 @@ public sealed class LearnerService : ILearnerService
         if (affected == 0)
         {
             return null;
+        }
+
+        if (hasLearnerParentGuardianTable)
+        {
+            await UpsertParentGuardianFallbackAsync(
+                connection,
+                null,
+                learnerId,
+                NormalizeParentGuardian(learner.ParentGuardian),
+                cancellationToken);
         }
 
         return new LearnerDto
@@ -1923,6 +2001,128 @@ public sealed class LearnerService : ILearnerService
         }
 
         return merged;
+    }
+
+    private static ParentGuardianDto MergeParentGuardianFromFallbackTable(
+        ParentGuardianDto baseParentGuardian,
+        ParentGuardianDto fallbackParentGuardian)
+    {
+        var merged = NormalizeParentGuardian(baseParentGuardian);
+        var fallback = NormalizeParentGuardian(fallbackParentGuardian);
+
+        if (!string.IsNullOrWhiteSpace(fallback.FirstName))
+        {
+            merged.FirstName = fallback.FirstName;
+        }
+
+        if (!string.IsNullOrWhiteSpace(fallback.Surname))
+        {
+            merged.Surname = fallback.Surname;
+        }
+
+        if (!string.IsNullOrWhiteSpace(fallback.PhoneNumber))
+        {
+            merged.PhoneNumber = fallback.PhoneNumber;
+        }
+
+        if (!string.IsNullOrWhiteSpace(fallback.EmailAddress))
+        {
+            merged.EmailAddress = fallback.EmailAddress;
+        }
+
+        if (!string.IsNullOrWhiteSpace(fallback.RelationshipToLearner))
+        {
+            merged.RelationshipToLearner = fallback.RelationshipToLearner;
+        }
+
+        return merged;
+    }
+
+    private static async Task<ParentGuardianDto?> TryGetParentGuardianFromFallbackTableAsync(
+        SqlConnection connection,
+        int learnerId,
+        CancellationToken cancellationToken)
+    {
+        using var command = new SqlCommand(
+            @"SELECT ParentFirstName, ParentSurname, ParentPhoneNumber, ParentEmailAddress, RelationshipToLearner
+              FROM institution.LearnerParentGuardian
+              WHERE LearnerId = @LearnerId;",
+            connection);
+        command.Parameters.AddWithValue("@LearnerId", learnerId);
+
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        return NormalizeParentGuardian(new ParentGuardianDto
+        {
+            FirstName = reader.IsDBNull(0) ? string.Empty : reader.GetString(0),
+            Surname = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+            PhoneNumber = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+            EmailAddress = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+            RelationshipToLearner = reader.IsDBNull(4) ? string.Empty : reader.GetString(4)
+        });
+    }
+
+    private static async Task UpsertParentGuardianFallbackAsync(
+        SqlConnection connection,
+        SqlTransaction? transaction,
+        int learnerId,
+        ParentGuardianDto parentGuardian,
+        CancellationToken cancellationToken)
+    {
+        using var command = new SqlCommand(
+            @"IF EXISTS (SELECT 1 FROM institution.LearnerParentGuardian WHERE LearnerId = @LearnerId)
+              BEGIN
+                  UPDATE institution.LearnerParentGuardian
+                  SET ParentFirstName = @ParentFirstName,
+                      ParentSurname = @ParentSurname,
+                      ParentPhoneNumber = @ParentPhoneNumber,
+                      ParentEmailAddress = @ParentEmailAddress,
+                      RelationshipToLearner = @RelationshipToLearner,
+                      UpdatedAt = SYSUTCDATETIME()
+                  WHERE LearnerId = @LearnerId;
+              END
+              ELSE
+              BEGIN
+                  INSERT INTO institution.LearnerParentGuardian
+                      (LearnerId, ParentFirstName, ParentSurname, ParentPhoneNumber, ParentEmailAddress, RelationshipToLearner, UpdatedAt)
+                  VALUES
+                      (@LearnerId, @ParentFirstName, @ParentSurname, @ParentPhoneNumber, @ParentEmailAddress, @RelationshipToLearner, SYSUTCDATETIME());
+              END",
+            connection,
+            transaction);
+
+        command.Parameters.AddWithValue("@LearnerId", learnerId);
+        command.Parameters.AddWithValue("@ParentFirstName", parentGuardian.FirstName);
+        command.Parameters.AddWithValue("@ParentSurname", parentGuardian.Surname);
+        command.Parameters.AddWithValue("@ParentPhoneNumber", parentGuardian.PhoneNumber);
+        command.Parameters.AddWithValue("@ParentEmailAddress", parentGuardian.EmailAddress);
+        command.Parameters.AddWithValue("@RelationshipToLearner", parentGuardian.RelationshipToLearner);
+
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private static async Task<bool> HasTableAsync(
+        SqlConnection connection,
+        string schemaName,
+        string tableName,
+        CancellationToken cancellationToken)
+    {
+        using var command = new SqlCommand(
+            @"SELECT COUNT(1)
+              FROM INFORMATION_SCHEMA.TABLES
+              WHERE TABLE_SCHEMA = @SchemaName
+                AND TABLE_NAME = @TableName;",
+            connection);
+
+        command.Parameters.AddWithValue("@SchemaName", schemaName);
+        command.Parameters.AddWithValue("@TableName", tableName);
+
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return Convert.ToInt32(result ?? 0) > 0;
     }
 
     private static string BuildCreateLearnerInsertSql(bool hasParentGuardianContact, bool hasParentUserId)

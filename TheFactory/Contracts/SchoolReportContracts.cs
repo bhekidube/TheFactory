@@ -148,6 +148,7 @@ public sealed class LearnerDetailDto
     public string Grade { get; set; } = string.Empty;
     public string DateOfBirth { get; set; } = string.Empty;
     public string ParentGuardianContact { get; set; } = string.Empty;
+    public ParentGuardianDto ParentGuardian { get; set; } = new();
     public IReadOnlyCollection<LearnerAcademicRecordDto> AcademicRecords { get; set; } = Array.Empty<LearnerAcademicRecordDto>();
 }
 

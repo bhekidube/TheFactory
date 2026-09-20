@@ -128,6 +128,7 @@ export interface LearnerDetailDto {
   grade: string;
   dateOfBirth: string;
   parentGuardianContact: string;
+  parentGuardian: ParentGuardianDto;
   academicRecords: LearnerAcademicRecordDto[];
 }
 

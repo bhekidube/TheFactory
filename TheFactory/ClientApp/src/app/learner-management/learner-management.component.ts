@@ -60,6 +60,7 @@ export class LearnerManagementComponent implements OnInit {
   showReportPanel = false;
   showClassForm = false;
   isEditMode = false;
+  editingLearnerId: number | null = null;
   classFormSubmitted = false;
   classNameTouched = false;
   learnerFormSubmitted = false;
@@ -230,6 +231,7 @@ export class LearnerManagementComponent implements OnInit {
   openAddLearner(): void {
     this.clearMessages();
     this.isEditMode = false;
+    this.editingLearnerId = null;
     this.learnerFormSubmitted = false;
     this.learnerForm = this.getEmptyLearner();
     this.parentGuardianForm = this.getEmptyParentGuardian();
@@ -352,25 +354,56 @@ export class LearnerManagementComponent implements OnInit {
   openEditLearner(learner: LearnerDto): void {
     this.clearMessages();
     this.isEditMode = true;
+    this.editingLearnerId = learner.id;
     this.learnerFormSubmitted = false;
     this.showLearnerForm = true;
     this.loadingLearnerDetail = true;
 
+    if (!Number.isFinite(learner.id) || learner.id <= 0) {
+      const fallback = this.normalizeLearnerResponse(learner);
+      this.learnerForm = {
+        ...fallback,
+        id: 0,
+        parentGuardian: fallback.parentGuardian || this.getEmptyParentGuardian()
+      };
+      this.parentGuardianForm = {
+        ...this.getEmptyParentGuardian(),
+        ...(fallback.parentGuardian || {})
+      };
+      this.loadingLearnerDetail = false;
+      this.errorMessage = 'Unable to edit this learner because the learner id is missing.';
+      return;
+    }
+
     this.learnerService.getLearner(learner.id).subscribe({
       next: detail => {
+        const normalized = this.normalizeLearnerResponse(detail);
+        const resolvedId = normalized.id > 0 ? normalized.id : (this.editingLearnerId ?? 0);
+
         this.learnerForm = {
-          ...detail,
-          parentGuardian: detail.parentGuardian || this.getEmptyParentGuardian()
+          ...normalized,
+          id: resolvedId,
+          parentGuardian: normalized.parentGuardian || this.getEmptyParentGuardian()
         };
         this.parentGuardianForm = {
           ...this.getEmptyParentGuardian(),
-          ...(detail.parentGuardian || {})
+          ...(normalized.parentGuardian || {})
         };
         this.loadingLearnerDetail = false;
       },
       error: err => {
+        const fallback = this.normalizeLearnerResponse(learner);
+        this.learnerForm = {
+          ...fallback,
+          id: this.editingLearnerId ?? fallback.id,
+          parentGuardian: fallback.parentGuardian || this.getEmptyParentGuardian()
+        };
+        this.parentGuardianForm = {
+          ...this.getEmptyParentGuardian(),
+          ...(fallback.parentGuardian || {})
+        };
         this.loadingLearnerDetail = false;
-        this.errorMessage = this.mapHttpError(err, 'Failed to load learner details.');
+        this.errorMessage = this.mapHttpError(err, 'Loaded learner data was incomplete, so the form was restored from the current list row.');
       }
     });
   }
@@ -381,6 +414,7 @@ export class LearnerManagementComponent implements OnInit {
     }
 
     this.showLearnerForm = false;
+    this.editingLearnerId = null;
     this.learnerFormSubmitted = false;
     this.learnerForm = this.getEmptyLearner();
     this.parentGuardianForm = this.getEmptyParentGuardian();
@@ -441,11 +475,23 @@ export class LearnerManagementComponent implements OnInit {
       return;
     }
 
+    const learnerIdToUpdate = Number.isFinite(updatePayload.id) && updatePayload.id > 0
+      ? updatePayload.id
+      : (this.editingLearnerId ?? 0);
+
+    if (!Number.isFinite(learnerIdToUpdate) || learnerIdToUpdate <= 0) {
+      this.errorMessage = 'Unable to update learner: learner id is missing.';
+      return;
+    }
+
+    updatePayload.id = learnerIdToUpdate;
+
     this.updatingLearner = true;
-    this.learnerService.updateLearner(updatePayload.id, updatePayload).subscribe({
+    this.learnerService.updateLearner(learnerIdToUpdate, updatePayload).subscribe({
       next: () => {
         this.updatingLearner = false;
         this.showLearnerForm = false;
+        this.editingLearnerId = null;
         this.learnerFormSubmitted = false;
         this.successMessage = 'Learner updated successfully.';
         this.loadLearners();
@@ -725,6 +771,26 @@ export class LearnerManagementComponent implements OnInit {
     }
 
     return '';
+  }
+
+  private normalizeLearnerResponse(raw: any): LearnerDto {
+    const source = raw ?? {};
+    const parentSource = source.parentGuardian ?? source.ParentGuardian ?? {};
+    const idValue = Number(source.id ?? source.learnerId ?? 0);
+
+    return {
+      id: Number.isFinite(idValue) ? idValue : 0,
+      firstName: String(source.firstName ?? source.FirstName ?? ''),
+      surname: String(source.surname ?? source.Surname ?? ''),
+      grade: String(source.grade ?? source.Grade ?? ''),
+      parentGuardian: {
+        firstName: String(parentSource.firstName ?? parentSource.FirstName ?? ''),
+        surname: String(parentSource.surname ?? parentSource.Surname ?? ''),
+        phoneNumber: String(parentSource.phoneNumber ?? parentSource.PhoneNumber ?? ''),
+        emailAddress: String(parentSource.emailAddress ?? parentSource.EmailAddress ?? ''),
+        relationshipToLearner: String(parentSource.relationshipToLearner ?? parentSource.RelationshipToLearner ?? '')
+      }
+    };
   }
 
   private getEmptyLearner(): LearnerDto {
