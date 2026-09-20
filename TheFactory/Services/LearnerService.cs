@@ -517,6 +517,100 @@ public sealed class LearnerService : ILearnerService
         }
     }
 
+    public async Task<LearnerLookupDto?> AssignLearnerToClassAsync(int classId, int learnerId, CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        var tenantId = await ResolveTenantIdAsync(connection, cancellationToken);
+        if (!tenantId.HasValue)
+        {
+            return null;
+        }
+
+        using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
+        try
+        {
+            using (var classCheckCommand = new SqlCommand(
+                @"SELECT COUNT(1)
+                  FROM institution.Class
+                  WHERE Id = @ClassId
+                    AND SchoolId = @SchoolId;",
+                connection,
+                transaction))
+            {
+                classCheckCommand.Parameters.AddWithValue("@ClassId", classId);
+                classCheckCommand.Parameters.AddWithValue("@SchoolId", tenantId.Value);
+                if (Convert.ToInt32(await classCheckCommand.ExecuteScalarAsync(cancellationToken)) == 0)
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    return null;
+                }
+            }
+
+            LearnerLookupDto learner;
+            using (var learnerCommand = new SqlCommand(
+                @"SELECT Id, FirstName, Surname, Grade
+                  FROM institution.Learner
+                  WHERE Id = @LearnerId
+                    AND TenantId = @TenantId
+                    AND IsArchived = 0;",
+                connection,
+                transaction))
+            {
+                learnerCommand.Parameters.AddWithValue("@LearnerId", learnerId);
+                learnerCommand.Parameters.AddWithValue("@TenantId", tenantId.Value);
+                using var reader = await learnerCommand.ExecuteReaderAsync(cancellationToken);
+                if (!await reader.ReadAsync(cancellationToken))
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    return null;
+                }
+
+                learner = new LearnerLookupDto
+                {
+                    LearnerId = reader.GetInt32(0),
+                    FirstName = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                    Surname = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                    Grade = reader.IsDBNull(3) ? string.Empty : reader.GetString(3)
+                };
+            }
+
+            using (var existingCommand = new SqlCommand(
+                @"SELECT COUNT(1)
+                  FROM institution.ClassEnrolment
+                  WHERE ClassId = @ClassId
+                    AND LearnerId = @LearnerId;",
+                connection,
+                transaction))
+            {
+                existingCommand.Parameters.AddWithValue("@ClassId", classId);
+                existingCommand.Parameters.AddWithValue("@LearnerId", learnerId);
+                if (Convert.ToInt32(await existingCommand.ExecuteScalarAsync(cancellationToken)) > 0)
+                {
+                    throw new InvalidOperationException("Learner is already enrolled in this class.");
+                }
+            }
+
+            using (var insertCommand = new SqlCommand(
+                @"INSERT INTO institution.ClassEnrolment (ClassId, LearnerId)
+                  VALUES (@ClassId, @LearnerId);",
+                connection,
+                transaction))
+            {
+                insertCommand.Parameters.AddWithValue("@ClassId", classId);
+                insertCommand.Parameters.AddWithValue("@LearnerId", learnerId);
+                await insertCommand.ExecuteNonQueryAsync(cancellationToken);
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+            return learner;
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
     public async Task<ClassAssignedSubjectDto?> AssignSubjectToClassAsync(int classId, int subjectId, CancellationToken cancellationToken = default)
     {
         using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);

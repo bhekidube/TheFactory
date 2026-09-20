@@ -161,6 +161,11 @@ public sealed class AssignClassSubjectRequestDto
     public int SubjectId { get; set; }
 }
 
+public sealed class AssignClassLearnerRequestDto
+{
+    public int LearnerId { get; set; }
+}
+
 public sealed class SubjectUpsertRequestDto
 {
     public string Name { get; set; } = string.Empty;

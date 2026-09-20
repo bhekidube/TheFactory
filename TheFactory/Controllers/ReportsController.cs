@@ -477,6 +477,36 @@ public class ReportsController : ControllerBase
         }
     }
 
+    [HttpPost("classes/{id:int}/learners")]
+    [ProducesResponseType(typeof(LearnerLookupDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<LearnerLookupDto>> AssignLearnerToClass(
+        int id,
+        [FromBody] AssignClassLearnerRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        if (request is null || request.LearnerId <= 0)
+        {
+            return BadRequest("LearnerId is required.");
+        }
+
+        try
+        {
+            var assignedLearner = await _learnerService.AssignLearnerToClassAsync(id, request.LearnerId, cancellationToken);
+            if (assignedLearner is null)
+            {
+                return NotFound();
+            }
+
+            return Ok(assignedLearner);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Failed to enroll learner: {ex.Message}");
+        }
+    }
+
     [HttpGet("work")]
     [ProducesResponseType(typeof(IReadOnlyCollection<WorkDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyCollection<WorkDto>>> GetWorkItems(CancellationToken cancellationToken)

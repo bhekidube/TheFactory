@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ClassAssignedSubjectDto, ClassDetailDto, WorkDto, WorkTypeLookupDto, WorkUpsertRequestDto } from '../learner-management/learner-management.models';
+import { ClassAssignedSubjectDto, ClassDetailDto, LearnerDto, LearnerLookupDto, WorkDto, WorkTypeLookupDto, WorkUpsertRequestDto } from '../learner-management/learner-management.models';
 import { LearnerManagementService } from '../services/learner-management.service';
 
 @Component({
@@ -17,6 +17,8 @@ export class ClassDetailComponent implements OnInit {
   loadingWork = false;
   assigningSubject = false;
   searchingSubjects = false;
+  loadingLearners = false;
+  enrollingLearner = false;
   creatingWork = false;
   updatingWork = false;
   archivingWorkId: number | null = null;
@@ -26,6 +28,9 @@ export class ClassDetailComponent implements OnInit {
   subjectSearchTerm = '';
   subjectLookupResults: ClassAssignedSubjectDto[] = [];
   selectedSubject: ClassAssignedSubjectDto | null = null;
+  learnerSearchTerm = '';
+  availableLearners: LearnerLookupDto[] = [];
+  selectedLearnerId = 0;
   isEditWorkMode = false;
   editingWorkId = 0;
   workItems: WorkDto[] = [];
@@ -61,12 +66,74 @@ export class ClassDetailComponent implements OnInit {
       next: detail => {
         this.classDetail = detail;
         this.loading = false;
+        this.loadAvailableLearners();
         this.loadWorkTypes();
         this.loadWorkItems();
       },
       error: err => {
         this.loading = false;
         this.errorMessage = this.mapHttpError(err, 'Failed to load class details.');
+      }
+    });
+  }
+
+  get filteredAvailableLearners(): LearnerLookupDto[] {
+    const term = this.learnerSearchTerm.trim().toLowerCase();
+    if (!term) {
+      return this.availableLearners;
+    }
+
+    return this.availableLearners.filter(learner =>
+      `${learner.firstName} ${learner.surname}`.toLowerCase().includes(term)
+      || learner.grade.toLowerCase().includes(term)
+      || learner.learnerId.toString().includes(term)
+    );
+  }
+
+  private loadAvailableLearners(): void {
+    if (!this.classDetail) {
+      return;
+    }
+
+    this.loadingLearners = true;
+    const enrolledIds = new Set(this.classDetail.learners.map(learner => learner.learnerId));
+    this.learnerService.getLearners().subscribe({
+      next: learners => {
+        this.availableLearners = learners
+          .filter(learner => !enrolledIds.has(learner.id))
+          .map((learner: LearnerDto) => ({
+            learnerId: learner.id,
+            firstName: learner.firstName,
+            surname: learner.surname,
+            grade: learner.grade
+          }));
+        this.loadingLearners = false;
+      },
+      error: err => {
+        this.loadingLearners = false;
+        this.errorMessage = this.mapHttpError(err, 'Failed to load available learners.');
+      }
+    });
+  }
+
+  enrollSelectedLearner(): void {
+    if (!this.selectedLearnerId || this.enrollingLearner || !this.classDetail) {
+      return;
+    }
+
+    this.enrollingLearner = true;
+    this.clearMessages();
+    this.learnerService.assignLearnerToClass(this.classId, this.selectedLearnerId).subscribe({
+      next: () => {
+        this.enrollingLearner = false;
+        this.selectedLearnerId = 0;
+        this.learnerSearchTerm = '';
+        this.successMessage = 'Learner enrolled in class successfully.';
+        this.loadClassDetail();
+      },
+      error: err => {
+        this.enrollingLearner = false;
+        this.errorMessage = this.mapHttpError(err, 'Failed to enroll learner.');
       }
     });
   }

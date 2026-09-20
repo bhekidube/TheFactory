@@ -51,7 +51,9 @@ builder.Services.AddCors(options =>
             "https://hambaonline.com",           // (optional, non-www)
             "https://newdomain.com",             // new Angular app domain
             "http://newdomain.com",               // (optional, non-https)
-            "http://localhost:4200" // <-- add this for local Angular dev
+            "http://localhost:4200", // local Angular dev
+            "https://localhost:4201",
+            "http://localhost:4201" // newdomain Angular dev
         )
         .AllowAnyHeader()
         .AllowAnyMethod();

@@ -13,6 +13,7 @@ public interface ILearnerService
     Task<IReadOnlyCollection<LearnerLookupDto>> SearchLearnersAsync(string query, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<ClassAssignedSubjectDto>> SearchSubjectsAsync(string query, CancellationToken cancellationToken = default);
     Task<ClassDto> CreateClassAsync(CreateClassRequestDto request, CancellationToken cancellationToken = default);
+    Task<LearnerLookupDto?> AssignLearnerToClassAsync(int classId, int learnerId, CancellationToken cancellationToken = default);
     Task<ClassAssignedSubjectDto?> AssignSubjectToClassAsync(int classId, int subjectId, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<SubjectDto>> GetAllSubjectsForCurrentTenantAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<GradeDto>> GetGradesAsync(CancellationToken cancellationToken = default);

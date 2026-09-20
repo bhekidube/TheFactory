@@ -36,6 +36,34 @@
 
     <div class="section-card">
       <h3>Enrolled Learners</h3>
+      <div class="enroll-learner-controls">
+        <label>
+          Search learner
+          <input
+            type="search"
+            name="learnerSearch"
+            [(ngModel)]="learnerSearchTerm"
+            placeholder="Search by name, grade, or ID" />
+        </label>
+        <label>
+          Learner to enroll
+          <select name="learnerToEnroll" [(ngModel)]="selectedLearnerId" [disabled]="loadingLearners || enrollingLearner">
+            <option [ngValue]="0">Select a learner</option>
+            <option *ngFor="let learner of filteredAvailableLearners" [ngValue]="learner.learnerId">
+              {{ learner.firstName }} {{ learner.surname }} - {{ learner.grade }}
+            </option>
+          </select>
+        </label>
+        <button
+          type="button"
+          class="primary-btn"
+          [disabled]="!selectedLearnerId || loadingLearners || enrollingLearner"
+          (click)="enrollSelectedLearner()">
+          {{ enrollingLearner ? 'Enrolling...' : 'Enroll' }}
+        </button>
+      </div>
+      <div class="state-card" *ngIf="loadingLearners">Loading available learners...</div>
+      <div class="state-card" *ngIf="!loadingLearners && availableLearners.length === 0">All learners are already enrolled.</div>
       <div class="state-card" *ngIf="classDetail.learners.length === 0">No learners enrolled yet.</div>
       <div class="table-wrap" *ngIf="classDetail.learners.length > 0">
         <table>

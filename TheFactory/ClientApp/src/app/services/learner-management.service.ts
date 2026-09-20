@@ -165,6 +165,14 @@ export class LearnerManagementService {
     );
   }
 
+  assignLearnerToClass(classId: number, learnerId: number): Observable<LearnerLookupDto> {
+    return this.http.post<LearnerLookupDto>(
+      `${this.baseUrl}/classes/${classId}/learners`,
+      { learnerId },
+      this.getRequestOptions()
+    );
+  }
+
   assignSubjectToClass(classId: number, subjectId: number): Observable<ClassAssignedSubjectDto> {
     return this.http.post<ClassAssignedSubjectDto>(
       `${this.baseUrl}/classes/${classId}/subjects`,
