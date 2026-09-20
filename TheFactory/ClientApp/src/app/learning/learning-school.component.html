@@ -11,8 +11,12 @@
     <h2 class="mb-1">School</h2>
     <p class="school-name" *ngIf="!loading && schoolName">{{ schoolName }}</p>
     <div class="school-meta-badges" *ngIf="!loading && schoolName">
-      <span class="school-meta-badge">• {{ classesCount }} {{ classesCount === 1 ? 'Class' : 'Classes' }}</span>
-      <span class="school-meta-badge">• {{ learnersCount }} {{ learnersCount === 1 ? 'Learner' : 'Learners' }}</span>
+      <a [routerLink]="['/learning/schools', schoolId, 'classes']" [queryParams]="{ tab: 'classes' }">
+        <span class="school-meta-badge">• {{ classesCount }} {{ classesCount === 1 ? 'Class' : 'Classes' }}</span>
+      </a>
+      <a [routerLink]="['/learning/schools', schoolId, 'learners']">
+        <span class="school-meta-badge">• {{ learnersCount }} {{ learnersCount === 1 ? 'Learner' : 'Learners' }}</span>
+      </a>
     </div>
     <p *ngIf="!loading && !schoolName && !errorMessage">No school selected.</p>
   </div>
