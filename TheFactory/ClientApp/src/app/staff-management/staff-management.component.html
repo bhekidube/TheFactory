@@ -21,17 +21,19 @@
     </div>
   </div>
 
-  <div class="toolbar action-bar">
-    <input
-      type="search"
-      [(ngModel)]="searchTerm"
-      (ngModelChange)="loadStaff()"
-      placeholder="Search staff..."
-      aria-label="Search staff" />
-    <button type="button" class="secondary-btn" (click)="loadStaff()" [disabled]="loading">
-      {{ loading ? 'Refreshing...' : 'Refresh' }}
-    </button>
-    <button type="button" class="primary-btn" (click)="openAddStaff()">+ Add Staff</button>
+  <div class="toolbar search-controls-row action-bar d-flex justify-content-between align-items-center gap-3 mb-3">
+    <div class="search-controls-group d-flex gap-2 flex-grow-1">
+      <input
+        type="search"
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="loadStaff()"
+        placeholder="Search staff..."
+        aria-label="Search staff" />
+      <button type="button" class="secondary-btn" (click)="loadStaff()" [disabled]="loading">
+        {{ loading ? 'Refreshing...' : 'Refresh' }}
+      </button>
+    </div>
+    <button type="button" class="primary-btn w-auto" (click)="openAddStaff()">+ Add Staff</button>
   </div>
 
   <div *ngIf="loading" class="state-card">Loading staff...</div>
