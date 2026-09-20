@@ -17,6 +17,9 @@
       <a [routerLink]="['/learning/schools', schoolId, 'learners']">
         <span class="school-meta-badge">• {{ learnersCount }} {{ learnersCount === 1 ? 'Learner' : 'Learners' }}</span>
       </a>
+      <a [routerLink]="['/learning/schools', schoolId, 'staff']">
+        <span class="school-meta-badge">• {{ staffCount }} Staff</span>
+      </a>
     </div>
     <p *ngIf="!loading && !schoolName && !errorMessage">No school selected.</p>
   </div>

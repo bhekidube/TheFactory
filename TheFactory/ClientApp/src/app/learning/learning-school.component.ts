@@ -12,6 +12,7 @@ export class LearningSchoolComponent implements OnInit {
   schoolName = '';
   classesCount = 0;
   learnersCount = 0;
+  staffCount = 0;
   loading = false;
   errorMessage = '';
 
@@ -37,6 +38,7 @@ export class LearningSchoolComponent implements OnInit {
     this.schoolName = '';
     this.classesCount = 0;
     this.learnersCount = 0;
+    this.staffCount = 0;
 
     this.learnerService.getSchools().subscribe({
       next: schools => {
@@ -63,7 +65,16 @@ export class LearningSchoolComponent implements OnInit {
             this.learnerService.getLearners().subscribe({
               next: learners => {
                 this.learnersCount = learners.length;
-                this.loading = false;
+                this.learnerService.getStaff(schoolIdNumber).subscribe({
+                  next: staff => {
+                    this.staffCount = staff.length;
+                    this.loading = false;
+                  },
+                  error: () => {
+                    this.loading = false;
+                    this.errorMessage = 'Unable to load school context right now.';
+                  }
+                });
               },
               error: () => {
                 this.loading = false;
