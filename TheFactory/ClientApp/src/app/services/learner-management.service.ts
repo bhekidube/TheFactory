@@ -7,6 +7,8 @@ import {
   ClassDetailDto,
   ClassDto,
   CreateClassRequestDto,
+  CreateLearnerRequestDto,
+  GradeDto,
   LearnerLookupDto,
   LearnerDto,
   LearnerDetailDto,
@@ -97,6 +99,10 @@ export class LearnerManagementService {
 
   getClasses(): Observable<ClassDto[]> {
     return this.http.get<ClassDto[]>(`${this.baseUrl}/classes`, this.getRequestOptions());
+  }
+
+  getGrades(): Observable<GradeDto[]> {
+    return this.http.get<GradeDto[]>(`${this.baseUrl}/lookup/Grades`, this.getRequestOptions());
   }
 
   getActiveClassCountForSchool(schoolId: number): Observable<ActiveClassCountDto> {
@@ -237,7 +243,7 @@ export class LearnerManagementService {
     );
   }
 
-  createLearner(payload: LearnerDto): Observable<LearnerDto> {
+  createLearner(payload: CreateLearnerRequestDto): Observable<LearnerDto> {
     return this.http.post<LearnerDto>(`${this.baseUrl}/learners`, payload, this.getRequestOptions());
   }
 

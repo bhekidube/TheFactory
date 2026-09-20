@@ -78,4 +78,15 @@ public class LookupController : ControllerBase
         var subjects = await _learnerService.GetSubjectsForCurrentTenantAsync(cancellationToken);
         return Ok(subjects);
     }
+
+    /// <summary>
+    /// Gets active grades for learner and class forms.
+    /// </summary>
+    [HttpGet("Grades")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<GradeDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<GradeDto>>> GetGrades(CancellationToken cancellationToken)
+    {
+        var grades = await _learnerService.GetGradesAsync(cancellationToken);
+        return Ok(grades);
+    }
 }

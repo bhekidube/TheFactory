@@ -6,6 +6,16 @@ public sealed class LearnerDto
     public string FirstName { get; set; } = string.Empty;
     public string Surname { get; set; } = string.Empty;
     public string Grade { get; set; } = string.Empty;
+    public ParentGuardianDto ParentGuardian { get; set; } = new();
+}
+
+public sealed class ParentGuardianDto
+{
+    public string FirstName { get; set; } = string.Empty;
+    public string Surname { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
+    public string EmailAddress { get; set; } = string.Empty;
+    public string RelationshipToLearner { get; set; } = string.Empty;
 }
 
 public sealed class SubjectScoreDto
@@ -31,6 +41,12 @@ public sealed class SubjectDto
     public string Name { get; set; } = string.Empty;
     public string Code { get; set; } = string.Empty;
     public bool IsActive { get; set; }
+}
+
+public sealed class GradeDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
 }
 
 public sealed class LearnerReportDto
@@ -138,6 +154,7 @@ public sealed class LearnerDetailDto
     public string Grade { get; set; } = string.Empty;
     public string DateOfBirth { get; set; } = string.Empty;
     public string ParentGuardianContact { get; set; } = string.Empty;
+    public ParentGuardianDto ParentGuardian { get; set; } = new();
     public IReadOnlyCollection<LearnerAcademicRecordDto> AcademicRecords { get; set; } = Array.Empty<LearnerAcademicRecordDto>();
 }
 

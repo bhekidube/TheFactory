@@ -996,6 +996,54 @@ public class ReportsController : ControllerBase
             return false;
         }
 
+        if (learnerDto.ParentGuardian is null)
+        {
+            error = "Parent/guardian details are required.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(learnerDto.ParentGuardian.FirstName))
+        {
+            error = "Parent first name is required.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(learnerDto.ParentGuardian.Surname))
+        {
+            error = "Parent surname is required.";
+            return false;
+        }
+
+        var phoneDigits = new string((learnerDto.ParentGuardian.PhoneNumber ?? string.Empty)
+            .Where(char.IsDigit)
+            .ToArray());
+
+        if (string.IsNullOrWhiteSpace(phoneDigits)
+            || !System.Text.RegularExpressions.Regex.IsMatch(phoneDigits, "^(07\\d{8}|2637\\d{8})$"))
+        {
+            error = "Parent phone number must be a valid Zimbabwe mobile number (07XXXXXXXX or 2637XXXXXXXX).";
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(learnerDto.ParentGuardian.EmailAddress))
+        {
+            try
+            {
+                _ = new System.Net.Mail.MailAddress(learnerDto.ParentGuardian.EmailAddress.Trim());
+            }
+            catch
+            {
+                error = "Parent email address format is invalid.";
+                return false;
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(learnerDto.ParentGuardian.RelationshipToLearner))
+        {
+            error = "Relationship to learner is required.";
+            return false;
+        }
+
         error = string.Empty;
         return true;
     }

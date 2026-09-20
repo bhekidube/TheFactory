@@ -5,8 +5,11 @@ import { filter, forkJoin, Subscription } from 'rxjs';
 import {
   ClassDto,
   CreateClassRequestDto,
+  CreateLearnerRequestDto,
+  GradeDto,
   LearnerLookupDto,
   LearnerDto,
+  ParentGuardianDto,
   LearnerReportResponseDto,
   SubjectDto,
   SubjectScoreDto,
@@ -34,10 +37,11 @@ export class LearnerManagementComponent implements OnInit {
   selectedLearners: LearnerLookupDto[] = [];
   selectedGrade = '';
   className = '';
-  gradeOptions = ['Baby Class', 'Middle Class', 'ECD A', 'ECD B', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4'];
+  gradeOptions: string[] = [];
 
   loadingLearners = false;
   loadingClasses = false;
+  loadingGrades = false;
   loadingLearnerDetail = false;
   loadingReport = false;
   loadingSubjects = false;
@@ -58,9 +62,15 @@ export class LearnerManagementComponent implements OnInit {
   showReportPanel = false;
   showClassForm = false;
   isEditMode = false;
+  editingLearnerId: number | null = null;
+  classFormSubmitted = false;
+  classNameTouched = false;
+  learnerFormSubmitted = false;
 
   learnerForm: LearnerDto = this.getEmptyLearner();
+  parentGuardianForm: ParentGuardianDto = this.getEmptyParentGuardian();
   scoreForm: SubjectScoreDto = this.getEmptyScore();
+  relationshipOptions = ['Mother', 'Father', 'Guardian', 'Other'];
 
   errorMessage = '';
   successMessage = '';
@@ -81,6 +91,7 @@ export class LearnerManagementComponent implements OnInit {
 
     this.loadLearners();
     this.loadClasses();
+    this.loadGrades();
   }
 
   ngOnDestroy(): void {
@@ -127,6 +138,29 @@ export class LearnerManagementComponent implements OnInit {
     }
 
     return this.selectedReport.average;
+  }
+
+  get isClassNameValid(): boolean {
+    return this.className.trim().length > 0;
+  }
+
+  get showClassNameValidationError(): boolean {
+    return (this.classFormSubmitted || this.classNameTouched) && !this.isClassNameValid;
+  }
+
+  markClassNameTouched(): void {
+    this.classNameTouched = true;
+  }
+
+  get isClassFormSubmittable(): boolean {
+    if (this.creatingClass) {
+      return false;
+    }
+
+    return this.isClassNameValid
+      && this.selectedGrade.trim().length > 0
+      && !!this.selectedTeacher
+      && this.selectedTeacher.teacherId > 0;
   }
 
   private setCurrentSectionFromRoute(): void {
@@ -177,6 +211,20 @@ export class LearnerManagementComponent implements OnInit {
     });
   }
 
+  loadGrades(): void {
+    this.loadingGrades = true;
+    this.learnerService.getGrades().subscribe({
+      next: (grades: GradeDto[]) => {
+        this.gradeOptions = grades.map(grade => grade.name);
+        this.loadingGrades = false;
+      },
+      error: err => {
+        this.loadingGrades = false;
+        this.errorMessage = this.mapHttpError(err, 'Failed to load grades.');
+      }
+    });
+  }
+
   applySearch(): void {
     const term = this.searchTerm.trim().toLowerCase();
 
@@ -200,7 +248,10 @@ export class LearnerManagementComponent implements OnInit {
   openAddLearner(): void {
     this.clearMessages();
     this.isEditMode = false;
+    this.editingLearnerId = null;
+    this.learnerFormSubmitted = false;
     this.learnerForm = this.getEmptyLearner();
+    this.parentGuardianForm = this.getEmptyParentGuardian();
     this.showLearnerForm = true;
   }
 
@@ -281,6 +332,7 @@ export class LearnerManagementComponent implements OnInit {
   }
 
   saveClass(): void {
+    this.classFormSubmitted = true;
     this.clearMessages();
 
     const validationError = this.validateClassForm();
@@ -319,17 +371,56 @@ export class LearnerManagementComponent implements OnInit {
   openEditLearner(learner: LearnerDto): void {
     this.clearMessages();
     this.isEditMode = true;
+    this.editingLearnerId = learner.id;
+    this.learnerFormSubmitted = false;
     this.showLearnerForm = true;
     this.loadingLearnerDetail = true;
 
+    if (!Number.isFinite(learner.id) || learner.id <= 0) {
+      const fallback = this.normalizeLearnerResponse(learner);
+      this.learnerForm = {
+        ...fallback,
+        id: 0,
+        parentGuardian: fallback.parentGuardian || this.getEmptyParentGuardian()
+      };
+      this.parentGuardianForm = {
+        ...this.getEmptyParentGuardian(),
+        ...(fallback.parentGuardian || {})
+      };
+      this.loadingLearnerDetail = false;
+      this.errorMessage = 'Unable to edit this learner because the learner id is missing.';
+      return;
+    }
+
     this.learnerService.getLearner(learner.id).subscribe({
       next: detail => {
-        this.learnerForm = { ...detail };
+        const normalized = this.normalizeLearnerResponse(detail);
+        const resolvedId = normalized.id > 0 ? normalized.id : (this.editingLearnerId ?? 0);
+
+        this.learnerForm = {
+          ...normalized,
+          id: resolvedId,
+          parentGuardian: normalized.parentGuardian || this.getEmptyParentGuardian()
+        };
+        this.parentGuardianForm = {
+          ...this.getEmptyParentGuardian(),
+          ...(normalized.parentGuardian || {})
+        };
         this.loadingLearnerDetail = false;
       },
       error: err => {
+        const fallback = this.normalizeLearnerResponse(learner);
+        this.learnerForm = {
+          ...fallback,
+          id: this.editingLearnerId ?? fallback.id,
+          parentGuardian: fallback.parentGuardian || this.getEmptyParentGuardian()
+        };
+        this.parentGuardianForm = {
+          ...this.getEmptyParentGuardian(),
+          ...(fallback.parentGuardian || {})
+        };
         this.loadingLearnerDetail = false;
-        this.errorMessage = this.mapHttpError(err, 'Failed to load learner details.');
+        this.errorMessage = this.mapHttpError(err, 'Loaded learner data was incomplete, so the form was restored from the current list row.');
       }
     });
   }
@@ -340,31 +431,55 @@ export class LearnerManagementComponent implements OnInit {
     }
 
     this.showLearnerForm = false;
+    this.editingLearnerId = null;
+    this.learnerFormSubmitted = false;
     this.learnerForm = this.getEmptyLearner();
+    this.parentGuardianForm = this.getEmptyParentGuardian();
   }
 
   saveLearner(): void {
+    this.learnerFormSubmitted = true;
     this.clearMessages();
 
-    const validationMessage = this.validateLearner(this.learnerForm);
+    const validationMessage = this.validateLearner(this.learnerForm, this.parentGuardianForm);
     if (validationMessage) {
-      this.errorMessage = validationMessage;
       return;
     }
 
-    const payload: LearnerDto = {
+    const updatePayload: LearnerDto = {
       id: this.learnerForm.id,
       firstName: this.learnerForm.firstName.trim(),
       surname: this.learnerForm.surname.trim(),
-      grade: this.learnerForm.grade.trim()
+      grade: this.learnerForm.grade.trim(),
+      parentGuardian: {
+        firstName: this.parentGuardianForm.firstName.trim(),
+        surname: this.parentGuardianForm.surname.trim(),
+        phoneNumber: this.normalizePhoneDigits(this.parentGuardianForm.phoneNumber),
+        emailAddress: this.parentGuardianForm.emailAddress.trim(),
+        relationshipToLearner: this.parentGuardianForm.relationshipToLearner.trim()
+      }
+    };
+
+    const createPayload: CreateLearnerRequestDto = {
+      firstName: this.learnerForm.firstName.trim(),
+      surname: this.learnerForm.surname.trim(),
+      grade: this.learnerForm.grade.trim(),
+      parentGuardian: {
+        firstName: this.parentGuardianForm.firstName.trim(),
+        surname: this.parentGuardianForm.surname.trim(),
+        phoneNumber: this.normalizePhoneDigits(this.parentGuardianForm.phoneNumber),
+        emailAddress: this.parentGuardianForm.emailAddress.trim(),
+        relationshipToLearner: this.parentGuardianForm.relationshipToLearner.trim()
+      }
     };
 
     if (!this.isEditMode) {
       this.creatingLearner = true;
-      this.learnerService.createLearner(payload).subscribe({
+      this.learnerService.createLearner(createPayload).subscribe({
         next: () => {
           this.creatingLearner = false;
           this.showLearnerForm = false;
+          this.learnerFormSubmitted = false;
           this.successMessage = 'Learner created successfully.';
           this.loadLearners();
         },
@@ -377,15 +492,28 @@ export class LearnerManagementComponent implements OnInit {
       return;
     }
 
+    const learnerIdToUpdate = Number.isFinite(updatePayload.id) && updatePayload.id > 0
+      ? updatePayload.id
+      : (this.editingLearnerId ?? 0);
+
+    if (!Number.isFinite(learnerIdToUpdate) || learnerIdToUpdate <= 0) {
+      this.errorMessage = 'Unable to update learner: learner id is missing.';
+      return;
+    }
+
+    updatePayload.id = learnerIdToUpdate;
+
     this.updatingLearner = true;
-    this.learnerService.updateLearner(payload.id, payload).subscribe({
+    this.learnerService.updateLearner(learnerIdToUpdate, updatePayload).subscribe({
       next: () => {
         this.updatingLearner = false;
         this.showLearnerForm = false;
+        this.editingLearnerId = null;
+        this.learnerFormSubmitted = false;
         this.successMessage = 'Learner updated successfully.';
         this.loadLearners();
-        if (this.selectedLearner?.id === payload.id) {
-          this.selectedLearner = { ...payload };
+        if (this.selectedLearner?.id === updatePayload.id) {
+          this.selectedLearner = { ...updatePayload };
         }
       },
       error: err => {
@@ -576,7 +704,21 @@ export class LearnerManagementComponent implements OnInit {
     return schoolClass.id;
   }
 
-  private validateLearner(learner: LearnerDto): string {
+  get isParentEmailValid(): boolean {
+    const value = this.parentGuardianForm.emailAddress.trim();
+    if (!value) {
+      return true;
+    }
+
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  }
+
+  get isParentPhoneValid(): boolean {
+    const digitsOnly = this.normalizePhoneDigits(this.parentGuardianForm.phoneNumber);
+    return /^(07\d{8}|2637\d{8})$/.test(digitsOnly);
+  }
+
+  private validateLearner(learner: LearnerDto, parentGuardian: ParentGuardianDto): string {
     if (!learner.firstName?.trim()) {
       return 'First name is required.';
     }
@@ -587,6 +729,26 @@ export class LearnerManagementComponent implements OnInit {
 
     if (!learner.grade?.trim()) {
       return 'Grade is required.';
+    }
+
+    if (!parentGuardian.firstName?.trim()) {
+      return 'Parent first name is required.';
+    }
+
+    if (!parentGuardian.surname?.trim()) {
+      return 'Parent surname is required.';
+    }
+
+    if (!this.isParentPhoneValid) {
+      return 'Parent phone number must be a valid Zimbabwe mobile number (07XXXXXXXX or 2637XXXXXXXX).';
+    }
+
+    if (!this.isParentEmailValid) {
+      return 'Parent email address format is invalid.';
+    }
+
+    if (!parentGuardian.relationshipToLearner?.trim()) {
+      return 'Relationship to learner is required.';
     }
 
     return '';
@@ -628,13 +790,48 @@ export class LearnerManagementComponent implements OnInit {
     return '';
   }
 
+  private normalizeLearnerResponse(raw: any): LearnerDto {
+    const source = raw ?? {};
+    const parentSource = source.parentGuardian ?? source.ParentGuardian ?? {};
+    const idValue = Number(source.id ?? source.learnerId ?? 0);
+
+    return {
+      id: Number.isFinite(idValue) ? idValue : 0,
+      firstName: String(source.firstName ?? source.FirstName ?? ''),
+      surname: String(source.surname ?? source.Surname ?? ''),
+      grade: String(source.grade ?? source.Grade ?? ''),
+      parentGuardian: {
+        firstName: String(parentSource.firstName ?? parentSource.FirstName ?? ''),
+        surname: String(parentSource.surname ?? parentSource.Surname ?? ''),
+        phoneNumber: String(parentSource.phoneNumber ?? parentSource.PhoneNumber ?? ''),
+        emailAddress: String(parentSource.emailAddress ?? parentSource.EmailAddress ?? ''),
+        relationshipToLearner: String(parentSource.relationshipToLearner ?? parentSource.RelationshipToLearner ?? '')
+      }
+    };
+  }
+
   private getEmptyLearner(): LearnerDto {
     return {
       id: 0,
       firstName: '',
       surname: '',
-      grade: ''
+      grade: '',
+      parentGuardian: this.getEmptyParentGuardian()
     };
+  }
+
+  private getEmptyParentGuardian(): ParentGuardianDto {
+    return {
+      firstName: '',
+      surname: '',
+      phoneNumber: '',
+      emailAddress: '',
+      relationshipToLearner: ''
+    };
+  }
+
+  private normalizePhoneDigits(phoneNumber: string): string {
+    return (phoneNumber || '').replace(/\D/g, '');
   }
 
   private getEmptyScore(): SubjectScoreDto {
@@ -726,6 +923,8 @@ export class LearnerManagementComponent implements OnInit {
   }
 
   private resetClassForm(): void {
+    this.classFormSubmitted = false;
+    this.classNameTouched = false;
     this.className = '';
     this.selectedGrade = '';
     this.teacherSearchTerm = '';

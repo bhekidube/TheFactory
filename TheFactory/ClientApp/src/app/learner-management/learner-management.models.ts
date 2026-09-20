@@ -3,6 +3,22 @@ export interface LearnerDto {
   firstName: string;
   surname: string;
   grade: string;
+  parentGuardian: ParentGuardianDto;
+}
+
+export interface ParentGuardianDto {
+  firstName: string;
+  surname: string;
+  phoneNumber: string;
+  emailAddress: string;
+  relationshipToLearner: string;
+}
+
+export interface CreateLearnerRequestDto {
+  firstName: string;
+  surname: string;
+  grade: string;
+  parentGuardian: ParentGuardianDto;
 }
 
 export interface SubjectDto {
@@ -10,6 +26,11 @@ export interface SubjectDto {
   name: string;
   code: string;
   isActive: boolean;
+}
+
+export interface GradeDto {
+  id: number;
+  name: string;
 }
 
 export interface SubjectScoreDto {
@@ -112,6 +133,7 @@ export interface LearnerDetailDto {
   grade: string;
   dateOfBirth: string;
   parentGuardianContact: string;
+  parentGuardian: ParentGuardianDto;
   academicRecords: LearnerAcademicRecordDto[];
 }
 
