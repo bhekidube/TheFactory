@@ -10,10 +10,10 @@
       2) Run the preview section to inspect affected rows
       3) Run the delete transaction section
 */
-
+SELECT * FROM dbo.[User] WHERE UserId IN (50, 12);  -- TODO: replace with user to delete and fallback user
 SET NOCOUNT ON;
 
-DECLARE @UserIdToDelete INT = 49;   -- TODO: replace with user to delete
+DECLARE @UserIdToDelete INT = 50;   -- TODO: replace with user to delete
 DECLARE @ReassignUserId INT = 12;     -- TODO: replace with fallback user (must exist, cannot equal @UserIdToDelete)
 
 /* ===============================
@@ -37,6 +37,8 @@ WHERE our.OperatorUserId IN (
 )
 UNION ALL
 SELECT 'OperatorContact.OperatorContactPersonId', COUNT(*) FROM dbo.OperatorContact WHERE OperatorContactPersonId = @UserIdToDelete
+UNION ALL
+SELECT 'institution.Staff.UserId', COUNT(*) FROM institution.Staff WHERE UserId = @UserIdToDelete
 UNION ALL
 SELECT 'Route.CreatedBy', COUNT(*) FROM dbo.Route WHERE CreatedBy = @UserIdToDelete
 UNION ALL
@@ -76,6 +78,12 @@ BEGIN TRY
     UPDATE dbo.OperatorContact
     SET OperatorContactPersonId = @ReassignUserId
     WHERE OperatorContactPersonId = @UserIdToDelete;
+
+    -- Preserve institution staff records while unlinking the user being deleted.
+    UPDATE institution.Staff
+    SET UserId = NULL,
+        UpdatedAt = SYSUTCDATETIME()
+    WHERE UserId = @UserIdToDelete;
 
     -- Clear nullable references
     UPDATE dbo.Route

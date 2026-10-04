@@ -79,7 +79,7 @@ public class ReportsController : ControllerBase
     {
         if (!IsSystemAdminRequest())
         {
-            return Forbid();
+            return StatusCode(StatusCodes.Status403Forbidden);
         }
 
         if (request is null || string.IsNullOrWhiteSpace(request.Name))
@@ -131,7 +131,7 @@ public class ReportsController : ControllerBase
     {
         if (!IsSystemAdminRequest())
         {
-            return Forbid();
+            return StatusCode(StatusCodes.Status403Forbidden);
         }
 
         var roles = new List<object>();
@@ -163,7 +163,7 @@ public class ReportsController : ControllerBase
     {
         if (!IsSystemAdminRequest())
         {
-            return Forbid();
+            return StatusCode(StatusCodes.Status403Forbidden);
         }
 
         var searchTerm = query?.Trim();
@@ -206,7 +206,7 @@ public class ReportsController : ControllerBase
     {
         if (!IsSystemAdminRequest())
         {
-            return Forbid();
+            return StatusCode(StatusCodes.Status403Forbidden);
         }
 
         if (request is null || request.UserId <= 0 || request.UserRoleId <= 0)
