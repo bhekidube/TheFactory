@@ -32,6 +32,7 @@ import { OperatorRouteComponent } from './operator-route/operator-route.componen
 import { AdminScreenComponent } from './admin-screen/admin-screen.component';
 import { AuthComponent } from './auth/auth.component';
 import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
+import { ResetPasswordComponent } from './reset-password/reset-password.component';
 import { AppRoutingModule } from './app-routing.module';
 import { OperatorAdminComponent } from './operator-admin/operator-admin.component';
 import { LogoutLinkComponent } from './logout-link/logout-link.component';
@@ -61,6 +62,7 @@ import { StaffManagementComponent } from './staff-management/staff-management.co
     AdminScreenComponent,
     AuthComponent,
     ForgotPasswordComponent,
+    ResetPasswordComponent,
     OperatorAdminComponent,
     LogoutLinkComponent,
     OperatorRouteTripComponent,
