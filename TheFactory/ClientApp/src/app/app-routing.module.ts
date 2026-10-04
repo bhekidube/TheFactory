@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthComponent } from './auth/auth.component'; 
+import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
 import { AdminScreenComponent } from './admin-screen/admin-screen.component';
 import { OperatorAdminComponent } from './operator-admin/operator-admin.component';
 import { ZimraComponent } from './zimra/zimra.component';
@@ -20,6 +21,7 @@ import { LearningAccessGuard } from './guards/learning-access.guard';
 const routes: Routes = [
   { path: '', component: BusSearchComponent, pathMatch: 'full' },
   { path: 'auth', component: AuthComponent },
+  { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'learning', component: LearningComponent, canActivate: [LearningAccessGuard] },
   {
     path: 'learning/schools/:schoolId',

@@ -229,7 +229,7 @@ public class UserController : ControllerBase
         }
     }
 
-    private static string HashPassword(string password, string salt)
+    internal static string HashPassword(string password, string salt)
     {
         using (var sha256 = SHA256.Create())
         {

@@ -38,6 +38,8 @@ builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
 builder.Services.AddScoped<SqlConnectionService>();
 builder.Services.AddScoped<ILearnerService, LearnerService>();
 builder.Services.AddScoped<IStaffService, StaffService>();
+builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
+builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IPdfGeneratorService, PdfGeneratorService>();
 builder.Services.AddCors(options =>
@@ -115,5 +117,3 @@ static TokenCredential CreateAzureCredential(bool isDevelopment)
 
     return new DefaultAzureCredential(options);
 }
-
-

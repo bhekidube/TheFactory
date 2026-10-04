@@ -31,6 +31,7 @@ import { DutyCalculatorComponent } from './dutycalculator/dutycalculator.compone
 import { OperatorRouteComponent } from './operator-route/operator-route.component';
 import { AdminScreenComponent } from './admin-screen/admin-screen.component';
 import { AuthComponent } from './auth/auth.component';
+import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
 import { AppRoutingModule } from './app-routing.module';
 import { OperatorAdminComponent } from './operator-admin/operator-admin.component';
 import { LogoutLinkComponent } from './logout-link/logout-link.component';
@@ -59,6 +60,7 @@ import { StaffManagementComponent } from './staff-management/staff-management.co
     OperatorRouteComponent,
     AdminScreenComponent,
     AuthComponent,
+    ForgotPasswordComponent,
     OperatorAdminComponent,
     LogoutLinkComponent,
     OperatorRouteTripComponent,
@@ -100,4 +102,3 @@ import { StaffManagementComponent } from './staff-management/staff-management.co
   bootstrap: [AppComponent]
 })
 export class AppModule { }
-

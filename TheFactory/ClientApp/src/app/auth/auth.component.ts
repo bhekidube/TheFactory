@@ -138,6 +138,6 @@ export class AuthComponent implements OnInit {
 
 
   forgotPassword() {
-    alert('Forgot password functionality coming soon.');
+    this.router.navigate(['/forgot-password']);
   }
 }
