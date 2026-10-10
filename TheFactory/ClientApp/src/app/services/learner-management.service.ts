@@ -117,12 +117,20 @@ export class LearnerManagementService {
     return this.http.post<StaffDto>(`${this.baseUrl}/schools/${schoolId}/staff`, payload, this.getRequestOptions());
   }
 
-  updateStaff(schoolId: number, staffId: number, payload: StaffUpsertRequest): Observable<StaffDto> {
-    return this.http.put<StaffDto>(`${this.baseUrl}/schools/${schoolId}/staff/${staffId}`, payload, this.getRequestOptions());
+  updateStaff(schoolId: number, nationalId: string, payload: StaffUpsertRequest): Observable<StaffDto> {
+    return this.http.put<StaffDto>(`${this.baseUrl}/schools/${schoolId}/staff/${encodeURIComponent(nationalId)}`, payload, this.getRequestOptions());
   }
 
-  archiveStaff(schoolId: number, staffId: number): Observable<void> {
-    return this.http.patch<void>(`${this.baseUrl}/schools/${schoolId}/staff/${staffId}/archive`, {}, this.getRequestOptions());
+  updateLegacyStaff(schoolId: number, legacyId: number, payload: StaffUpsertRequest): Observable<StaffDto> {
+    return this.http.put<StaffDto>(`${this.baseUrl}/schools/${schoolId}/staff/legacy/${legacyId}`, payload, this.getRequestOptions());
+  }
+
+  archiveStaff(schoolId: number, nationalId: string): Observable<void> {
+    return this.http.patch<void>(`${this.baseUrl}/schools/${schoolId}/staff/${encodeURIComponent(nationalId)}/archive`, {}, this.getRequestOptions());
+  }
+
+  archiveLegacyStaff(schoolId: number, legacyId: number): Observable<void> {
+    return this.http.patch<void>(`${this.baseUrl}/schools/${schoolId}/staff/legacy/${legacyId}/archive`, {}, this.getRequestOptions());
   }
 
   getActiveClassCountForSchool(schoolId: number): Observable<ActiveClassCountDto> {

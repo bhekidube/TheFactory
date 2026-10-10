@@ -18,7 +18,8 @@ export class StaffManagementComponent implements OnInit, OnDestroy {
   errorMessage = '';
   successMessage = '';
   showForm = false;
-  editingStaffId: number | null = null;
+  editingNationalId: string | null = null;
+  editingLegacyStaffId: number | null = null;
   formSubmitted = false;
   readonly roleOptions = ['Teacher', 'Admin', 'Support'];
   form: StaffUpsertRequest = this.emptyForm();
@@ -69,7 +70,8 @@ export class StaffManagementComponent implements OnInit, OnDestroy {
 
   openAddStaff(): void {
     this.clearMessages();
-    this.editingStaffId = null;
+    this.editingNationalId = null;
+    this.editingLegacyStaffId = null;
     this.formSubmitted = false;
     this.form = this.emptyForm();
     this.showForm = true;
@@ -77,9 +79,11 @@ export class StaffManagementComponent implements OnInit, OnDestroy {
 
   openEditStaff(member: StaffDto): void {
     this.clearMessages();
-    this.editingStaffId = member.id;
+    this.editingNationalId = member.nationalId || null;
+    this.editingLegacyStaffId = member.nationalId ? null : member.legacyId ?? null;
     this.formSubmitted = false;
     this.form = {
+      nationalId: member.nationalId,
       userId: member.userId ?? null,
       firstName: member.firstName,
       surname: member.surname,
@@ -97,7 +101,8 @@ export class StaffManagementComponent implements OnInit, OnDestroy {
     }
 
     this.showForm = false;
-    this.editingStaffId = null;
+    this.editingNationalId = null;
+    this.editingLegacyStaffId = null;
     this.formSubmitted = false;
   }
 
@@ -119,16 +124,21 @@ export class StaffManagementComponent implements OnInit, OnDestroy {
     };
 
     this.saving = true;
-    const request = this.editingStaffId
-      ? this.learnerService.updateStaff(this.schoolId, this.editingStaffId, payload)
-      : this.learnerService.createStaff(this.schoolId, payload);
+    const request = this.editingLegacyStaffId !== null
+      ? this.learnerService.updateLegacyStaff(this.schoolId, this.editingLegacyStaffId, payload)
+      : this.editingNationalId
+        ? this.learnerService.updateStaff(this.schoolId, this.editingNationalId, payload)
+        : this.learnerService.createStaff(this.schoolId, payload);
 
     request.subscribe({
       next: () => {
         this.saving = false;
         this.showForm = false;
-        this.successMessage = this.editingStaffId ? 'Staff member updated successfully.' : 'Staff member added successfully.';
-        this.editingStaffId = null;
+        this.successMessage = this.editingNationalId || this.editingLegacyStaffId !== null
+          ? 'Staff member updated successfully.'
+          : 'Staff member added successfully.';
+        this.editingNationalId = null;
+        this.editingLegacyStaffId = null;
         this.loadStaff();
       },
       error: error => {
@@ -144,7 +154,18 @@ export class StaffManagementComponent implements OnInit, OnDestroy {
     }
 
     this.clearMessages();
-    this.learnerService.archiveStaff(this.schoolId, member.id).subscribe({
+    const request = member.nationalId
+      ? this.learnerService.archiveStaff(this.schoolId, member.nationalId)
+      : member.legacyId !== null && member.legacyId !== undefined
+        ? this.learnerService.archiveLegacyStaff(this.schoolId, member.legacyId)
+        : null;
+
+    if (!request) {
+      this.errorMessage = 'This staff record cannot be edited until it has an identifier.';
+      return;
+    }
+
+    request.subscribe({
       next: () => {
         this.successMessage = 'Staff member archived successfully.';
         this.loadStaff();
@@ -155,12 +176,13 @@ export class StaffManagementComponent implements OnInit, OnDestroy {
     });
   }
 
-  trackByStaffId(_: number, member: StaffDto): number {
-    return member.id;
+  trackByNationalId(index: number, member: StaffDto): string | number {
+    return member.nationalId || member.legacyId || index;
   }
 
   isFormValid(): boolean {
     return !!this.form.firstName.trim()
+      && !!this.form.nationalId.trim()
       && !!this.form.surname.trim()
       && !!this.form.role.trim()
       && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.form.email.trim());
@@ -168,6 +190,7 @@ export class StaffManagementComponent implements OnInit, OnDestroy {
 
   private emptyForm(): StaffUpsertRequest {
     return {
+      nationalId: '',
       userId: null,
       firstName: '',
       surname: '',

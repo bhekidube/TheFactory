@@ -7,7 +7,8 @@ export interface LearnerDto {
 }
 
 export interface StaffDto {
-  id: number;
+  legacyId?: number | null;
+  nationalId: string;
   schoolId: number;
   userId?: number | null;
   firstName: string;
@@ -21,6 +22,7 @@ export interface StaffDto {
 }
 
 export interface StaffUpsertRequest {
+  nationalId: string;
   userId?: number | null;
   firstName: string;
   surname: string;

@@ -49,7 +49,7 @@ public sealed class StaffController : ControllerBase
         try
         {
             var staff = await _staffService.CreateStaffAsync(schoolId, request, cancellationToken);
-            return CreatedAtAction(nameof(GetStaffById), new { schoolId, id = staff.Id }, staff);
+            return CreatedAtAction(nameof(GetStaffByNationalId), new { schoolId, nationalId = staff.NationalId }, staff);
         }
         catch (InvalidOperationException ex)
         {
@@ -57,20 +57,47 @@ public sealed class StaffController : ControllerBase
         }
     }
 
-    [HttpGet("{id:int}")]
+    [HttpGet("{nationalId}")]
     [ProducesResponseType(typeof(StaffDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<StaffDto>> GetStaffById(int schoolId, int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<StaffDto>> GetStaffByNationalId(int schoolId, string nationalId, CancellationToken cancellationToken)
     {
-        var staff = await _staffService.GetStaffByIdAsync(schoolId, id, cancellationToken);
+        var staff = await _staffService.GetStaffByNationalIdAsync(schoolId, nationalId, cancellationToken);
         return staff is null ? NotFound() : Ok(staff);
     }
 
-    [HttpPut("{id:int}")]
+    [HttpPut("{nationalId}")]
     [ProducesResponseType(typeof(StaffDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<StaffDto>> UpdateStaff(
+        int schoolId,
+        string nationalId,
+        [FromBody] StaffUpsertRequest request,
+        CancellationToken cancellationToken)
+    {
+        var validationError = ValidateRequest(schoolId, request);
+        if (validationError is not null)
+        {
+            return BadRequest(new { error = validationError });
+        }
+
+        try
+        {
+            var staff = await _staffService.UpdateStaffAsync(schoolId, nationalId, request, cancellationToken);
+            return staff is null ? NotFound() : Ok(staff);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpPut("legacy/{id:int}")]
+    [ProducesResponseType(typeof(StaffDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<StaffDto>> UpdateLegacyStaff(
         int schoolId,
         int id,
         [FromBody] StaffUpsertRequest request,
@@ -84,7 +111,7 @@ public sealed class StaffController : ControllerBase
 
         try
         {
-            var staff = await _staffService.UpdateStaffAsync(schoolId, id, request, cancellationToken);
+            var staff = await _staffService.UpdateLegacyStaffAsync(schoolId, id, request, cancellationToken);
             return staff is null ? NotFound() : Ok(staff);
         }
         catch (InvalidOperationException ex)
@@ -93,12 +120,22 @@ public sealed class StaffController : ControllerBase
         }
     }
 
-    [HttpPatch("{id:int}/archive")]
+    [HttpPatch("{nationalId}/archive")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> ArchiveStaff(int schoolId, int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> ArchiveStaff(int schoolId, string nationalId, CancellationToken cancellationToken)
     {
-        return await _staffService.ArchiveStaffAsync(schoolId, id, cancellationToken)
+        return await _staffService.ArchiveStaffAsync(schoolId, nationalId, cancellationToken)
+            ? NoContent()
+            : NotFound();
+    }
+
+    [HttpPatch("legacy/{id:int}/archive")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ArchiveLegacyStaff(int schoolId, int id, CancellationToken cancellationToken)
+    {
+        return await _staffService.ArchiveLegacyStaffAsync(schoolId, id, cancellationToken)
             ? NoContent()
             : NotFound();
     }
@@ -123,6 +160,11 @@ public sealed class StaffController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.Surname))
         {
             return "Surname is required.";
+        }
+
+        if (string.IsNullOrWhiteSpace(request.NationalId))
+        {
+            return "National ID is required.";
         }
 
         if (string.IsNullOrWhiteSpace(request.Role))

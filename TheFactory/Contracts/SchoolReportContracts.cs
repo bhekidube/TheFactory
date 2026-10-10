@@ -11,7 +11,8 @@ public sealed class LearnerDto
 
 public sealed class StaffDto
 {
-    public int Id { get; set; }
+    public int? LegacyId { get; set; }
+    public string NationalId { get; set; } = string.Empty;
     public int SchoolId { get; set; }
     public int? UserId { get; set; }
     public string FirstName { get; set; } = string.Empty;
@@ -26,6 +27,7 @@ public sealed class StaffDto
 
 public sealed class StaffUpsertRequest
 {
+    public string NationalId { get; set; } = string.Empty;
     public int? UserId { get; set; }
     public string FirstName { get; set; } = string.Empty;
     public string Surname { get; set; } = string.Empty;
