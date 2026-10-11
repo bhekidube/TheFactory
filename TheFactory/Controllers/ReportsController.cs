@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using System.Data;
 using System.Globalization;
 using TheFactory.Contracts;
 using TheFactory.Services;
@@ -211,7 +212,7 @@ public class ReportsController : ControllerBase
         }
 
         using var command = new SqlCommand(
-            @"SELECT users.SourceId, users.Name, users.Email, users.UserType,
+            @"SELECT users.SourceId, users.SourceType, users.Name, users.Email, users.UserType,
                      users.AddressId, addresses.AddressLine1, addresses.AddressLine2,
                      addresses.City, addresses.ProvinceState, addresses.PostalCode, addresses.Country
               FROM institution.vw_AllUsers AS users
@@ -228,19 +229,112 @@ public class ReportsController : ControllerBase
                 reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
                 reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
                 reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+                reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
                 new AddressDto
                 {
-                    AddressId = reader.IsDBNull(4) ? null : reader.GetInt32(4),
-                    AddressLine1 = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
-                    AddressLine2 = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
-                    City = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
-                    ProvinceState = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
-                    PostalCode = reader.IsDBNull(9) ? string.Empty : reader.GetString(9),
-                    Country = reader.IsDBNull(10) ? string.Empty : reader.GetString(10)
+                    AddressId = reader.IsDBNull(5) ? null : reader.GetInt32(5),
+                    AddressLine1 = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
+                    AddressLine2 = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+                    City = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
+                    ProvinceState = reader.IsDBNull(9) ? string.Empty : reader.GetString(9),
+                    PostalCode = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
+                    Country = reader.IsDBNull(11) ? string.Empty : reader.GetString(11)
                 }));
         }
 
         return Ok(users);
+    }
+
+    [HttpDelete("admin/users/{userId:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> DeleteDirectoryUser(
+        int userId,
+        [FromQuery] int reassignUserId,
+        CancellationToken cancellationToken)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        if (!await IsSystemAdminUserRequestAsync(connection, cancellationToken))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden);
+        }
+
+        if (userId <= 0 || reassignUserId <= 0 || userId == reassignUserId)
+        {
+            return BadRequest(new { error = "Select a different existing user to receive required references." });
+        }
+
+        var callerId = GetRequestUserId();
+        if (callerId == userId)
+        {
+            return BadRequest(new { error = "You cannot delete the account currently in use." });
+        }
+
+        using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
+        try
+        {
+            using var validateCommand = new SqlCommand(
+                @"SELECT
+                    CASE WHEN EXISTS (SELECT 1 FROM dbo.[User] WHERE UserId = @UserId) THEN 1 ELSE 0 END,
+                    CASE WHEN EXISTS (SELECT 1 FROM dbo.[User] WHERE UserId = @ReassignUserId) THEN 1 ELSE 0 END;",
+                connection,
+                transaction);
+            validateCommand.Parameters.AddWithValue("@UserId", userId);
+            validateCommand.Parameters.AddWithValue("@ReassignUserId", reassignUserId);
+            using (var reader = await validateCommand.ExecuteReaderAsync(cancellationToken))
+            {
+                await reader.ReadAsync(cancellationToken);
+                if (reader.GetInt32(0) != 1)
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    return NotFound(new { error = "User to delete was not found." });
+                }
+
+                if (reader.GetInt32(1) != 1)
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    return BadRequest(new { error = "The reassignment user was not found." });
+                }
+            }
+
+            await ExecuteUserDeleteStepAsync(
+                connection,
+                transaction,
+                @"UPDATE dbo.Route SET CreatedBy = @ReassignUserId WHERE CreatedBy = @UserId;
+                  UPDATE dbo.RouteTrip SET CreatedBy = @ReassignUserId WHERE CreatedBy = @UserId;
+                  UPDATE dbo.OperatorContact SET OperatorContactPersonId = @ReassignUserId WHERE OperatorContactPersonId = @UserId;
+                  UPDATE institution.Staff SET UserId = NULL, UpdatedAt = SYSUTCDATETIME() WHERE UserId = @UserId;
+                  IF COL_LENGTH('institution.Learner', 'ParentUserId') IS NOT NULL
+                      EXEC sys.sp_executesql N'UPDATE institution.Learner SET ParentUserId = NULL WHERE ParentUserId = @UserId;',
+                          N'@UserId INT', @UserId;
+                  UPDATE dbo.Route SET UpdatedBy = NULL WHERE UpdatedBy = @UserId;
+                  UPDATE dbo.RouteTrip SET UpdatedBy = NULL WHERE UpdatedBy = @UserId;
+                  DELETE FROM dbo.Ticket WHERE UserId = @UserId;
+                  DELETE roleLink FROM dbo.OperatorUserRole AS roleLink
+                    INNER JOIN dbo.OperatorUser AS operatorLink ON operatorLink.OperatorUserId = roleLink.OperatorUserId
+                    WHERE operatorLink.UserId = @UserId;
+                  DELETE FROM dbo.OperatorUser WHERE UserId = @UserId;
+                  DELETE FROM dbo.SystemUserRole WHERE UserId = @UserId;
+                  DELETE FROM dbo.[User] WHERE UserId = @UserId;",
+                userId,
+                reassignUserId,
+                cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
+            return Ok(new
+            {
+                message = "User deleted successfully. Required references were reassigned.",
+                deletedUserId = userId,
+                reassignedToUserId = reassignUserId
+            });
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 
     [HttpPost("userroles/assign")]
@@ -1177,9 +1271,8 @@ public class ReportsController : ControllerBase
 
     private async Task<bool> IsSystemAdminUserRequestAsync(SqlConnection connection, CancellationToken cancellationToken)
     {
-        if (!Request.Headers.TryGetValue("X-User-Id", out var userIdHeader)
-            || !int.TryParse(userIdHeader.FirstOrDefault(), out var userId)
-            || userId <= 0)
+        var userId = GetRequestUserId();
+        if (!userId.HasValue)
         {
             return false;
         }
@@ -1201,8 +1294,31 @@ public class ReportsController : ControllerBase
                       )
                 ) THEN 1 ELSE 0 END;",
             connection);
-        command.Parameters.AddWithValue("@UserId", userId);
+        command.Parameters.AddWithValue("@UserId", userId.Value);
         return Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken)) == 1;
+    }
+
+    private int? GetRequestUserId()
+    {
+        return Request.Headers.TryGetValue("X-User-Id", out var userIdHeader)
+            && int.TryParse(userIdHeader.FirstOrDefault(), out var userId)
+            && userId > 0
+                ? userId
+                : null;
+    }
+
+    private static async Task ExecuteUserDeleteStepAsync(
+        SqlConnection connection,
+        SqlTransaction transaction,
+        string commandText,
+        int userId,
+        int reassignUserId,
+        CancellationToken cancellationToken)
+    {
+        using var command = new SqlCommand(commandText, connection, transaction);
+        command.Parameters.AddWithValue("@UserId", userId);
+        command.Parameters.AddWithValue("@ReassignUserId", reassignUserId);
+        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private static bool TryValidateSubjectScoreDto(SubjectScoreDto subjectScoreDto, out string error)

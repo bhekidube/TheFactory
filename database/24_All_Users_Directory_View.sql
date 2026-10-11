@@ -17,6 +17,7 @@ CREATE OR ALTER VIEW institution.vw_AllUsers
 AS
     SELECT
         u.UserId AS SourceId,
+        CAST(N''User'' AS NVARCHAR(30)) AS SourceType,
         CAST(u.Name AS NVARCHAR(300)) AS Name,
         CAST(ISNULL(u.Email, N'''') AS NVARCHAR(255)) AS Email,
         CAST(ISNULL(ur.Name, N''User'') AS NVARCHAR(50)) AS UserType,
@@ -28,6 +29,7 @@ AS
 
     SELECT
         s.Id AS SourceId,
+        CAST(N''Staff'' AS NVARCHAR(30)) AS SourceType,
         CAST(LTRIM(RTRIM(CONCAT(ISNULL(s.FirstName, N''''), N'' '', ISNULL(s.Surname, N'''')))) AS NVARCHAR(300)) AS Name,
         CAST(ISNULL(s.Email, N'''') AS NVARCHAR(255)) AS Email,
         CAST(CONCAT(N''Staff - '', ISNULL(s.Role, N''Staff'')) AS NVARCHAR(50)) AS UserType,
@@ -38,6 +40,7 @@ AS
 
     SELECT
         l.Id AS SourceId,
+        CAST(N''Learner'' AS NVARCHAR(30)) AS SourceType,
         CAST(LTRIM(RTRIM(CONCAT(ISNULL(l.FirstName, N''''), N'' '', ISNULL(l.Surname, N'''')))) AS NVARCHAR(300)) AS Name,
         CAST(N'''' AS NVARCHAR(255)) AS Email,
         CAST(N''Learner'' AS NVARCHAR(50)) AS UserType,
@@ -48,6 +51,7 @@ AS
 
     SELECT
         lpg.LearnerId AS SourceId,
+        CAST(N''Parent/Guardian'' AS NVARCHAR(30)) AS SourceType,
         CAST(LTRIM(RTRIM(CONCAT(ISNULL(lpg.ParentFirstName, N''''), N'' '', ISNULL(lpg.ParentSurname, N'''')))) AS NVARCHAR(300)) AS Name,
         CAST(ISNULL(lpg.ParentEmailAddress, N'''') AS NVARCHAR(255)) AS Email,
         CAST(N''Parent/Guardian'' AS NVARCHAR(50)) AS UserType,

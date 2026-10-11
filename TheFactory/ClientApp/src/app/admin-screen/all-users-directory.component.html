@@ -32,6 +32,7 @@
           <th scope="col">Email</th>
           <th scope="col">User Type</th>
           <th scope="col">Address</th>
+          <th scope="col" class="actions-column">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -40,6 +41,19 @@
           <td>{{ user.email || '—' }}</td>
           <td>{{ user.userType }}</td>
           <td>{{ formatAddress(user.address) }}</td>
+          <td class="actions-column">
+            <button
+              *ngIf="user.sourceType === 'User'"
+              type="button"
+              class="delete-button"
+              [disabled]="user.sourceId === currentUserId"
+              [attr.aria-label]="'Delete user ' + user.name"
+              [title]="user.sourceId === currentUserId ? 'You cannot delete the account currently in use.' : 'Delete this user'"
+              (click)="openDeleteDialog(user)">
+              Delete
+            </button>
+            <span *ngIf="user.sourceType !== 'User'">—</span>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -47,4 +61,36 @@
   <p *ngIf="!loading && !errorMessage && filteredUsers.length > 0" class="directory-count">
     Showing {{ filteredUsers.length }} of {{ users.length }} profiles
   </p>
+
+  <p *ngIf="successMessage" class="directory-state success" role="status">{{ successMessage }}</p>
+
+  <div class="delete-overlay" *ngIf="pendingDeleteUser as user">
+    <section class="delete-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-user-title">
+      <h4 id="delete-user-title">Delete {{ user.name || 'user' }}?</h4>
+      <p>
+        This permanently deletes the system account and its tickets and role links. Required records are reassigned
+        and linked staff or guardian profiles are retained without their user-account link.
+      </p>
+      <label>
+        Reassign required records to
+        <select [(ngModel)]="reassignUserId" [disabled]="deleting" required>
+          <option [ngValue]="null">Select a user</option>
+          <option *ngFor="let candidate of reassignmentUsers" [ngValue]="candidate.sourceId">
+            {{ candidate.name }} — {{ candidate.email || candidate.userType }}
+          </option>
+        </select>
+      </label>
+      <p *ngIf="errorMessage" class="directory-state error" role="alert">{{ errorMessage }}</p>
+      <div class="delete-actions">
+        <button type="button" class="cancel-button" (click)="closeDeleteDialog()" [disabled]="deleting">Cancel</button>
+        <button
+          type="button"
+          class="delete-button"
+          (click)="deleteUser()"
+          [disabled]="deleting || !reassignUserId || reassignmentUsers.length === 0">
+          {{ deleting ? 'Deleting...' : 'Delete user' }}
+        </button>
+      </div>
+    </section>
+  </div>
 </section>

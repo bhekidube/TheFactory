@@ -14,6 +14,7 @@ export class LearningComponent implements OnInit {
   schools: Array<{ id: string; name: string }> = [];
   userRoles: UserRoleDto[] = [];
   userSearchResults: UserLookupDto[] = [];
+  currentUserRole = '';
   loading = false;
   adminLoading = false;
   userSearchLoading = false;
@@ -21,7 +22,9 @@ export class LearningComponent implements OnInit {
   adminErrorMessage = '';
   adminSuccessMessage = '';
 
-  readonly isSystemAdmin = (localStorage.getItem('userRole') || '').toLowerCase() === 'systemadmin';
+  get isSystemAdmin(): boolean {
+    return this.currentUserRole.toLowerCase() === 'systemadmin';
+  }
 
   createTenantModel = {
     name: '',
@@ -38,6 +41,7 @@ export class LearningComponent implements OnInit {
   constructor(private readonly learnerService: LearnerManagementService) {}
 
   ngOnInit(): void {
+    this.currentUserRole = localStorage.getItem('userRole') || 'Unknown';
     this.learnerService.clearSelectedTenantId();
     this.loadSchools();
     if (this.isSystemAdmin) {

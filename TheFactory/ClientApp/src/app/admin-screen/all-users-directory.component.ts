@@ -9,9 +9,13 @@ import { LearnerManagementService } from '../services/learner-management.service
 })
 export class AllUsersDirectoryComponent implements OnInit {
   users: AllUsersDirectoryDto[] = [];
+  pendingDeleteUser: AllUsersDirectoryDto | null = null;
+  reassignUserId: number | null = null;
   searchTerm = '';
   loading = false;
+  deleting = false;
   errorMessage = '';
+  successMessage = '';
 
   constructor(private readonly learnerManagementService: LearnerManagementService) {}
 
@@ -32,9 +36,20 @@ export class AllUsersDirectoryComponent implements OnInit {
     );
   }
 
+  get reassignmentUsers(): AllUsersDirectoryDto[] {
+    return this.users.filter(user =>
+      user.sourceType === 'User' && user.sourceId !== this.pendingDeleteUser?.sourceId
+    );
+  }
+
+  get currentUserId(): number {
+    return Number(localStorage.getItem('userId')) || 0;
+  }
+
   loadUsers(): void {
     this.loading = true;
     this.errorMessage = '';
+    this.successMessage = '';
     this.learnerManagementService.getAllUsersDirectory().subscribe({
       next: users => {
         this.users = users;
@@ -45,6 +60,50 @@ export class AllUsersDirectoryComponent implements OnInit {
           ? 'You are not authorized to view the all-users directory.'
           : error?.error?.error || 'Failed to load the all-users directory.';
         this.loading = false;
+      }
+    });
+  }
+
+  openDeleteDialog(user: AllUsersDirectoryDto): void {
+    if (user.sourceType !== 'User' || user.sourceId === this.currentUserId) {
+      return;
+    }
+
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.pendingDeleteUser = user;
+    this.reassignUserId = null;
+  }
+
+  closeDeleteDialog(): void {
+    if (this.deleting) {
+      return;
+    }
+
+    this.pendingDeleteUser = null;
+    this.reassignUserId = null;
+  }
+
+  deleteUser(): void {
+    if (!this.pendingDeleteUser || !this.reassignUserId || this.deleting) {
+      return;
+    }
+
+    this.deleting = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.learnerManagementService.deleteDirectoryUser(this.pendingDeleteUser.sourceId, this.reassignUserId).subscribe({
+      next: response => {
+        const successMessage = response.message;
+        this.pendingDeleteUser = null;
+        this.reassignUserId = null;
+        this.deleting = false;
+        this.loadUsers();
+        this.successMessage = successMessage;
+      },
+      error: error => {
+        this.errorMessage = error?.error?.error || 'Failed to delete this user.';
+        this.deleting = false;
       }
     });
   }

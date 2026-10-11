@@ -2,8 +2,14 @@
   <app-logout-link></app-logout-link>
 
   <div class="learning-header">
-    <h2>Learning</h2>
-    <p>Schools currently available to your account.</p>
+    <div>
+      <h2>Learning</h2>
+      <p>Schools currently available to your account.</p>
+    </div>
+    <div class="current-role" aria-label="Current user role">
+      <span>Current role</span>
+      <strong>{{ currentUserRole }}</strong>
+    </div>
   </div>
 
   <section *ngIf="isSystemAdmin" class="admin-panel" aria-label="System administrator controls">

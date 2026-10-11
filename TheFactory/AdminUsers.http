@@ -1,8 +1,16 @@
 @baseUrl = http://localhost:8080
 @userId = 1
 @userRole = SystemAdmin
+@targetUserId = 0
+@reassignUserId = 0
 
 ### Get the consolidated all-users directory (requires a SystemAdmin account)
 GET {{baseUrl}}/api/admin/users
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}
+
+### Delete a user and reassign required references (choose IDs carefully)
+### Replace both zero IDs with verified user IDs before executing.
+DELETE {{baseUrl}}/api/admin/users/{{targetUserId}}?reassignUserId={{reassignUserId}}
 X-User-Id: {{userId}}
 X-User-Role: {{userRole}}

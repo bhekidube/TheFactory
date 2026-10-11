@@ -10,6 +10,7 @@ export interface AddressDto {
 
 export interface AllUsersDirectoryDto {
   sourceId: number;
+  sourceType: string;
   name: string;
   email: string;
   userType: string;

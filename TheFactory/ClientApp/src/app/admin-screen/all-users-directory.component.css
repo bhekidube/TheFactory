@@ -98,6 +98,90 @@ th {
   color: #8b1e1e;
 }
 
+.directory-state.success {
+  margin-top: 0.8rem;
+  background: #eaf7ef;
+  color: #176b3a;
+}
+
+.actions-column {
+  width: 7rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.delete-button,
+.cancel-button {
+  padding: 0.5rem 0.8rem;
+  border: 1px solid #b3261e;
+  border-radius: 6px;
+  background: #fff;
+  color: #b3261e;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.delete-button:disabled,
+.cancel-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.delete-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(20, 35, 45, 0.5);
+}
+
+.delete-dialog {
+  display: grid;
+  gap: 0.9rem;
+  width: min(100%, 34rem);
+  padding: 1.25rem;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+.delete-dialog h4,
+.delete-dialog p {
+  margin: 0;
+}
+
+.delete-dialog h4 {
+  color: #8b1e1e;
+}
+
+.delete-dialog label {
+  display: grid;
+  gap: 0.4rem;
+  font-weight: 700;
+}
+
+.delete-dialog select {
+  min-height: 2.5rem;
+  padding: 0.5rem;
+  border: 1px solid #b0bec5;
+  border-radius: 6px;
+  font: inherit;
+}
+
+.delete-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.cancel-button {
+  border-color: #b0bec5;
+  color: #263238;
+}
+
 .directory-count {
   font-size: 0.85rem;
 }

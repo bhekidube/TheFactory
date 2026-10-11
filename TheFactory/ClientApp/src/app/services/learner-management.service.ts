@@ -93,6 +93,13 @@ export class LearnerManagementService {
     return this.http.get<AllUsersDirectoryDto[]>(`${this.baseUrl}/admin/users`, this.getAdminRequestOptions());
   }
 
+  deleteDirectoryUser(userId: number, reassignUserId: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(
+      `${this.baseUrl}/admin/users/${userId}?reassignUserId=${reassignUserId}`,
+      this.getAdminRequestOptions()
+    );
+  }
+
   setSelectedTenantId(tenantId: number): void {
     localStorage.setItem('selectedTenantId', tenantId.toString());
   }
