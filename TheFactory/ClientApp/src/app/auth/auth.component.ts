@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
+import { AddressDto } from '../learner-management/learner-management.models';
 
 @Component({
   selector: 'app-auth',
@@ -15,13 +16,31 @@ export class AuthComponent implements OnInit {
   loginSubmitted = false;
   readonly emailPattern = '^[^\\s@]+@[^\\s@]+(?:\\.[^\\s@]+)+$';
 
-  registerModel: any = {
+  registerModel: {
+    userRoleId: number;
+    name: string;
+    email: string;
+    cellPhoneNo: string;
+    alternateCellPhoneNo: string;
+    password: string;
+    address: AddressDto;
+    operatorId: number | null;
+  } = {
     userRoleId: 3, // Default role->OperatorAdmin
     name: '',
     email: '',
     cellPhoneNo: '',
     alternateCellPhoneNo: '',
     password: '',
+    address: {
+      addressId: null,
+      addressLine1: '',
+      addressLine2: '',
+      city: '',
+      provinceState: '',
+      postalCode: '',
+      country: ''
+    },
     operatorId: null // <-- Add this line
   };
 

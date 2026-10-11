@@ -716,13 +716,19 @@ public sealed class LearnerService : ILearnerService
         }
 
         var hasDateOfBirth = await HasColumnAsync(connection, "institution", "Learner", "DateOfBirth", cancellationToken);
+        var hasAddressId = await HasColumnAsync(connection, "institution", "Learner", "AddressId", cancellationToken);
+        var addressColumns = hasAddressId
+            ? "l.AddressId, a.AddressLine1, a.AddressLine2, a.City, a.ProvinceState, a.PostalCode, a.Country"
+            : "CAST(NULL AS INT), CAST(NULL AS NVARCHAR(200)), CAST(NULL AS NVARCHAR(200)), CAST(NULL AS NVARCHAR(100)), CAST(NULL AS NVARCHAR(100)), CAST(NULL AS NVARCHAR(20)), CAST(NULL AS NVARCHAR(100))";
         using var command = new SqlCommand(
-            $@"SELECT Id, FirstName, Surname, Grade,
-                      {(hasDateOfBirth ? "CONVERT(NVARCHAR(10), DateOfBirth, 23)" : "CAST(NULL AS NVARCHAR(10))")} AS DateOfBirth
-              FROM institution.Learner
-              WHERE TenantId = @TenantId
-                AND IsArchived = 0
-              ORDER BY Id ASC;",
+            $@"SELECT l.Id, l.FirstName, l.Surname, l.Grade,
+                      {(hasDateOfBirth ? "CONVERT(NVARCHAR(10), l.DateOfBirth, 23)" : "CAST(NULL AS NVARCHAR(10))")} AS DateOfBirth,
+                      {addressColumns}
+              FROM institution.Learner l
+              {(hasAddressId ? "LEFT JOIN institution.Addresses a ON a.AddressId = l.AddressId" : string.Empty)}
+              WHERE l.TenantId = @TenantId
+                AND l.IsArchived = 0
+              ORDER BY l.Id ASC;",
             connection);
         command.Parameters.AddWithValue("@TenantId", tenantId.Value);
 
@@ -736,7 +742,8 @@ public sealed class LearnerService : ILearnerService
                 FirstName = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
                 Surname = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
                 Grade = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
-                DateOfBirth = reader.IsDBNull(4) ? string.Empty : reader.GetString(4)
+                DateOfBirth = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
+                Address = AddressPersistence.ReadAddress(reader, 5)
             });
         }
 
@@ -1603,6 +1610,8 @@ public sealed class LearnerService : ILearnerService
         var hasDateOfBirth = await HasColumnAsync(connection, "institution", "Learner", "DateOfBirth", cancellationToken);
         var hasParentGuardianContact = await HasColumnAsync(connection, "institution", "Learner", "ParentGuardianContact", cancellationToken);
         var hasParentUserId = await HasColumnAsync(connection, "institution", "Learner", "ParentUserId", cancellationToken);
+        var hasAddressId = await HasColumnAsync(connection, "institution", "Learner", "AddressId", cancellationToken);
+        var hasUserAddressId = await HasColumnAsync(connection, "dbo", "User", "AddressId", cancellationToken);
         var hasLearnerParentGuardianTable = await HasTableAsync(connection, "institution", "LearnerParentGuardian", cancellationToken);
 
         var parentUserIdSelect = hasParentUserId
@@ -1611,6 +1620,15 @@ public sealed class LearnerService : ILearnerService
         var parentJoin = hasParentUserId
             ? "LEFT JOIN [User] pu ON pu.UserId = l.ParentUserId"
             : string.Empty;
+        var parentUserNameSelect = hasParentUserId
+            ? "ISNULL(pu.Name, '') AS ParentUserName"
+            : "CAST('' AS NVARCHAR(200)) AS ParentUserName";
+        var parentUserEmailSelect = hasParentUserId
+            ? "ISNULL(pu.Email, '') AS ParentUserEmail"
+            : "CAST('' AS NVARCHAR(255)) AS ParentUserEmail";
+        var parentUserPhoneSelect = hasParentUserId
+            ? "ISNULL(pu.CellPhoneNo, '') AS ParentUserPhone"
+            : "CAST('' AS NVARCHAR(50)) AS ParentUserPhone";
 
         var learnerColumns = new List<string>
         {
@@ -1621,15 +1639,31 @@ public sealed class LearnerService : ILearnerService
             hasDateOfBirth ? "CONVERT(NVARCHAR(30), DateOfBirth, 23) AS DateOfBirth" : "CAST(NULL AS NVARCHAR(30)) AS DateOfBirth",
             hasParentGuardianContact ? "ParentGuardianContact" : "CAST(NULL AS NVARCHAR(200)) AS ParentGuardianContact",
             parentUserIdSelect,
-            "ISNULL(pu.Name, '') AS ParentUserName",
-            "ISNULL(pu.Email, '') AS ParentUserEmail",
-            "ISNULL(pu.CellPhoneNo, '') AS ParentUserPhone"
+            parentUserNameSelect,
+            parentUserEmailSelect,
+            parentUserPhoneSelect,
+            hasParentUserId && hasUserAddressId ? "pu.AddressId AS ParentAddressId" : "CAST(NULL AS INT) AS ParentAddressId",
+            hasParentUserId && hasUserAddressId ? "pa.AddressLine1 AS ParentAddressLine1" : "CAST(NULL AS NVARCHAR(200)) AS ParentAddressLine1",
+            hasParentUserId && hasUserAddressId ? "pa.AddressLine2 AS ParentAddressLine2" : "CAST(NULL AS NVARCHAR(200)) AS ParentAddressLine2",
+            hasParentUserId && hasUserAddressId ? "pa.City AS ParentCity" : "CAST(NULL AS NVARCHAR(100)) AS ParentCity",
+            hasParentUserId && hasUserAddressId ? "pa.ProvinceState AS ParentProvinceState" : "CAST(NULL AS NVARCHAR(100)) AS ParentProvinceState",
+            hasParentUserId && hasUserAddressId ? "pa.PostalCode AS ParentPostalCode" : "CAST(NULL AS NVARCHAR(20)) AS ParentPostalCode",
+            hasParentUserId && hasUserAddressId ? "pa.Country AS ParentCountry" : "CAST(NULL AS NVARCHAR(100)) AS ParentCountry",
+            hasAddressId ? "l.AddressId" : "CAST(NULL AS INT) AS AddressId",
+            hasAddressId ? "la.AddressLine1 AS AddressLine1" : "CAST(NULL AS NVARCHAR(200)) AS AddressLine1",
+            hasAddressId ? "la.AddressLine2 AS AddressLine2" : "CAST(NULL AS NVARCHAR(200)) AS AddressLine2",
+            hasAddressId ? "la.City AS City" : "CAST(NULL AS NVARCHAR(100)) AS City",
+            hasAddressId ? "la.ProvinceState AS ProvinceState" : "CAST(NULL AS NVARCHAR(100)) AS ProvinceState",
+            hasAddressId ? "la.PostalCode AS PostalCode" : "CAST(NULL AS NVARCHAR(20)) AS PostalCode",
+            hasAddressId ? "la.Country AS Country" : "CAST(NULL AS NVARCHAR(100)) AS Country"
         };
 
         using var learnerCommand = new SqlCommand(
             $@"SELECT {string.Join(", ", learnerColumns)}
                FROM institution.Learner l
                {parentJoin}
+               {(hasParentUserId && hasUserAddressId ? "LEFT JOIN institution.Addresses pa ON pa.AddressId = pu.AddressId" : string.Empty)}
+               {(hasAddressId ? "LEFT JOIN institution.Addresses la ON la.AddressId = l.AddressId" : string.Empty)}
                WHERE l.Id = @LearnerId
                  AND l.TenantId = @TenantId
                  AND l.IsArchived = 0;",
@@ -1654,6 +1688,12 @@ public sealed class LearnerService : ILearnerService
         var parentUserEmail = reader.IsDBNull(8) ? string.Empty : reader.GetString(8);
         var parentUserPhone = reader.IsDBNull(9) ? string.Empty : reader.GetString(9);
         parentGuardian = MergeParentGuardianFromLinkedUser(parentGuardian, parentUserName, parentUserEmail, parentUserPhone);
+        var linkedParentAddress = AddressPersistence.ReadAddress(reader, 10);
+        if (AddressIsEmpty(parentGuardian.Address))
+        {
+            parentGuardian.Address = linkedParentAddress;
+        }
+        var learnerAddress = AddressPersistence.ReadAddress(reader, 17);
 
         reader.Close();
 
@@ -1673,6 +1713,7 @@ public sealed class LearnerService : ILearnerService
             Surname = surname,
             Grade = grade,
             DateOfBirth = dateOfBirth,
+            Address = learnerAddress,
             ParentGuardianContact = parentGuardianContact,
             ParentGuardian = parentGuardian
         };
@@ -1849,6 +1890,8 @@ public sealed class LearnerService : ILearnerService
         var hasDateOfBirth = await HasColumnAsync(connection, "institution", "Learner", "DateOfBirth", cancellationToken);
         var hasParentGuardianContact = await HasColumnAsync(connection, "institution", "Learner", "ParentGuardianContact", cancellationToken);
         var hasParentUserId = await HasColumnAsync(connection, "institution", "Learner", "ParentUserId", cancellationToken);
+        var hasAddressId = await HasColumnAsync(connection, "institution", "Learner", "AddressId", cancellationToken);
+        var hasUserAddressId = await HasColumnAsync(connection, "dbo", "User", "AddressId", cancellationToken);
         var hasLearnerParentGuardianTable = await HasTableAsync(connection, "institution", "LearnerParentGuardian", cancellationToken);
         var parentContactSelect = hasParentGuardianContact
             ? "ParentGuardianContact"
@@ -1859,6 +1902,17 @@ public sealed class LearnerService : ILearnerService
         var parentJoin = hasParentUserId
             ? "LEFT JOIN [User] pu ON pu.UserId = l.ParentUserId"
             : string.Empty;
+        var parentUserDetailsSelect = hasParentUserId
+            ? "ISNULL(pu.Name, ''), ISNULL(pu.Email, ''), ISNULL(pu.CellPhoneNo, '')"
+            : "CAST('' AS NVARCHAR(200)), CAST('' AS NVARCHAR(255)), CAST('' AS NVARCHAR(50))";
+        var parentAddressSelect = hasParentUserId && hasUserAddressId
+            ? "pu.AddressId, pa.AddressLine1, pa.AddressLine2, pa.City, pa.ProvinceState, pa.PostalCode, pa.Country"
+            : "CAST(NULL AS INT), CAST(NULL AS NVARCHAR(200)), CAST(NULL AS NVARCHAR(200)), CAST(NULL AS NVARCHAR(100)), CAST(NULL AS NVARCHAR(100)), CAST(NULL AS NVARCHAR(20)), CAST(NULL AS NVARCHAR(100))";
+        var parentAddressJoin = hasParentUserId && hasUserAddressId ? "LEFT JOIN institution.Addresses pa ON pa.AddressId = pu.AddressId" : string.Empty;
+        var learnerAddressSelect = hasAddressId
+            ? "l.AddressId, la.AddressLine1, la.AddressLine2, la.City, la.ProvinceState, la.PostalCode, la.Country"
+            : "CAST(NULL AS INT), CAST(NULL AS NVARCHAR(200)), CAST(NULL AS NVARCHAR(200)), CAST(NULL AS NVARCHAR(100)), CAST(NULL AS NVARCHAR(100)), CAST(NULL AS NVARCHAR(20)), CAST(NULL AS NVARCHAR(100))";
+        var learnerAddressJoin = hasAddressId ? "LEFT JOIN institution.Addresses la ON la.AddressId = l.AddressId" : string.Empty;
 
         using var command = new SqlCommand(
             $@"SELECT l.Id,
@@ -1868,11 +1922,13 @@ public sealed class LearnerService : ILearnerService
                       {(hasDateOfBirth ? "CONVERT(NVARCHAR(10), l.DateOfBirth, 23)" : "CAST(NULL AS NVARCHAR(10))")},
                       {parentContactSelect},
                       {parentUserIdSelect},
-                      ISNULL(pu.Name, ''),
-                      ISNULL(pu.Email, ''),
-                      ISNULL(pu.CellPhoneNo, '')
+                      {parentUserDetailsSelect},
+                      {parentAddressSelect},
+                      {learnerAddressSelect}
                FROM institution.Learner l
                {parentJoin}
+               {parentAddressJoin}
+               {learnerAddressJoin}
                WHERE l.Id = @LearnerId
                  AND l.TenantId = @TenantId
                  AND l.IsArchived = 0;",
@@ -1897,6 +1953,12 @@ public sealed class LearnerService : ILearnerService
         var parentUserEmail = reader.IsDBNull(8) ? string.Empty : reader.GetString(8);
         var parentUserPhone = reader.IsDBNull(9) ? string.Empty : reader.GetString(9);
         parentGuardian = MergeParentGuardianFromLinkedUser(parentGuardian, parentUserName, parentUserEmail, parentUserPhone);
+        var linkedParentAddress = AddressPersistence.ReadAddress(reader, 10);
+        if (AddressIsEmpty(parentGuardian.Address))
+        {
+            parentGuardian.Address = linkedParentAddress;
+        }
+        var learnerAddress = AddressPersistence.ReadAddress(reader, 17);
 
         reader.Close();
 
@@ -1916,6 +1978,7 @@ public sealed class LearnerService : ILearnerService
             Surname = surname,
             Grade = grade,
             DateOfBirth = dateOfBirth,
+            Address = learnerAddress,
             ParentGuardian = parentGuardian
         };
     }
@@ -1932,19 +1995,32 @@ public sealed class LearnerService : ILearnerService
         var hasParentGuardianContact = await HasColumnAsync(connection, "institution", "Learner", "ParentGuardianContact", cancellationToken);
         var hasParentUserId = await HasColumnAsync(connection, "institution", "Learner", "ParentUserId", cancellationToken);
         var hasDateOfBirth = await HasColumnAsync(connection, "institution", "Learner", "DateOfBirth", cancellationToken);
+        var hasAddressId = await HasColumnAsync(connection, "institution", "Learner", "AddressId", cancellationToken);
+        var hasUserAddressId = await HasColumnAsync(connection, "dbo", "User", "AddressId", cancellationToken);
         var hasLearnerParentGuardianTable = await HasTableAsync(connection, "institution", "LearnerParentGuardian", cancellationToken);
         if (!hasDateOfBirth && !string.IsNullOrWhiteSpace(learner.DateOfBirth))
         {
             throw new InvalidOperationException("Learner DateOfBirth column is missing. Run the learner date-of-birth migration.");
+        }
+        if (!hasAddressId && !AddressIsEmpty(learner.Address))
+        {
+            throw new InvalidOperationException("Learner AddressId column is missing. Run the shared addresses migration.");
+        }
+        if (!hasUserAddressId && !AddressIsEmpty(learner.ParentGuardian?.Address))
+        {
+            throw new InvalidOperationException("User AddressId column is missing. Run the shared addresses migration.");
         }
 
         using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
         try
         {
             var linkedParentUserId = await TryFindExistingParentUserIdAsync(connection, transaction, learner.ParentGuardian, cancellationToken);
+            var learnerAddressId = await AddressPersistence.GetOrCreateAddressIdAsync(connection, transaction, learner.Address, cancellationToken);
+            var parentAddressId = await AddressPersistence.GetOrCreateAddressIdAsync(connection, transaction, learner.ParentGuardian?.Address, cancellationToken);
             var nextId = await GetNextIdAsync(connection, transaction, "institution.Learner", cancellationToken);
+            await UpdateLinkedParentAddressAsync(connection, transaction, linkedParentUserId, parentAddressId, hasUserAddressId, cancellationToken);
             using var command = new SqlCommand(
-                BuildCreateLearnerInsertSql(hasParentGuardianContact, hasParentUserId, hasDateOfBirth),
+                BuildCreateLearnerInsertSql(hasParentGuardianContact, hasParentUserId, hasDateOfBirth, hasAddressId),
                 connection,
                 transaction);
 
@@ -1953,6 +2029,10 @@ public sealed class LearnerService : ILearnerService
             command.Parameters.AddWithValue("@FirstName", learner.FirstName.Trim());
             command.Parameters.AddWithValue("@Surname", learner.Surname.Trim());
             command.Parameters.AddWithValue("@Grade", learner.Grade.Trim());
+            if (hasAddressId)
+            {
+                command.Parameters.Add("@AddressId", SqlDbType.Int).Value = (object?)learnerAddressId ?? DBNull.Value;
+            }
             if (hasDateOfBirth)
             {
                 command.Parameters.Add("@DateOfBirth", SqlDbType.Date).Value = ParseDateOfBirthOrDbNull(learner.DateOfBirth);
@@ -1975,6 +2055,7 @@ public sealed class LearnerService : ILearnerService
                     transaction,
                     nextId,
                     NormalizeParentGuardian(learner.ParentGuardian),
+                    parentAddressId,
                     cancellationToken);
             }
 
@@ -1987,6 +2068,7 @@ public sealed class LearnerService : ILearnerService
                 Surname = learner.Surname.Trim(),
                 Grade = learner.Grade.Trim(),
                 DateOfBirth = learner.DateOfBirth?.Trim() ?? string.Empty,
+                Address = learner.Address,
                 ParentGuardian = NormalizeParentGuardian(learner.ParentGuardian)
             };
         }
@@ -2009,60 +2091,91 @@ public sealed class LearnerService : ILearnerService
         var hasParentGuardianContact = await HasColumnAsync(connection, "institution", "Learner", "ParentGuardianContact", cancellationToken);
         var hasParentUserId = await HasColumnAsync(connection, "institution", "Learner", "ParentUserId", cancellationToken);
         var hasDateOfBirth = await HasColumnAsync(connection, "institution", "Learner", "DateOfBirth", cancellationToken);
+        var hasAddressId = await HasColumnAsync(connection, "institution", "Learner", "AddressId", cancellationToken);
+        var hasUserAddressId = await HasColumnAsync(connection, "dbo", "User", "AddressId", cancellationToken);
         var hasLearnerParentGuardianTable = await HasTableAsync(connection, "institution", "LearnerParentGuardian", cancellationToken);
         if (!hasDateOfBirth && !string.IsNullOrWhiteSpace(learner.DateOfBirth))
         {
             throw new InvalidOperationException("Learner DateOfBirth column is missing. Run the learner date-of-birth migration.");
         }
-        var linkedParentUserId = await TryFindExistingParentUserIdAsync(connection, null, learner.ParentGuardian, cancellationToken);
-
-        using var command = new SqlCommand(
-            BuildUpdateLearnerSql(hasParentGuardianContact, hasParentUserId, hasDateOfBirth),
-            connection);
-
-        command.Parameters.AddWithValue("@LearnerId", learnerId);
-        command.Parameters.AddWithValue("@TenantId", tenantId.Value);
-        command.Parameters.AddWithValue("@FirstName", learner.FirstName.Trim());
-        command.Parameters.AddWithValue("@Surname", learner.Surname.Trim());
-        command.Parameters.AddWithValue("@Grade", learner.Grade.Trim());
-        if (hasDateOfBirth)
+        if (!hasAddressId && !AddressIsEmpty(learner.Address))
         {
-            command.Parameters.Add("@DateOfBirth", SqlDbType.Date).Value = ParseDateOfBirthOrDbNull(learner.DateOfBirth);
+            throw new InvalidOperationException("Learner AddressId column is missing. Run the shared addresses migration.");
         }
-        if (hasParentGuardianContact)
+        if (!hasUserAddressId && !AddressIsEmpty(learner.ParentGuardian?.Address))
         {
-            command.Parameters.AddWithValue("@ParentGuardianContact", SerializeParentGuardian(learner.ParentGuardian));
-        }
-        if (hasParentUserId)
-        {
-            command.Parameters.AddWithValue("@ParentUserId", (object?)linkedParentUserId ?? DBNull.Value);
+            throw new InvalidOperationException("User AddressId column is missing. Run the shared addresses migration.");
         }
 
-        var affected = await command.ExecuteNonQueryAsync(cancellationToken);
-        if (affected == 0)
+        using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
+        try
         {
-            return null;
-        }
+            var linkedParentUserId = await TryFindExistingParentUserIdAsync(connection, transaction, learner.ParentGuardian, cancellationToken);
+            var learnerAddressId = await AddressPersistence.GetOrCreateAddressIdAsync(connection, transaction, learner.Address, cancellationToken);
+            var parentAddressId = await AddressPersistence.GetOrCreateAddressIdAsync(connection, transaction, learner.ParentGuardian?.Address, cancellationToken);
+            await UpdateLinkedParentAddressAsync(connection, transaction, linkedParentUserId, parentAddressId, hasUserAddressId, cancellationToken);
 
-        if (hasLearnerParentGuardianTable)
-        {
-            await UpsertParentGuardianFallbackAsync(
+            using var command = new SqlCommand(
+                BuildUpdateLearnerSql(hasParentGuardianContact, hasParentUserId, hasDateOfBirth, hasAddressId && !AddressIsEmpty(learner.Address)),
                 connection,
-                null,
-                learnerId,
-                NormalizeParentGuardian(learner.ParentGuardian),
-                cancellationToken);
-        }
+                transaction);
 
-        return new LearnerDto
+            command.Parameters.AddWithValue("@LearnerId", learnerId);
+            command.Parameters.AddWithValue("@TenantId", tenantId.Value);
+            command.Parameters.AddWithValue("@FirstName", learner.FirstName.Trim());
+            command.Parameters.AddWithValue("@Surname", learner.Surname.Trim());
+            command.Parameters.AddWithValue("@Grade", learner.Grade.Trim());
+            if (hasDateOfBirth)
+            {
+                command.Parameters.Add("@DateOfBirth", SqlDbType.Date).Value = ParseDateOfBirthOrDbNull(learner.DateOfBirth);
+            }
+            if (hasAddressId && !AddressIsEmpty(learner.Address))
+            {
+                command.Parameters.Add("@AddressId", SqlDbType.Int).Value = (object?)learnerAddressId ?? DBNull.Value;
+            }
+            if (hasParentGuardianContact)
+            {
+                command.Parameters.AddWithValue("@ParentGuardianContact", SerializeParentGuardian(learner.ParentGuardian));
+            }
+            if (hasParentUserId)
+            {
+                command.Parameters.AddWithValue("@ParentUserId", (object?)linkedParentUserId ?? DBNull.Value);
+            }
+
+            if (await command.ExecuteNonQueryAsync(cancellationToken) == 0)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return null;
+            }
+
+            if (hasLearnerParentGuardianTable)
+            {
+                await UpsertParentGuardianFallbackAsync(
+                    connection,
+                    transaction,
+                    learnerId,
+                    NormalizeParentGuardian(learner.ParentGuardian),
+                    parentAddressId,
+                    cancellationToken);
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+            return new LearnerDto
+            {
+                Id = learnerId,
+                FirstName = learner.FirstName.Trim(),
+                Surname = learner.Surname.Trim(),
+                Grade = learner.Grade.Trim(),
+                DateOfBirth = learner.DateOfBirth?.Trim() ?? string.Empty,
+                Address = learner.Address,
+                ParentGuardian = NormalizeParentGuardian(learner.ParentGuardian)
+            };
+        }
+        catch
         {
-            Id = learnerId,
-            FirstName = learner.FirstName.Trim(),
-            Surname = learner.Surname.Trim(),
-            Grade = learner.Grade.Trim(),
-            DateOfBirth = learner.DateOfBirth?.Trim() ?? string.Empty,
-            ParentGuardian = NormalizeParentGuardian(learner.ParentGuardian)
-        };
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 
     private static ParentGuardianDto NormalizeParentGuardian(ParentGuardianDto? parentGuardian)
@@ -2074,7 +2187,17 @@ public sealed class LearnerService : ILearnerService
             Surname = value.Surname?.Trim() ?? string.Empty,
             PhoneNumber = value.PhoneNumber?.Trim() ?? string.Empty,
             EmailAddress = value.EmailAddress?.Trim() ?? string.Empty,
-            RelationshipToLearner = value.RelationshipToLearner?.Trim() ?? string.Empty
+            RelationshipToLearner = value.RelationshipToLearner?.Trim() ?? string.Empty,
+            Address = new AddressDto
+            {
+                AddressId = value.Address?.AddressId,
+                AddressLine1 = value.Address?.AddressLine1?.Trim() ?? string.Empty,
+                AddressLine2 = value.Address?.AddressLine2?.Trim() ?? string.Empty,
+                City = value.Address?.City?.Trim() ?? string.Empty,
+                ProvinceState = value.Address?.ProvinceState?.Trim() ?? string.Empty,
+                PostalCode = value.Address?.PostalCode?.Trim() ?? string.Empty,
+                Country = value.Address?.Country?.Trim() ?? string.Empty
+            }
         };
     }
 
@@ -2241,6 +2364,11 @@ public sealed class LearnerService : ILearnerService
             merged.RelationshipToLearner = fallback.RelationshipToLearner;
         }
 
+        if (!AddressIsEmpty(fallback.Address))
+        {
+            merged.Address = fallback.Address;
+        }
+
         return merged;
     }
 
@@ -2249,10 +2377,13 @@ public sealed class LearnerService : ILearnerService
         int learnerId,
         CancellationToken cancellationToken)
     {
+        var hasAddressId = await HasColumnAsync(connection, "institution", "LearnerParentGuardian", "AddressId", cancellationToken);
         using var command = new SqlCommand(
-            @"SELECT ParentFirstName, ParentSurname, ParentPhoneNumber, ParentEmailAddress, RelationshipToLearner
-              FROM institution.LearnerParentGuardian
-              WHERE LearnerId = @LearnerId;",
+            $@"SELECT lpg.ParentFirstName, lpg.ParentSurname, lpg.ParentPhoneNumber, lpg.ParentEmailAddress, lpg.RelationshipToLearner,
+                      {(hasAddressId ? "a.AddressId, a.AddressLine1, a.AddressLine2, a.City, a.ProvinceState, a.PostalCode, a.Country" : "CAST(NULL AS INT), CAST(NULL AS NVARCHAR(200)), CAST(NULL AS NVARCHAR(200)), CAST(NULL AS NVARCHAR(100)), CAST(NULL AS NVARCHAR(100)), CAST(NULL AS NVARCHAR(20)), CAST(NULL AS NVARCHAR(100))")}
+              FROM institution.LearnerParentGuardian lpg
+              {(hasAddressId ? "LEFT JOIN institution.Addresses a ON a.AddressId = lpg.AddressId" : string.Empty)}
+              WHERE lpg.LearnerId = @LearnerId;",
             connection);
         command.Parameters.AddWithValue("@LearnerId", learnerId);
 
@@ -2262,14 +2393,16 @@ public sealed class LearnerService : ILearnerService
             return null;
         }
 
-        return NormalizeParentGuardian(new ParentGuardianDto
+        var parentGuardian = NormalizeParentGuardian(new ParentGuardianDto
         {
             FirstName = reader.IsDBNull(0) ? string.Empty : reader.GetString(0),
             Surname = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
             PhoneNumber = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
             EmailAddress = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
-            RelationshipToLearner = reader.IsDBNull(4) ? string.Empty : reader.GetString(4)
+            RelationshipToLearner = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
+            Address = AddressPersistence.ReadAddress(reader, 5)
         });
+        return parentGuardian;
     }
 
     private static async Task UpsertParentGuardianFallbackAsync(
@@ -2277,10 +2410,19 @@ public sealed class LearnerService : ILearnerService
         SqlTransaction? transaction,
         int learnerId,
         ParentGuardianDto parentGuardian,
+        int? addressId,
         CancellationToken cancellationToken)
     {
+        var hasAddressId = await HasColumnAsync(connection, "institution", "LearnerParentGuardian", "AddressId", cancellationToken, transaction);
+        if (!hasAddressId && addressId.HasValue)
+        {
+            throw new InvalidOperationException("LearnerParentGuardian AddressId column is missing. Run the shared addresses migration.");
+        }
+        var addressAssignment = hasAddressId && addressId.HasValue ? ", AddressId = @AddressId" : string.Empty;
+        var addressColumn = hasAddressId ? ", AddressId" : string.Empty;
+        var addressValue = hasAddressId ? ", @AddressId" : string.Empty;
         using var command = new SqlCommand(
-            @"IF EXISTS (SELECT 1 FROM institution.LearnerParentGuardian WHERE LearnerId = @LearnerId)
+            $@"IF EXISTS (SELECT 1 FROM institution.LearnerParentGuardian WHERE LearnerId = @LearnerId)
               BEGIN
                   UPDATE institution.LearnerParentGuardian
                   SET ParentFirstName = @ParentFirstName,
@@ -2288,15 +2430,15 @@ public sealed class LearnerService : ILearnerService
                       ParentPhoneNumber = @ParentPhoneNumber,
                       ParentEmailAddress = @ParentEmailAddress,
                       RelationshipToLearner = @RelationshipToLearner,
-                      UpdatedAt = SYSUTCDATETIME()
+                      UpdatedAt = SYSUTCDATETIME(){addressAssignment}
                   WHERE LearnerId = @LearnerId;
               END
               ELSE
               BEGIN
                   INSERT INTO institution.LearnerParentGuardian
-                      (LearnerId, ParentFirstName, ParentSurname, ParentPhoneNumber, ParentEmailAddress, RelationshipToLearner, UpdatedAt)
+                      (LearnerId, ParentFirstName, ParentSurname, ParentPhoneNumber, ParentEmailAddress, RelationshipToLearner, UpdatedAt{addressColumn})
                   VALUES
-                      (@LearnerId, @ParentFirstName, @ParentSurname, @ParentPhoneNumber, @ParentEmailAddress, @RelationshipToLearner, SYSUTCDATETIME());
+                      (@LearnerId, @ParentFirstName, @ParentSurname, @ParentPhoneNumber, @ParentEmailAddress, @RelationshipToLearner, SYSUTCDATETIME(){addressValue});
               END",
             connection,
             transaction);
@@ -2307,6 +2449,10 @@ public sealed class LearnerService : ILearnerService
         command.Parameters.AddWithValue("@ParentPhoneNumber", parentGuardian.PhoneNumber);
         command.Parameters.AddWithValue("@ParentEmailAddress", parentGuardian.EmailAddress);
         command.Parameters.AddWithValue("@RelationshipToLearner", parentGuardian.RelationshipToLearner);
+        if (hasAddressId)
+        {
+            command.Parameters.Add("@AddressId", SqlDbType.Int).Value = (object?)addressId ?? DBNull.Value;
+        }
 
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
@@ -2331,7 +2477,7 @@ public sealed class LearnerService : ILearnerService
         return Convert.ToInt32(result ?? 0) > 0;
     }
 
-    private static string BuildCreateLearnerInsertSql(bool hasParentGuardianContact, bool hasParentUserId, bool hasDateOfBirth)
+    private static string BuildCreateLearnerInsertSql(bool hasParentGuardianContact, bool hasParentUserId, bool hasDateOfBirth, bool hasAddressId)
     {
         var columns = new List<string> { "Id", "TenantId", "FirstName", "Surname", "Grade" };
         var values = new List<string> { "@Id", "@TenantId", "@FirstName", "@Surname", "@Grade" };
@@ -2339,6 +2485,11 @@ public sealed class LearnerService : ILearnerService
         {
             columns.Add("DateOfBirth");
             values.Add("@DateOfBirth");
+        }
+        if (hasAddressId)
+        {
+            columns.Add("AddressId");
+            values.Add("@AddressId");
         }
         if (hasParentGuardianContact)
         {
@@ -2357,7 +2508,7 @@ public sealed class LearnerService : ILearnerService
                   VALUES ({string.Join(", ", values)});";
     }
 
-    private static string BuildUpdateLearnerSql(bool hasParentGuardianContact, bool hasParentUserId, bool hasDateOfBirth)
+    private static string BuildUpdateLearnerSql(bool hasParentGuardianContact, bool hasParentUserId, bool hasDateOfBirth, bool hasAddressId)
     {
         var assignments = new List<string>
         {
@@ -2368,6 +2519,10 @@ public sealed class LearnerService : ILearnerService
         if (hasDateOfBirth)
         {
             assignments.Add("DateOfBirth = @DateOfBirth");
+        }
+        if (hasAddressId)
+        {
+            assignments.Add("AddressId = @AddressId");
         }
         if (hasParentGuardianContact)
         {
@@ -2390,6 +2545,39 @@ public sealed class LearnerService : ILearnerService
         return string.IsNullOrWhiteSpace(value)
             ? DBNull.Value
             : DateTime.ParseExact(value.Trim(), "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture).Date;
+    }
+
+    private static bool AddressIsEmpty(AddressDto? address)
+    {
+        return address is null
+            || (string.IsNullOrWhiteSpace(address.AddressLine1)
+                && string.IsNullOrWhiteSpace(address.AddressLine2)
+                && string.IsNullOrWhiteSpace(address.City)
+                && string.IsNullOrWhiteSpace(address.ProvinceState)
+                && string.IsNullOrWhiteSpace(address.PostalCode)
+                && string.IsNullOrWhiteSpace(address.Country));
+    }
+
+    private static async Task UpdateLinkedParentAddressAsync(
+        SqlConnection connection,
+        SqlTransaction transaction,
+        int? parentUserId,
+        int? addressId,
+        bool hasAddressId,
+        CancellationToken cancellationToken)
+    {
+        if (!parentUserId.HasValue || !hasAddressId || !addressId.HasValue)
+        {
+            return;
+        }
+
+        using var command = new SqlCommand(
+            "UPDATE [User] SET AddressId = @AddressId WHERE UserId = @UserId;",
+            connection,
+            transaction);
+        command.Parameters.Add("@AddressId", SqlDbType.Int).Value = (object?)addressId ?? DBNull.Value;
+        command.Parameters.AddWithValue("@UserId", parentUserId.Value);
+        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private static async Task<int?> TryFindExistingParentUserIdAsync(

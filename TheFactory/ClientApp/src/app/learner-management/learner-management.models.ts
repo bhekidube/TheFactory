@@ -1,9 +1,20 @@
+export interface AddressDto {
+  addressId?: number | null;
+  addressLine1: string;
+  addressLine2: string;
+  city: string;
+  provinceState: string;
+  postalCode: string;
+  country: string;
+}
+
 export interface LearnerDto {
   id: number;
   firstName: string;
   surname: string;
   grade: string;
   dateOfBirth: string;
+  address: AddressDto;
   parentGuardian: ParentGuardianDto;
 }
 
@@ -17,6 +28,7 @@ export interface StaffDto {
   role: string;
   email: string;
   phone: string;
+  address: AddressDto;
   status: string;
   createdAt: string;
   updatedAt: string;
@@ -30,6 +42,7 @@ export interface StaffUpsertRequest {
   role: string;
   email: string;
   phone: string;
+  address: AddressDto;
   status: string;
 }
 
@@ -39,6 +52,7 @@ export interface ParentGuardianDto {
   phoneNumber: string;
   emailAddress: string;
   relationshipToLearner: string;
+  address: AddressDto;
 }
 
 export interface CreateLearnerRequestDto {
@@ -46,6 +60,7 @@ export interface CreateLearnerRequestDto {
   surname: string;
   grade: string;
   dateOfBirth: string;
+  address: AddressDto;
   parentGuardian: ParentGuardianDto;
 }
 
@@ -167,6 +182,7 @@ export interface LearnerDetailDto {
   grade: string;
   dateOfBirth: string;
   parentGuardianContact: string;
+  address: AddressDto;
   parentGuardian: ParentGuardianDto;
   academicRecords: LearnerAcademicRecordDto[];
 }

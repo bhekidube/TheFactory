@@ -90,6 +90,7 @@ export class StaffManagementComponent implements OnInit, OnDestroy {
       role: member.role,
       email: member.email,
       phone: member.phone,
+      address: { ...member.address },
       status: member.status
     };
     this.showForm = true;
@@ -120,6 +121,7 @@ export class StaffManagementComponent implements OnInit, OnDestroy {
       role: this.form.role.trim(),
       email: this.form.email.trim(),
       phone: this.form.phone.trim(),
+      address: { ...this.form.address },
       status: this.form.status || 'Active'
     };
 
@@ -197,6 +199,15 @@ export class StaffManagementComponent implements OnInit, OnDestroy {
       role: 'Teacher',
       email: '',
       phone: '',
+      address: {
+        addressId: null,
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        provinceState: '',
+        postalCode: '',
+        country: ''
+      },
       status: 'Active'
     };
   }

@@ -21,12 +21,14 @@ public sealed class StaffService : IStaffService
     {
         using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
         using var command = new SqlCommand(
-            @"SELECT Id, national_id AS NationalId, SchoolId, UserId, FirstName, Surname, Role, Email, Phone, Status, CreatedAt, UpdatedAt
-              FROM institution.Staff
-              WHERE SchoolId = @SchoolId
-                AND (@Status = '' OR Status = @Status)
-                AND (@Search = '' OR national_id LIKE @SearchPattern OR FirstName LIKE @SearchPattern OR Surname LIKE @SearchPattern OR Role LIKE @SearchPattern OR Email LIKE @SearchPattern OR Phone LIKE @SearchPattern)
-              ORDER BY FirstName ASC, Surname ASC, national_id ASC;",
+            @"SELECT s.Id, s.national_id AS NationalId, s.SchoolId, s.UserId, s.FirstName, s.Surname, s.Role, s.Email, s.Phone, s.Status, s.CreatedAt, s.UpdatedAt,
+                     s.AddressId, a.AddressLine1, a.AddressLine2, a.City, a.ProvinceState, a.PostalCode, a.Country
+              FROM institution.Staff s
+              LEFT JOIN institution.Addresses a ON a.AddressId = s.AddressId
+              WHERE s.SchoolId = @SchoolId
+                AND (@Status = '' OR s.Status = @Status)
+                AND (@Search = '' OR s.national_id LIKE @SearchPattern OR s.FirstName LIKE @SearchPattern OR s.Surname LIKE @SearchPattern OR s.Role LIKE @SearchPattern OR s.Email LIKE @SearchPattern OR s.Phone LIKE @SearchPattern)
+              ORDER BY s.FirstName ASC, s.Surname ASC, s.national_id ASC;",
             connection);
         command.Parameters.AddWithValue("@SchoolId", schoolId);
         command.Parameters.AddWithValue("@Status", string.IsNullOrWhiteSpace(status) ? "Active" : status.Trim());
@@ -48,9 +50,11 @@ public sealed class StaffService : IStaffService
     {
         using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
         using var command = new SqlCommand(
-            @"SELECT Id, national_id AS NationalId, SchoolId, UserId, FirstName, Surname, Role, Email, Phone, Status, CreatedAt, UpdatedAt
-              FROM institution.Staff
-              WHERE national_id = @NationalId AND SchoolId = @SchoolId;",
+            @"SELECT s.Id, s.national_id AS NationalId, s.SchoolId, s.UserId, s.FirstName, s.Surname, s.Role, s.Email, s.Phone, s.Status, s.CreatedAt, s.UpdatedAt,
+                     s.AddressId, a.AddressLine1, a.AddressLine2, a.City, a.ProvinceState, a.PostalCode, a.Country
+              FROM institution.Staff s
+              LEFT JOIN institution.Addresses a ON a.AddressId = s.AddressId
+              WHERE s.national_id = @NationalId AND s.SchoolId = @SchoolId;",
             connection);
         command.Parameters.AddWithValue("@NationalId", nationalId);
         command.Parameters.AddWithValue("@SchoolId", schoolId);
@@ -70,15 +74,16 @@ public sealed class StaffService : IStaffService
             await EnsureEmailIsAvailableAsync(connection, transaction, schoolId, request.Email, null, null, cancellationToken);
             await EnsureNationalIdIsAvailableAsync(connection, transaction, request.NationalId, null, cancellationToken);
             var internalStaffId = await GetNextIdAsync(connection, transaction, cancellationToken);
+            var addressId = await AddressPersistence.GetOrCreateAddressIdAsync(connection, transaction, request.Address, cancellationToken);
 
             using var command = new SqlCommand(
                                 @"INSERT INTO institution.Staff
-                                        (Id, SchoolId, national_id, UserId, FirstName, Surname, Role, Email, Phone, Status, CreatedAt, UpdatedAt)
+                                        (Id, SchoolId, national_id, UserId, FirstName, Surname, Role, Email, Phone, AddressId, Status, CreatedAt, UpdatedAt)
                   VALUES
-                                        (@Id, @SchoolId, @NationalId, @UserId, @FirstName, @Surname, @Role, @Email, @Phone, @Status, SYSUTCDATETIME(), SYSUTCDATETIME());",
+                                        (@Id, @SchoolId, @NationalId, @UserId, @FirstName, @Surname, @Role, @Email, @Phone, @AddressId, @Status, SYSUTCDATETIME(), SYSUTCDATETIME());",
                 connection,
                 transaction);
-            AddStaffParameters(command, internalStaffId, schoolId, request);
+            AddStaffParameters(command, internalStaffId, schoolId, request, addressId);
             await command.ExecuteNonQueryAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
@@ -94,11 +99,14 @@ public sealed class StaffService : IStaffService
     public async Task<StaffDto?> UpdateStaffAsync(int schoolId, string nationalId, StaffUpsertRequest request, CancellationToken cancellationToken = default)
     {
         using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
-        await EnsureEmailIsAvailableAsync(connection, null, schoolId, request.Email, null, nationalId, cancellationToken);
-        await EnsureNationalIdIsAvailableAsync(connection, null, request.NationalId, nationalId, cancellationToken);
-
-        using var command = new SqlCommand(
-            @"UPDATE institution.Staff
+        using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
+        try
+        {
+            await EnsureEmailIsAvailableAsync(connection, transaction, schoolId, request.Email, null, nationalId, cancellationToken);
+            await EnsureNationalIdIsAvailableAsync(connection, transaction, request.NationalId, nationalId, cancellationToken);
+            var addressId = await AddressPersistence.GetOrCreateAddressIdAsync(connection, transaction, request.Address, cancellationToken);
+            using var command = new SqlCommand(
+                @"UPDATE institution.Staff
               SET national_id = @NationalId,
                   UserId = @UserId,
                   FirstName = @FirstName,
@@ -106,17 +114,27 @@ public sealed class StaffService : IStaffService
                   Role = @Role,
                   Email = @Email,
                   Phone = @Phone,
+                  AddressId = @AddressId,
                   Status = @Status,
                   UpdatedAt = SYSUTCDATETIME()
               WHERE national_id = @ExistingNationalId AND SchoolId = @SchoolId;",
-            connection);
-        command.Parameters.AddWithValue("@ExistingNationalId", nationalId);
-        command.Parameters.AddWithValue("@SchoolId", schoolId);
-        AddStaffParameters(command, 0, schoolId, request, includeIdentity: false);
+                connection,
+                transaction);
+            command.Parameters.AddWithValue("@ExistingNationalId", nationalId);
+            AddStaffParameters(command, 0, schoolId, request, addressId, includeIdentity: false);
 
-        if (await command.ExecuteNonQueryAsync(cancellationToken) == 0)
+            if (await command.ExecuteNonQueryAsync(cancellationToken) == 0)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return null;
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
         {
-            return null;
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
         }
 
         return await GetStaffByNationalIdAsync(schoolId, request.NationalId.Trim(), cancellationToken);
@@ -125,11 +143,14 @@ public sealed class StaffService : IStaffService
     public async Task<StaffDto?> UpdateLegacyStaffAsync(int schoolId, int legacyId, StaffUpsertRequest request, CancellationToken cancellationToken = default)
     {
         using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
-        await EnsureEmailIsAvailableAsync(connection, null, schoolId, request.Email, legacyId, null, cancellationToken);
-        await EnsureNationalIdIsAvailableAsync(connection, null, request.NationalId, null, cancellationToken);
-
-        using var command = new SqlCommand(
-            @"UPDATE institution.Staff
+        using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
+        try
+        {
+            await EnsureEmailIsAvailableAsync(connection, transaction, schoolId, request.Email, legacyId, null, cancellationToken);
+            await EnsureNationalIdIsAvailableAsync(connection, transaction, request.NationalId, null, cancellationToken);
+            var addressId = await AddressPersistence.GetOrCreateAddressIdAsync(connection, transaction, request.Address, cancellationToken);
+            using var command = new SqlCommand(
+                @"UPDATE institution.Staff
               SET national_id = @NationalId,
                   UserId = @UserId,
                   FirstName = @FirstName,
@@ -137,17 +158,28 @@ public sealed class StaffService : IStaffService
                   Role = @Role,
                   Email = @Email,
                   Phone = @Phone,
+                  AddressId = @AddressId,
                   Status = @Status,
                   UpdatedAt = SYSUTCDATETIME()
               WHERE Id = @LegacyId AND SchoolId = @SchoolId AND national_id IS NULL;",
-            connection);
-        command.Parameters.AddWithValue("@LegacyId", legacyId);
-        command.Parameters.AddWithValue("@SchoolId", schoolId);
-        AddStaffParameters(command, 0, schoolId, request, includeIdentity: false);
+                connection,
+                transaction);
+            command.Parameters.AddWithValue("@LegacyId", legacyId);
+            command.Parameters.AddWithValue("@SchoolId", schoolId);
+            AddStaffParameters(command, 0, schoolId, request, addressId, includeIdentity: false);
 
-        if (await command.ExecuteNonQueryAsync(cancellationToken) == 0)
+            if (await command.ExecuteNonQueryAsync(cancellationToken) == 0)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return null;
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
         {
-            return null;
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
         }
 
         return await GetStaffByNationalIdAsync(schoolId, request.NationalId.Trim(), cancellationToken);
@@ -194,11 +226,12 @@ public sealed class StaffService : IStaffService
             Phone = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
             Status = reader.IsDBNull(9) ? "Active" : reader.GetString(9),
             CreatedAt = reader.GetDateTime(10),
-            UpdatedAt = reader.GetDateTime(11)
+            UpdatedAt = reader.GetDateTime(11),
+            Address = AddressPersistence.ReadAddress(reader, 12)
         };
     }
 
-    private static void AddStaffParameters(SqlCommand command, int internalStaffId, int schoolId, StaffUpsertRequest request, bool includeIdentity = true)
+    private static void AddStaffParameters(SqlCommand command, int internalStaffId, int schoolId, StaffUpsertRequest request, int? addressId, bool includeIdentity = true)
     {
         if (includeIdentity)
         {
@@ -207,6 +240,7 @@ public sealed class StaffService : IStaffService
         }
 
         command.Parameters.AddWithValue("@NationalId", request.NationalId.Trim());
+        command.Parameters.Add("@AddressId", SqlDbType.Int).Value = (object?)addressId ?? DBNull.Value;
         command.Parameters.AddWithValue("@UserId", (object?)request.UserId ?? DBNull.Value);
         command.Parameters.AddWithValue("@FirstName", request.FirstName.Trim());
         command.Parameters.AddWithValue("@Surname", request.Surname.Trim());

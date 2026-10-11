@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using System.Security.Cryptography;
 using System.Text;
+using System.Data;
+using TheFactory.Contracts;
+using TheFactory.Services;
 
 public class UserRegisterModel
 {
@@ -11,6 +14,7 @@ public class UserRegisterModel
     public string cellPhoneNo { get; set; }
     public string alternateCellPhoneNo { get; set; }
     public string password { get; set; }
+    public AddressDto address { get; set; } = new();
     public int operatorId { get; set; } // <-- Add this property
 }
 
@@ -50,14 +54,19 @@ public class UserController : ControllerBase
             using (var conn = await _sqlService.GetSqlConnectionAsync())
             {
                 transaction = conn.BeginTransaction();
+                var addressId = await AddressPersistence.GetOrCreateAddressIdAsync(
+                    conn,
+                    transaction,
+                    model.address,
+                    HttpContext.RequestAborted);
 
                 // 1. Insert User
                 int newUserId;
                 using (var command = new SqlCommand(@"
                     INSERT INTO [User] 
-                        (UserRoleId, Name, Email, CellPhoneNo, AlternateCellPhoneNo, PasswordHash, Salt, CreatedAt)
+                        (UserRoleId, Name, Email, CellPhoneNo, AlternateCellPhoneNo, AddressId, PasswordHash, Salt, CreatedAt)
                     VALUES
-                        (@UserRoleId, @Name, @Email, @CellPhoneNo, @AlternateCellPhoneNo, @PasswordHash, @Salt, SYSUTCDATETIME());
+                        (@UserRoleId, @Name, @Email, @CellPhoneNo, @AlternateCellPhoneNo, @AddressId, @PasswordHash, @Salt, SYSUTCDATETIME());
                     SELECT SCOPE_IDENTITY();
                 ", conn, transaction))
                 {
@@ -66,6 +75,7 @@ public class UserController : ControllerBase
                     command.Parameters.AddWithValue("@Email", model.email ?? (object)DBNull.Value);
                     command.Parameters.AddWithValue("@CellPhoneNo", model.cellPhoneNo ?? (object)DBNull.Value);
                     command.Parameters.AddWithValue("@AlternateCellPhoneNo", model.alternateCellPhoneNo ?? (object)DBNull.Value);
+                    command.Parameters.Add("@AddressId", SqlDbType.Int).Value = (object?)addressId ?? DBNull.Value;
                     command.Parameters.AddWithValue("@PasswordHash", passwordHash);
                     command.Parameters.AddWithValue("@Salt", salt);
 
@@ -124,17 +134,21 @@ public class UserController : ControllerBase
         {
             using (var conn = await _sqlService.GetSqlConnectionAsync())
             using (var command = new SqlCommand(@"
-                SELECT u.UserId, u.Name, u.PasswordHash, u.Salt, ur.Name AS UserRole, OU.OperatorId
+                SELECT u.UserId, u.Name, u.PasswordHash, u.Salt, ur.Name AS UserRole, OU.OperatorId,
+                       u.AddressId, a.AddressLine1, a.AddressLine2, a.City, a.ProvinceState, a.PostalCode, a.Country
                 FROM [User] u
                     INNER JOIN OperatorUser OU ON OU.UserId = U.UserId
                     INNER JOIN OperatorUserRole OUR ON OU.OperatorUserId = OUR.OperatorUserId
                     INNER JOIN [UserRole] ur ON ur.UserRoleId = OUR.UserRoleId
+                    LEFT JOIN institution.Addresses a ON a.AddressId = u.AddressId
                 WHERE u.Email = @Email
                 UNION
-                SELECT u.UserId, u.Name, u.PasswordHash, u.Salt, UR.Name AS UserRole,0
+                SELECT u.UserId, u.Name, u.PasswordHash, u.Salt, UR.Name AS UserRole,0,
+                       u.AddressId, a.AddressLine1, a.AddressLine2, a.City, a.ProvinceState, a.PostalCode, a.Country
                 FROM [User] u
                     INNER JOIN SYSTEMUSERROLE SUR ON U.UserId = SUR.UserId
                     INNER JOIN [UserRole] ur ON uR.UserRoleId = SUR.UserRoleId
+                    LEFT JOIN institution.Addresses a ON a.AddressId = u.AddressId
                 WHERE u.Email = @Email
             ", conn))
             {
@@ -143,6 +157,7 @@ public class UserController : ControllerBase
                 int userId = 0;
                 string userName = null, storedHash = null, salt = null, userRole = null;
                 int operatorId = 0;
+                AddressDto address;
 
                 using (var reader = await command.ExecuteReaderAsync())
                 {
@@ -156,6 +171,7 @@ public class UserController : ControllerBase
                     salt = reader.GetString(3);
                     userRole = reader.GetString(4);
                     operatorId = reader.GetInt32(5);
+                    address = AddressPersistence.ReadAddress(reader, 6);
                 } // reader is disposed and closed here
 
                 var inputHash = HashPassword(model.Password, salt);
@@ -170,7 +186,7 @@ public class UserController : ControllerBase
                         await updateCmd.ExecuteNonQueryAsync();
                     }
 
-                    return Ok(new { message = "Login successful.", userName, userRole, userId, operatorId });
+                    return Ok(new { message = "Login successful.", userName, userRole, userId, operatorId, address });
                 }
                 else
                 {

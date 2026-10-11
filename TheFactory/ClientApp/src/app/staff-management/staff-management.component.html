@@ -109,6 +109,31 @@
           Phone
           <input type="tel" name="phone" [(ngModel)]="form.phone" />
         </label>
+        <div class="form-section-title">Address</div>
+        <label>
+          Address Line 1
+          <input type="text" name="addressLine1" [(ngModel)]="form.address.addressLine1" />
+        </label>
+        <label>
+          Address Line 2
+          <input type="text" name="addressLine2" [(ngModel)]="form.address.addressLine2" />
+        </label>
+        <label>
+          City
+          <input type="text" name="city" [(ngModel)]="form.address.city" />
+        </label>
+        <label>
+          Province / State
+          <input type="text" name="provinceState" [(ngModel)]="form.address.provinceState" />
+        </label>
+        <label>
+          Postal Code
+          <input type="text" name="postalCode" [(ngModel)]="form.address.postalCode" />
+        </label>
+        <label>
+          Country
+          <input type="text" name="country" [(ngModel)]="form.address.country" />
+        </label>
         <div class="panel-actions">
           <button type="submit" class="primary-btn" [disabled]="saving">{{ saving ? 'Saving...' : 'Save Staff' }}</button>
           <button type="button" class="secondary-btn" [disabled]="saving" (click)="closeForm()">Cancel</button>

@@ -1,3 +1,5 @@
+    using TheFactory.Contracts;
+
     public class UserInsertModel
     {
         public int UserRoleId { get; set; }
@@ -7,4 +9,5 @@
         public string AlternateCellPhoneNo { get; set; }
         public string PasswordHash { get; set; }
         public string Salt { get; set; }
+        public AddressDto Address { get; set; } = new();
     }

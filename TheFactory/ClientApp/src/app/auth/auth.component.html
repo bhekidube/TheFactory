@@ -73,6 +73,13 @@
       <div *ngIf="registerEmail.invalid && registerEmail.touched" class="error">Valid email is required.</div>
       <input type="text" [(ngModel)]="registerModel.cellPhoneNo" name="registerCellPhoneNo" placeholder="Cell Phone" />
       <input type="text" [(ngModel)]="registerModel.alternateCellPhoneNo" name="registerAlternateCellPhoneNo" placeholder="Alternate Cell Phone" />
+      <h3>Address</h3>
+      <input type="text" [(ngModel)]="registerModel.address.addressLine1" name="registerAddressLine1" placeholder="Address Line 1" />
+      <input type="text" [(ngModel)]="registerModel.address.addressLine2" name="registerAddressLine2" placeholder="Address Line 2" />
+      <input type="text" [(ngModel)]="registerModel.address.city" name="registerCity" placeholder="City" />
+      <input type="text" [(ngModel)]="registerModel.address.provinceState" name="registerProvinceState" placeholder="Province / State" />
+      <input type="text" [(ngModel)]="registerModel.address.postalCode" name="registerPostalCode" placeholder="Postal Code" />
+      <input type="text" [(ngModel)]="registerModel.address.country" name="registerCountry" placeholder="Country" />
 
       <!-- Operator Dropdown -->
       <select [(ngModel)]="registerModel.operatorId" name="registerOperatorId" required #registerOperatorId="ngModel">

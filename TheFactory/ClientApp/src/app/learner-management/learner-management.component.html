@@ -183,6 +183,32 @@
           </div>
         </label>
 
+        <div class="form-section-title">Learner Address</div>
+        <label>
+          Address Line 1
+          <input type="text" name="learnerAddressLine1" [(ngModel)]="learnerForm.address.addressLine1" />
+        </label>
+        <label>
+          Address Line 2
+          <input type="text" name="learnerAddressLine2" [(ngModel)]="learnerForm.address.addressLine2" />
+        </label>
+        <label>
+          City
+          <input type="text" name="learnerCity" [(ngModel)]="learnerForm.address.city" />
+        </label>
+        <label>
+          Province / State
+          <input type="text" name="learnerProvinceState" [(ngModel)]="learnerForm.address.provinceState" />
+        </label>
+        <label>
+          Postal Code
+          <input type="text" name="learnerPostalCode" [(ngModel)]="learnerForm.address.postalCode" />
+        </label>
+        <label>
+          Country
+          <input type="text" name="learnerCountry" [(ngModel)]="learnerForm.address.country" />
+        </label>
+
         <div class="form-section-title">Parent / Guardian Details</div>
 
         <label>
@@ -226,6 +252,32 @@
           <div class="field-error" *ngIf="learnerFormSubmitted && !parentGuardianForm.relationshipToLearner.trim()">
             Relationship to learner is required.
           </div>
+        </label>
+
+        <div class="form-section-title">Parent / Guardian Address</div>
+        <label>
+          Address Line 1
+          <input type="text" name="parentAddressLine1" [(ngModel)]="parentGuardianForm.address.addressLine1" />
+        </label>
+        <label>
+          Address Line 2
+          <input type="text" name="parentAddressLine2" [(ngModel)]="parentGuardianForm.address.addressLine2" />
+        </label>
+        <label>
+          City
+          <input type="text" name="parentCity" [(ngModel)]="parentGuardianForm.address.city" />
+        </label>
+        <label>
+          Province / State
+          <input type="text" name="parentProvinceState" [(ngModel)]="parentGuardianForm.address.provinceState" />
+        </label>
+        <label>
+          Postal Code
+          <input type="text" name="parentPostalCode" [(ngModel)]="parentGuardianForm.address.postalCode" />
+        </label>
+        <label>
+          Country
+          <input type="text" name="parentCountry" [(ngModel)]="parentGuardianForm.address.country" />
         </label>
 
         <div class="panel-actions">

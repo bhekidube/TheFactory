@@ -7,6 +7,7 @@ public sealed class LearnerDto
     public string Surname { get; set; } = string.Empty;
     public string Grade { get; set; } = string.Empty;
     public string DateOfBirth { get; set; } = string.Empty;
+    public AddressDto Address { get; set; } = new();
     public ParentGuardianDto ParentGuardian { get; set; } = new();
 }
 
@@ -21,6 +22,7 @@ public sealed class StaffDto
     public string Role { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
+    public AddressDto Address { get; set; } = new();
     public string Status { get; set; } = "Active";
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
@@ -35,6 +37,7 @@ public sealed class StaffUpsertRequest
     public string Role { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
+    public AddressDto Address { get; set; } = new();
     public string Status { get; set; } = "Active";
 }
 
@@ -45,6 +48,7 @@ public sealed class ParentGuardianDto
     public string PhoneNumber { get; set; } = string.Empty;
     public string EmailAddress { get; set; } = string.Empty;
     public string RelationshipToLearner { get; set; } = string.Empty;
+    public AddressDto Address { get; set; } = new();
 }
 
 public sealed class SubjectScoreDto
@@ -195,6 +199,7 @@ public sealed class LearnerDetailDto
     public string Grade { get; set; } = string.Empty;
     public string DateOfBirth { get; set; } = string.Empty;
     public string ParentGuardianContact { get; set; } = string.Empty;
+    public AddressDto Address { get; set; } = new();
     public ParentGuardianDto ParentGuardian { get; set; } = new();
     public IReadOnlyCollection<LearnerAcademicRecordDto> AcademicRecords { get; set; } = Array.Empty<LearnerAcademicRecordDto>();
 }

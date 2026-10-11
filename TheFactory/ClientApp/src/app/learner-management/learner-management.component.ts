@@ -6,6 +6,7 @@ import {
   ClassDto,
   CreateClassRequestDto,
   CreateLearnerRequestDto,
+  AddressDto,
   GradeDto,
   LearnerLookupDto,
   LearnerDto,
@@ -483,12 +484,14 @@ export class LearnerManagementComponent implements OnInit {
       surname: this.learnerForm.surname.trim(),
       grade: this.learnerForm.grade.trim(),
       dateOfBirth: this.learnerForm.dateOfBirth.trim(),
+      address: this.learnerForm.address,
       parentGuardian: {
         firstName: this.parentGuardianForm.firstName.trim(),
         surname: this.parentGuardianForm.surname.trim(),
         phoneNumber: this.normalizePhoneDigits(this.parentGuardianForm.phoneNumber),
         emailAddress: this.parentGuardianForm.emailAddress.trim(),
-        relationshipToLearner: this.parentGuardianForm.relationshipToLearner.trim()
+        relationshipToLearner: this.parentGuardianForm.relationshipToLearner.trim(),
+        address: this.parentGuardianForm.address
       }
     };
 
@@ -497,12 +500,14 @@ export class LearnerManagementComponent implements OnInit {
       surname: this.learnerForm.surname.trim(),
       grade: this.learnerForm.grade.trim(),
       dateOfBirth: this.learnerForm.dateOfBirth.trim(),
+      address: this.learnerForm.address,
       parentGuardian: {
         firstName: this.parentGuardianForm.firstName.trim(),
         surname: this.parentGuardianForm.surname.trim(),
         phoneNumber: this.normalizePhoneDigits(this.parentGuardianForm.phoneNumber),
         emailAddress: this.parentGuardianForm.emailAddress.trim(),
-        relationshipToLearner: this.parentGuardianForm.relationshipToLearner.trim()
+        relationshipToLearner: this.parentGuardianForm.relationshipToLearner.trim(),
+        address: this.parentGuardianForm.address
       }
     };
 
@@ -855,12 +860,14 @@ export class LearnerManagementComponent implements OnInit {
       surname: String(source.surname ?? source.Surname ?? ''),
       grade: String(source.grade ?? source.Grade ?? ''),
       dateOfBirth: String(source.dateOfBirth ?? source.DateOfBirth ?? ''),
+      address: this.normalizeAddress(source.address ?? source.Address),
       parentGuardian: {
         firstName: String(parentSource.firstName ?? parentSource.FirstName ?? ''),
         surname: String(parentSource.surname ?? parentSource.Surname ?? ''),
         phoneNumber: String(parentSource.phoneNumber ?? parentSource.PhoneNumber ?? ''),
         emailAddress: String(parentSource.emailAddress ?? parentSource.EmailAddress ?? ''),
-        relationshipToLearner: String(parentSource.relationshipToLearner ?? parentSource.RelationshipToLearner ?? '')
+        relationshipToLearner: String(parentSource.relationshipToLearner ?? parentSource.RelationshipToLearner ?? ''),
+        address: this.normalizeAddress(parentSource.address ?? parentSource.Address)
       }
     };
   }
@@ -872,6 +879,7 @@ export class LearnerManagementComponent implements OnInit {
       surname: '',
       grade: '',
       dateOfBirth: '',
+      address: this.getEmptyAddress(),
       parentGuardian: this.getEmptyParentGuardian()
     };
   }
@@ -882,7 +890,34 @@ export class LearnerManagementComponent implements OnInit {
       surname: '',
       phoneNumber: '',
       emailAddress: '',
-      relationshipToLearner: ''
+      relationshipToLearner: '',
+      address: this.getEmptyAddress()
+    };
+  }
+
+  private getEmptyAddress(): AddressDto {
+    return {
+      addressId: null,
+      addressLine1: '',
+      addressLine2: '',
+      city: '',
+      provinceState: '',
+      postalCode: '',
+      country: ''
+    };
+  }
+
+  private normalizeAddress(raw: any): AddressDto {
+    const source = raw ?? {};
+    const addressId = source.addressId ?? source.AddressId;
+    return {
+      addressId: addressId == null ? null : Number(addressId),
+      addressLine1: String(source.addressLine1 ?? source.AddressLine1 ?? ''),
+      addressLine2: String(source.addressLine2 ?? source.AddressLine2 ?? ''),
+      city: String(source.city ?? source.City ?? ''),
+      provinceState: String(source.provinceState ?? source.ProvinceState ?? ''),
+      postalCode: String(source.postalCode ?? source.PostalCode ?? ''),
+      country: String(source.country ?? source.Country ?? '')
     };
   }
 
