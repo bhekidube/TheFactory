@@ -3,6 +3,7 @@ export interface LearnerDto {
   firstName: string;
   surname: string;
   grade: string;
+  dateOfBirth: string;
   parentGuardian: ParentGuardianDto;
 }
 
@@ -44,6 +45,7 @@ export interface CreateLearnerRequestDto {
   firstName: string;
   surname: string;
   grade: string;
+  dateOfBirth: string;
   parentGuardian: ParentGuardianDto;
 }
 

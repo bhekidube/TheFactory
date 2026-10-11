@@ -62,6 +62,7 @@
             <th>First Name</th>
             <th>Surname</th>
             <th>Grade</th>
+            <th>Date of Birth</th>
             <th class="actions-col text-end">Actions</th>
           </tr>
         </thead>
@@ -71,6 +72,7 @@
             <td>{{ learner.firstName }}</td>
             <td>{{ learner.surname }}</td>
             <td>{{ learner.grade }}</td>
+            <td>{{ learner.dateOfBirth || '—' }}</td>
             <td class="actions-col text-end">
               <div class="actions-row d-flex justify-content-end gap-2">
                 <button type="button" class="link-btn" *ngIf="isReportsRoute" (click)="viewReport(learner)">View Report</button>
@@ -161,6 +163,13 @@
           <input type="text" name="surname" [(ngModel)]="learnerForm.surname" required />
           <div class="field-error" *ngIf="learnerFormSubmitted && !learnerForm.surname.trim()">
             Surname is required.
+          </div>
+        </label>
+        <label>
+          Date of Birth (optional)
+          <input type="date" name="dateOfBirth" [(ngModel)]="learnerForm.dateOfBirth" [max]="todayDate" />
+          <div class="field-error" *ngIf="learnerFormSubmitted && !isDateOfBirthValid">
+            Date of birth must be a valid date and cannot be in the future.
           </div>
         </label>
         <label>

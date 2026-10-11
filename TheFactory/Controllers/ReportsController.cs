@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using System.Globalization;
 using TheFactory.Contracts;
 using TheFactory.Services;
 
@@ -1051,6 +1052,19 @@ public class ReportsController : ControllerBase
         if (string.IsNullOrWhiteSpace(learnerDto.Grade))
         {
             error = "Grade is required.";
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(learnerDto.DateOfBirth)
+            && (!DateTime.TryParseExact(
+                    learnerDto.DateOfBirth,
+                    "yyyy-MM-dd",
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.None,
+                    out var dateOfBirth)
+                || dateOfBirth.Date > DateTime.UtcNow.Date))
+        {
+            error = "Date of birth must be a valid date in YYYY-MM-DD format and cannot be in the future.";
             return false;
         }
 

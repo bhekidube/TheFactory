@@ -715,8 +715,10 @@ public sealed class LearnerService : ILearnerService
             return Array.Empty<LearnerDto>();
         }
 
+        var hasDateOfBirth = await HasColumnAsync(connection, "institution", "Learner", "DateOfBirth", cancellationToken);
         using var command = new SqlCommand(
-            @"SELECT Id, FirstName, Surname, Grade
+            $@"SELECT Id, FirstName, Surname, Grade,
+                      {(hasDateOfBirth ? "CONVERT(NVARCHAR(10), DateOfBirth, 23)" : "CAST(NULL AS NVARCHAR(10))")} AS DateOfBirth
               FROM institution.Learner
               WHERE TenantId = @TenantId
                 AND IsArchived = 0
@@ -733,7 +735,8 @@ public sealed class LearnerService : ILearnerService
                 Id = reader.GetInt32(0),
                 FirstName = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
                 Surname = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
-                Grade = reader.IsDBNull(3) ? string.Empty : reader.GetString(3)
+                Grade = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+                DateOfBirth = reader.IsDBNull(4) ? string.Empty : reader.GetString(4)
             });
         }
 
@@ -1843,6 +1846,7 @@ public sealed class LearnerService : ILearnerService
                         return null;
                 }
 
+        var hasDateOfBirth = await HasColumnAsync(connection, "institution", "Learner", "DateOfBirth", cancellationToken);
         var hasParentGuardianContact = await HasColumnAsync(connection, "institution", "Learner", "ParentGuardianContact", cancellationToken);
         var hasParentUserId = await HasColumnAsync(connection, "institution", "Learner", "ParentUserId", cancellationToken);
         var hasLearnerParentGuardianTable = await HasTableAsync(connection, "institution", "LearnerParentGuardian", cancellationToken);
@@ -1861,6 +1865,7 @@ public sealed class LearnerService : ILearnerService
                       l.FirstName,
                       l.Surname,
                       l.Grade,
+                      {(hasDateOfBirth ? "CONVERT(NVARCHAR(10), l.DateOfBirth, 23)" : "CAST(NULL AS NVARCHAR(10))")},
                       {parentContactSelect},
                       {parentUserIdSelect},
                       ISNULL(pu.Name, ''),
@@ -1885,11 +1890,12 @@ public sealed class LearnerService : ILearnerService
         var firstName = reader.IsDBNull(1) ? string.Empty : reader.GetString(1);
         var surname = reader.IsDBNull(2) ? string.Empty : reader.GetString(2);
         var grade = reader.IsDBNull(3) ? string.Empty : reader.GetString(3);
-        var parentGuardianContact = reader.IsDBNull(4) ? string.Empty : reader.GetString(4);
+        var dateOfBirth = reader.IsDBNull(4) ? string.Empty : reader.GetString(4);
+        var parentGuardianContact = reader.IsDBNull(5) ? string.Empty : reader.GetString(5);
         var parentGuardian = DeserializeParentGuardian(parentGuardianContact);
-        var parentUserName = reader.IsDBNull(6) ? string.Empty : reader.GetString(6);
-        var parentUserEmail = reader.IsDBNull(7) ? string.Empty : reader.GetString(7);
-        var parentUserPhone = reader.IsDBNull(8) ? string.Empty : reader.GetString(8);
+        var parentUserName = reader.IsDBNull(7) ? string.Empty : reader.GetString(7);
+        var parentUserEmail = reader.IsDBNull(8) ? string.Empty : reader.GetString(8);
+        var parentUserPhone = reader.IsDBNull(9) ? string.Empty : reader.GetString(9);
         parentGuardian = MergeParentGuardianFromLinkedUser(parentGuardian, parentUserName, parentUserEmail, parentUserPhone);
 
         reader.Close();
@@ -1909,6 +1915,7 @@ public sealed class LearnerService : ILearnerService
             FirstName = firstName,
             Surname = surname,
             Grade = grade,
+            DateOfBirth = dateOfBirth,
             ParentGuardian = parentGuardian
         };
     }
@@ -1924,7 +1931,12 @@ public sealed class LearnerService : ILearnerService
 
         var hasParentGuardianContact = await HasColumnAsync(connection, "institution", "Learner", "ParentGuardianContact", cancellationToken);
         var hasParentUserId = await HasColumnAsync(connection, "institution", "Learner", "ParentUserId", cancellationToken);
+        var hasDateOfBirth = await HasColumnAsync(connection, "institution", "Learner", "DateOfBirth", cancellationToken);
         var hasLearnerParentGuardianTable = await HasTableAsync(connection, "institution", "LearnerParentGuardian", cancellationToken);
+        if (!hasDateOfBirth && !string.IsNullOrWhiteSpace(learner.DateOfBirth))
+        {
+            throw new InvalidOperationException("Learner DateOfBirth column is missing. Run the learner date-of-birth migration.");
+        }
 
         using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
         try
@@ -1932,7 +1944,7 @@ public sealed class LearnerService : ILearnerService
             var linkedParentUserId = await TryFindExistingParentUserIdAsync(connection, transaction, learner.ParentGuardian, cancellationToken);
             var nextId = await GetNextIdAsync(connection, transaction, "institution.Learner", cancellationToken);
             using var command = new SqlCommand(
-                BuildCreateLearnerInsertSql(hasParentGuardianContact, hasParentUserId),
+                BuildCreateLearnerInsertSql(hasParentGuardianContact, hasParentUserId, hasDateOfBirth),
                 connection,
                 transaction);
 
@@ -1941,6 +1953,10 @@ public sealed class LearnerService : ILearnerService
             command.Parameters.AddWithValue("@FirstName", learner.FirstName.Trim());
             command.Parameters.AddWithValue("@Surname", learner.Surname.Trim());
             command.Parameters.AddWithValue("@Grade", learner.Grade.Trim());
+            if (hasDateOfBirth)
+            {
+                command.Parameters.Add("@DateOfBirth", SqlDbType.Date).Value = ParseDateOfBirthOrDbNull(learner.DateOfBirth);
+            }
             if (hasParentGuardianContact)
             {
                 command.Parameters.AddWithValue("@ParentGuardianContact", SerializeParentGuardian(learner.ParentGuardian));
@@ -1970,6 +1986,7 @@ public sealed class LearnerService : ILearnerService
                 FirstName = learner.FirstName.Trim(),
                 Surname = learner.Surname.Trim(),
                 Grade = learner.Grade.Trim(),
+                DateOfBirth = learner.DateOfBirth?.Trim() ?? string.Empty,
                 ParentGuardian = NormalizeParentGuardian(learner.ParentGuardian)
             };
         }
@@ -1991,11 +2008,16 @@ public sealed class LearnerService : ILearnerService
 
         var hasParentGuardianContact = await HasColumnAsync(connection, "institution", "Learner", "ParentGuardianContact", cancellationToken);
         var hasParentUserId = await HasColumnAsync(connection, "institution", "Learner", "ParentUserId", cancellationToken);
+        var hasDateOfBirth = await HasColumnAsync(connection, "institution", "Learner", "DateOfBirth", cancellationToken);
         var hasLearnerParentGuardianTable = await HasTableAsync(connection, "institution", "LearnerParentGuardian", cancellationToken);
+        if (!hasDateOfBirth && !string.IsNullOrWhiteSpace(learner.DateOfBirth))
+        {
+            throw new InvalidOperationException("Learner DateOfBirth column is missing. Run the learner date-of-birth migration.");
+        }
         var linkedParentUserId = await TryFindExistingParentUserIdAsync(connection, null, learner.ParentGuardian, cancellationToken);
 
         using var command = new SqlCommand(
-            BuildUpdateLearnerSql(hasParentGuardianContact, hasParentUserId),
+            BuildUpdateLearnerSql(hasParentGuardianContact, hasParentUserId, hasDateOfBirth),
             connection);
 
         command.Parameters.AddWithValue("@LearnerId", learnerId);
@@ -2003,6 +2025,10 @@ public sealed class LearnerService : ILearnerService
         command.Parameters.AddWithValue("@FirstName", learner.FirstName.Trim());
         command.Parameters.AddWithValue("@Surname", learner.Surname.Trim());
         command.Parameters.AddWithValue("@Grade", learner.Grade.Trim());
+        if (hasDateOfBirth)
+        {
+            command.Parameters.Add("@DateOfBirth", SqlDbType.Date).Value = ParseDateOfBirthOrDbNull(learner.DateOfBirth);
+        }
         if (hasParentGuardianContact)
         {
             command.Parameters.AddWithValue("@ParentGuardianContact", SerializeParentGuardian(learner.ParentGuardian));
@@ -2034,6 +2060,7 @@ public sealed class LearnerService : ILearnerService
             FirstName = learner.FirstName.Trim(),
             Surname = learner.Surname.Trim(),
             Grade = learner.Grade.Trim(),
+            DateOfBirth = learner.DateOfBirth?.Trim() ?? string.Empty,
             ParentGuardian = NormalizeParentGuardian(learner.ParentGuardian)
         };
     }
@@ -2304,76 +2331,65 @@ public sealed class LearnerService : ILearnerService
         return Convert.ToInt32(result ?? 0) > 0;
     }
 
-    private static string BuildCreateLearnerInsertSql(bool hasParentGuardianContact, bool hasParentUserId)
+    private static string BuildCreateLearnerInsertSql(bool hasParentGuardianContact, bool hasParentUserId, bool hasDateOfBirth)
     {
-        if (hasParentGuardianContact && hasParentUserId)
+        var columns = new List<string> { "Id", "TenantId", "FirstName", "Surname", "Grade" };
+        var values = new List<string> { "@Id", "@TenantId", "@FirstName", "@Surname", "@Grade" };
+        if (hasDateOfBirth)
         {
-            return @"INSERT INTO institution.Learner (Id, TenantId, FirstName, Surname, Grade, ParentGuardianContact, ParentUserId, IsArchived)
-                     VALUES (@Id, @TenantId, @FirstName, @Surname, @Grade, @ParentGuardianContact, @ParentUserId, 0);";
+            columns.Add("DateOfBirth");
+            values.Add("@DateOfBirth");
         }
-
         if (hasParentGuardianContact)
         {
-            return @"INSERT INTO institution.Learner (Id, TenantId, FirstName, Surname, Grade, ParentGuardianContact, IsArchived)
-                     VALUES (@Id, @TenantId, @FirstName, @Surname, @Grade, @ParentGuardianContact, 0);";
+            columns.Add("ParentGuardianContact");
+            values.Add("@ParentGuardianContact");
         }
-
         if (hasParentUserId)
         {
-            return @"INSERT INTO institution.Learner (Id, TenantId, FirstName, Surname, Grade, ParentUserId, IsArchived)
-                     VALUES (@Id, @TenantId, @FirstName, @Surname, @Grade, @ParentUserId, 0);";
+            columns.Add("ParentUserId");
+            values.Add("@ParentUserId");
         }
 
-        return @"INSERT INTO institution.Learner (Id, TenantId, FirstName, Surname, Grade, IsArchived)
-                 VALUES (@Id, @TenantId, @FirstName, @Surname, @Grade, 0);";
+        columns.Add("IsArchived");
+        values.Add("0");
+        return $@"INSERT INTO institution.Learner ({string.Join(", ", columns)})
+                  VALUES ({string.Join(", ", values)});";
     }
 
-    private static string BuildUpdateLearnerSql(bool hasParentGuardianContact, bool hasParentUserId)
+    private static string BuildUpdateLearnerSql(bool hasParentGuardianContact, bool hasParentUserId, bool hasDateOfBirth)
     {
-        if (hasParentGuardianContact && hasParentUserId)
+        var assignments = new List<string>
         {
-            return @"UPDATE institution.Learner
-                     SET FirstName = @FirstName,
-                         Surname = @Surname,
-                         Grade = @Grade,
-                         ParentGuardianContact = @ParentGuardianContact,
-                         ParentUserId = @ParentUserId
-                     WHERE Id = @LearnerId
-                       AND TenantId = @TenantId
-                       AND IsArchived = 0;";
+            "FirstName = @FirstName",
+            "Surname = @Surname",
+            "Grade = @Grade"
+        };
+        if (hasDateOfBirth)
+        {
+            assignments.Add("DateOfBirth = @DateOfBirth");
         }
-
         if (hasParentGuardianContact)
         {
-            return @"UPDATE institution.Learner
-                     SET FirstName = @FirstName,
-                         Surname = @Surname,
-                         Grade = @Grade,
-                         ParentGuardianContact = @ParentGuardianContact
-                     WHERE Id = @LearnerId
-                       AND TenantId = @TenantId
-                       AND IsArchived = 0;";
+            assignments.Add("ParentGuardianContact = @ParentGuardianContact");
         }
-
         if (hasParentUserId)
         {
-            return @"UPDATE institution.Learner
-                     SET FirstName = @FirstName,
-                         Surname = @Surname,
-                         Grade = @Grade,
-                         ParentUserId = @ParentUserId
-                     WHERE Id = @LearnerId
-                       AND TenantId = @TenantId
-                       AND IsArchived = 0;";
+            assignments.Add("ParentUserId = @ParentUserId");
         }
 
-        return @"UPDATE institution.Learner
-                 SET FirstName = @FirstName,
-                     Surname = @Surname,
-                     Grade = @Grade
-                 WHERE Id = @LearnerId
-                   AND TenantId = @TenantId
-                   AND IsArchived = 0;";
+        return $@"UPDATE institution.Learner
+                  SET {string.Join(", ", assignments)}
+                  WHERE Id = @LearnerId
+                    AND TenantId = @TenantId
+                    AND IsArchived = 0;";
+    }
+
+    private static object ParseDateOfBirthOrDbNull(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value)
+            ? DBNull.Value
+            : DateTime.ParseExact(value.Trim(), "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture).Date;
     }
 
     private static async Task<int?> TryFindExistingParentUserIdAsync(

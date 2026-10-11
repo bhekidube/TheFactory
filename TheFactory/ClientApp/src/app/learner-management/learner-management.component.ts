@@ -482,6 +482,7 @@ export class LearnerManagementComponent implements OnInit {
       firstName: this.learnerForm.firstName.trim(),
       surname: this.learnerForm.surname.trim(),
       grade: this.learnerForm.grade.trim(),
+      dateOfBirth: this.learnerForm.dateOfBirth.trim(),
       parentGuardian: {
         firstName: this.parentGuardianForm.firstName.trim(),
         surname: this.parentGuardianForm.surname.trim(),
@@ -495,6 +496,7 @@ export class LearnerManagementComponent implements OnInit {
       firstName: this.learnerForm.firstName.trim(),
       surname: this.learnerForm.surname.trim(),
       grade: this.learnerForm.grade.trim(),
+      dateOfBirth: this.learnerForm.dateOfBirth.trim(),
       parentGuardian: {
         firstName: this.parentGuardianForm.firstName.trim(),
         surname: this.parentGuardianForm.surname.trim(),
@@ -749,6 +751,23 @@ export class LearnerManagementComponent implements OnInit {
     return /^(07\d{8}|2637\d{8})$/.test(digitsOnly);
   }
 
+  get isDateOfBirthValid(): boolean {
+    const value = this.learnerForm.dateOfBirth?.trim() ?? '';
+    if (!value) {
+      return true;
+    }
+
+    const parsed = new Date(`${value}T00:00:00.000Z`);
+    return /^\d{4}-\d{2}-\d{2}$/.test(value)
+      && !Number.isNaN(parsed.getTime())
+      && parsed.toISOString().slice(0, 10) === value
+      && value <= this.todayDate;
+  }
+
+  get todayDate(): string {
+    return new Date().toISOString().slice(0, 10);
+  }
+
   private validateLearner(learner: LearnerDto, parentGuardian: ParentGuardianDto): string {
     if (!learner.firstName?.trim()) {
       return 'First name is required.';
@@ -760,6 +779,10 @@ export class LearnerManagementComponent implements OnInit {
 
     if (!learner.grade?.trim()) {
       return 'Grade is required.';
+    }
+
+    if (!this.isDateOfBirthValid) {
+      return 'Date of birth must be a valid date and cannot be in the future.';
     }
 
     if (!parentGuardian.firstName?.trim()) {
@@ -831,6 +854,7 @@ export class LearnerManagementComponent implements OnInit {
       firstName: String(source.firstName ?? source.FirstName ?? ''),
       surname: String(source.surname ?? source.Surname ?? ''),
       grade: String(source.grade ?? source.Grade ?? ''),
+      dateOfBirth: String(source.dateOfBirth ?? source.DateOfBirth ?? ''),
       parentGuardian: {
         firstName: String(parentSource.firstName ?? parentSource.FirstName ?? ''),
         surname: String(parentSource.surname ?? parentSource.Surname ?? ''),
@@ -847,6 +871,7 @@ export class LearnerManagementComponent implements OnInit {
       firstName: '',
       surname: '',
       grade: '',
+      dateOfBirth: '',
       parentGuardian: this.getEmptyParentGuardian()
     };
   }
