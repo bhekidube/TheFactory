@@ -43,6 +43,7 @@
   </form>
   <div *ngIf="roleChangeMessage">{{ roleChangeMessage }}</div>
 </div>
+<app-all-users-directory *ngIf="isLoggedIn && userRole === 'SystemAdmin'"></app-all-users-directory>
 <app-operator-admin
   *ngIf="selectedOperator && operatorAdminSummary && isAdminRole(userRole)"
   [operatorName]="selectedOperator"

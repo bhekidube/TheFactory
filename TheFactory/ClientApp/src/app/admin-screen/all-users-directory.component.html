@@ -1,0 +1,50 @@
+<section class="directory-section" aria-labelledby="all-users-directory-title">
+  <div class="directory-header">
+    <div>
+      <h3 id="all-users-directory-title">System Admin - All Users Directory</h3>
+      <p>Consolidated profiles from system users, staff, learners, and parent/guardians.</p>
+    </div>
+    <button type="button" class="directory-refresh" (click)="loadUsers()" [disabled]="loading">
+      {{ loading ? 'Refreshing...' : 'Refresh' }}
+    </button>
+  </div>
+
+  <label class="directory-search">
+    <span>Filter by name, email, or user type</span>
+    <input
+      type="search"
+      [(ngModel)]="searchTerm"
+      placeholder="Search directory..."
+      aria-label="Filter users by name, email, or user type" />
+  </label>
+
+  <p *ngIf="loading" class="directory-state" role="status">Loading users...</p>
+  <p *ngIf="!loading && errorMessage" class="directory-state error" role="alert">{{ errorMessage }}</p>
+  <p *ngIf="!loading && !errorMessage && filteredUsers.length === 0" class="directory-state">
+    {{ users.length ? 'No users match this filter.' : 'No user profiles were found.' }}
+  </p>
+
+  <div class="directory-table-wrap" *ngIf="!loading && !errorMessage && filteredUsers.length > 0">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Name</th>
+          <th scope="col">Email</th>
+          <th scope="col">User Type</th>
+          <th scope="col">Address</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of filteredUsers; trackBy: trackBySource">
+          <td>{{ user.name || '—' }}</td>
+          <td>{{ user.email || '—' }}</td>
+          <td>{{ user.userType }}</td>
+          <td>{{ formatAddress(user.address) }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p *ngIf="!loading && !errorMessage && filteredUsers.length > 0" class="directory-count">
+    Showing {{ filteredUsers.length }} of {{ users.length }} profiles
+  </p>
+</section>

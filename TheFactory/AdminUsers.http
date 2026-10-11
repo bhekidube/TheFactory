@@ -1,0 +1,8 @@
+@baseUrl = http://localhost:8080
+@userId = 1
+@userRole = SystemAdmin
+
+### Get the consolidated all-users directory (requires a SystemAdmin account)
+GET {{baseUrl}}/api/admin/users
+X-User-Id: {{userId}}
+X-User-Role: {{userRole}}

@@ -198,6 +198,51 @@ public class ReportsController : ControllerBase
         return Ok(results);
     }
 
+    [HttpGet("admin/users")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<AllUsersDirectoryResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<IReadOnlyCollection<AllUsersDirectoryResponse>>> GetAllUsersDirectory(
+        CancellationToken cancellationToken)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        if (!await IsSystemAdminUserRequestAsync(connection, cancellationToken))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden);
+        }
+
+        using var command = new SqlCommand(
+            @"SELECT users.SourceId, users.Name, users.Email, users.UserType,
+                     users.AddressId, addresses.AddressLine1, addresses.AddressLine2,
+                     addresses.City, addresses.ProvinceState, addresses.PostalCode, addresses.Country
+              FROM institution.vw_AllUsers AS users
+              LEFT JOIN institution.Addresses AS addresses ON addresses.AddressId = users.AddressId
+              ORDER BY users.Name ASC, users.UserType ASC, users.SourceId ASC;",
+            connection);
+
+        var users = new List<AllUsersDirectoryResponse>();
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            users.Add(new AllUsersDirectoryResponse(
+                reader.GetInt32(0),
+                reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+                new AddressDto
+                {
+                    AddressId = reader.IsDBNull(4) ? null : reader.GetInt32(4),
+                    AddressLine1 = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
+                    AddressLine2 = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
+                    City = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+                    ProvinceState = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
+                    PostalCode = reader.IsDBNull(9) ? string.Empty : reader.GetString(9),
+                    Country = reader.IsDBNull(10) ? string.Empty : reader.GetString(10)
+                }));
+        }
+
+        return Ok(users);
+    }
+
     [HttpPost("userroles/assign")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -1128,6 +1173,36 @@ public class ReportsController : ControllerBase
         }
 
         return string.Equals(roleHeader.FirstOrDefault(), "SystemAdmin", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task<bool> IsSystemAdminUserRequestAsync(SqlConnection connection, CancellationToken cancellationToken)
+    {
+        if (!Request.Headers.TryGetValue("X-User-Id", out var userIdHeader)
+            || !int.TryParse(userIdHeader.FirstOrDefault(), out var userId)
+            || userId <= 0)
+        {
+            return false;
+        }
+
+        using var command = new SqlCommand(
+            @"SELECT CASE WHEN EXISTS (
+                    SELECT 1
+                    FROM dbo.[User] AS users
+                    INNER JOIN dbo.UserRole AS roles ON roles.UserRoleId = 1 AND roles.Name = N'SystemAdmin'
+                    WHERE users.UserId = @UserId
+                      AND (
+                          users.UserRoleId = roles.UserRoleId
+                          OR EXISTS (
+                              SELECT 1
+                              FROM dbo.SystemUserRole AS systemRoles
+                              WHERE systemRoles.UserId = users.UserId
+                                AND systemRoles.UserRoleId = roles.UserRoleId
+                          )
+                      )
+                ) THEN 1 ELSE 0 END;",
+            connection);
+        command.Parameters.AddWithValue("@UserId", userId);
+        return Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken)) == 1;
     }
 
     private static bool TryValidateSubjectScoreDto(SubjectScoreDto subjectScoreDto, out string error)

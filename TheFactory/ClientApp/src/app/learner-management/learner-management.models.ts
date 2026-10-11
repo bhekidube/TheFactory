@@ -8,6 +8,14 @@ export interface AddressDto {
   country: string;
 }
 
+export interface AllUsersDirectoryDto {
+  sourceId: number;
+  name: string;
+  email: string;
+  userType: string;
+  address: AddressDto;
+}
+
 export interface LearnerDto {
   id: number;
   firstName: string;

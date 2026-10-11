@@ -30,6 +30,7 @@ import { FaresComponent } from './fares/fares.component';
 import { DutyCalculatorComponent } from './dutycalculator/dutycalculator.component';
 import { OperatorRouteComponent } from './operator-route/operator-route.component';
 import { AdminScreenComponent } from './admin-screen/admin-screen.component';
+import { AllUsersDirectoryComponent } from './admin-screen/all-users-directory.component';
 import { AuthComponent } from './auth/auth.component';
 import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './reset-password/reset-password.component';
@@ -60,6 +61,7 @@ import { StaffManagementComponent } from './staff-management/staff-management.co
     ZimraDeclarationComponent,
     OperatorRouteComponent,
     AdminScreenComponent,
+    AllUsersDirectoryComponent,
     AuthComponent,
     ForgotPasswordComponent,
     ResetPasswordComponent,

@@ -6,6 +6,7 @@ import {
   ClassAssignedSubjectDto,
   ClassDetailDto,
   ClassDto,
+  AllUsersDirectoryDto,
   CreateClassRequestDto,
   CreateLearnerRequestDto,
   GradeDto,
@@ -86,6 +87,10 @@ export class LearnerManagementService {
 
   assignUserRole(payload: AssignUserRoleRequest): Observable<{ message: string }> {
     return this.http.post<{ message: string }>(`${this.baseUrl}/userroles/assign`, payload, this.getAdminRequestOptions());
+  }
+
+  getAllUsersDirectory(): Observable<AllUsersDirectoryDto[]> {
+    return this.http.get<AllUsersDirectoryDto[]>(`${this.baseUrl}/admin/users`, this.getAdminRequestOptions());
   }
 
   setSelectedTenantId(tenantId: number): void {
@@ -327,10 +332,11 @@ export class LearnerManagementService {
   }
 
   private getAdminRequestOptions(): { headers: HttpHeaders } {
-    const baseHeaders = this.getHeaders();
-    const userRole = localStorage.getItem('userRole') || '';
+    const headers = this.getHeaders()
+      .set('X-User-Role', localStorage.getItem('userRole') || '')
+      .set('X-User-Id', localStorage.getItem('userId') || '');
     return {
-      headers: baseHeaders.set('X-User-Role', userRole)
+      headers
     };
   }
 
