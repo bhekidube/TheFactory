@@ -30,9 +30,14 @@ export class AppComponent {
     return !!userId && this.allowedLearningRoles.has(userRole);
   }
 
+  get signedInUserName(): string {
+    return typeof localStorage === 'undefined'
+      ? ''
+      : localStorage.getItem('userName') || '';
+  }
+
   // Call this method when you want to show the operator route component
   toggleOperatorRoute() {
     this.showOperatorRoute = !this.showOperatorRoute;
   }
 }
-

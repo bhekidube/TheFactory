@@ -151,7 +151,7 @@ export class AuthComponent implements OnInit {
     this.error = null;
 
     this.authService.loginWithGoogle(credential).subscribe({
-      next: (response) => this.completeLogin(response),
+      next: (response) => this.completeLogin(response, true),
       error: (err) => {
         this.error = err.error?.error || 'Google sign-in failed. Please try again.';
         this.googleSignInPending = false;
@@ -162,12 +162,14 @@ export class AuthComponent implements OnInit {
     });
   }
 
-  private completeLogin(response: UserLoginResponse): void {
+  private completeLogin(response: UserLoginResponse, returnHome = false): void {
     this.error = null;
     localStorage.setItem('userName', response.userName);
     localStorage.setItem('userRole', response.userRole);
     localStorage.setItem('userId', response.userId?.toString() || '');
-    if (response.userRole === 'OperatorAdmin') {
+    if (returnHome) {
+      this.router.navigate(['/']);
+    } else if (response.userRole === 'OperatorAdmin') {
       this.viewOperator(response.userName, response.userId?.toString() || '');
     } else if (response.userRole === 'SystemAdmin') {
       this.router.navigate(['/admin-screen']);

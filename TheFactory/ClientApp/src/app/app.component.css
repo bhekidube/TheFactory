@@ -21,6 +21,10 @@
   font-size: clamp(0.94rem, 2.8vw, 1.06rem);
 }
 
+.header-banner .signed-in-status {
+  font-size: 0.9rem;
+}
+
 .hamba-nav {
   display: flex;
   gap: 0.5rem;

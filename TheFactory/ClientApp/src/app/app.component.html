@@ -7,6 +7,9 @@
 <header class="header-banner">
   <h1>HambaOnline</h1>
   <p *ngIf="showTransportTagline">Plug yama bhasi</p>
+  <p *ngIf="signedInUserName" class="signed-in-status" role="status">
+    Logged in as <strong>{{ signedInUserName }}</strong>
+  </p>
   <nav class="hamba-nav" aria-label="HambaOnline navigation">
     <a
       class="hamba-nav-link"

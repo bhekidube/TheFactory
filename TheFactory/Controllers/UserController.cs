@@ -280,7 +280,7 @@ public class UserController : ControllerBase
                     {
                         return Unauthorized(new
                         {
-                            error = "No HambaOnline account is linked to this Google email. To use Google sign-in, create a HambaOnline account with this same email address first. If you already have an account, use the email address registered to it."
+                            error = "No HambaOnline account is linked to this Google email address."
                         });
                     }
 
