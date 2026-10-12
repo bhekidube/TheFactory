@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-logout-link',
@@ -14,13 +15,14 @@ import { Router } from '@angular/router';
 export class LogoutLinkComponent {
   userName: string = localStorage.getItem('userName') || '';
 
-  constructor(private router: Router) {}
+  constructor(
+    private readonly router: Router,
+    private readonly authService: AuthService
+  ) {}
 
   logout(event: Event): void {
     event.preventDefault();
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('authToken');
+    this.authService.logout();
     this.router.navigate(['/auth']);
   }
 }

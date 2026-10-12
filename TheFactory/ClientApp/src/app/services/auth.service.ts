@@ -97,6 +97,18 @@ export class AuthService {
     );
   }
 
+  logout(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('operatorAdminSummary');
+  }
+
   requestPasswordReset(email: string): Observable<PasswordResetResponse> {
     return this.http.post<PasswordResetResponse>(
       `${this.baseUrl}/forgot-password`,

@@ -135,6 +135,71 @@
   overflow: visible;
 }
 
+.account-card {
+  width: 100%;
+  padding: 1.25rem;
+  border: 1px solid #dce7f6;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 14px 38px rgba(10, 38, 82, 0.12);
+}
+
+.account-card-eyebrow {
+  color: #526984;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.account-card h2 {
+  margin: 0.55rem 0;
+  color: #153a68;
+  font-size: 1.3rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.account-card-role {
+  display: inline-block;
+  margin: 0 0 0.75rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: #eaf2ff;
+  color: #174f91;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.account-card-message {
+  margin: 0;
+  color: #44566c;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.account-logout-btn {
+  margin-top: 1rem;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid #c83d45;
+  border-radius: 8px;
+  background: #fff;
+  color: #a52832;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.account-logout-btn:hover {
+  background: #fff3f3;
+}
+
+.account-logout-btn:focus-visible {
+  outline: 3px solid rgba(0, 74, 173, 0.35);
+  outline-offset: 2px;
+}
+
 .search-card {
   background: #ffffff;
   border: 1px solid #e4ebf7;

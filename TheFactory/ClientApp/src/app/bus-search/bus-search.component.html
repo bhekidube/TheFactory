@@ -156,10 +156,17 @@
   </div>
 
   <aside class="auth-column">
-    <section class="auth-card-section">
+    <section *ngIf="!isLoggedIn" class="auth-card-section">
       <div class="auth-card-shell login-card-container">
         <app-auth></app-auth>
       </div>
+    </section>
+    <section *ngIf="isLoggedIn" class="account-card" aria-labelledby="account-card-title">
+      <span class="account-card-eyebrow">Your HambaOnline account</span>
+      <h2 id="account-card-title">Welcome back, {{ signedInUserName }}</h2>
+      <p class="account-card-role">{{ signedInUserRole }}</p>
+      <p class="account-card-message">You are signed in and ready to search bus schedules.</p>
+      <button type="button" class="account-logout-btn" (click)="logout()">Log out</button>
     </section>
   </aside>
 </section>

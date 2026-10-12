@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
+import { AuthService } from '../services/auth.service';
 
 interface AdminSummary {
   totalOperators: number;
@@ -50,7 +51,11 @@ export class AdminScreenComponent implements OnInit {
   roleChangeMessage: string = '';
   selectedOperator: string | null = null;
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    private readonly authService: AuthService
+  ) {}
 
   ngOnInit(): void 
   {
@@ -100,9 +105,7 @@ export class AdminScreenComponent implements OnInit {
   }
 
   logout(): void {
-    // Clear authentication (example: remove token from localStorage)
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userName');
+    this.authService.logout();
     this.isLoggedIn = false;
     this.router.navigate(['/auth']);
   }

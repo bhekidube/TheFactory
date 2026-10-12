@@ -1,8 +1,10 @@
 import html2canvas from 'html2canvas';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { environment } from '../../environments/environment';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-bus-search',
@@ -51,6 +53,25 @@ export class BusSearchComponent implements OnInit {
   // If you already have operator chips/checkboxes, bind them to this array.
   selectedOperatorFilters: string[] = [];
 
+  get isLoggedIn(): boolean {
+    return !!this.signedInUserName;
+  }
+
+  get signedInUserName(): string {
+    if (typeof localStorage === 'undefined') {
+      return '';
+    }
+
+    const userName = localStorage.getItem('userName') || '';
+    const userRole = localStorage.getItem('userRole') || '';
+    const userId = localStorage.getItem('userId') || '';
+    return userName && userRole && userId ? userName : '';
+  }
+
+  get signedInUserRole(): string {
+    return this.isLoggedIn ? localStorage.getItem('userRole') || '' : '';
+  }
+
   // Existing fields...
   fromInput: string = '';
   toInput: string = '';
@@ -62,7 +83,16 @@ export class BusSearchComponent implements OnInit {
   toTownInput: string = '';
   searchResults: any[] = [];
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private readonly authService: AuthService,
+    private readonly router: Router
+  ) {}
+
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/auth']);
+  }
 
   // Dynamic active filter badge count
   get activeFilterCount(): number {
