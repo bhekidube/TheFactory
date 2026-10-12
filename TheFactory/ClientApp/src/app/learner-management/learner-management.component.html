@@ -46,6 +46,57 @@
       <button type="button" class="primary-btn w-auto" (click)="openAddLearner()">+ Add Learner</button>
     </div>
 
+    <section *ngIf="isReportsRoute" class="incomplete-guardians-report" aria-labelledby="incomplete-guardians-title">
+      <div class="page-header">
+        <div>
+          <h3 id="incomplete-guardians-title">Incomplete Parent/Guardian Details</h3>
+          <p>Records with a parent/guardian first name containing exactly one non-whitespace character.</p>
+        </div>
+        <span class="report-count">{{ incompleteParentGuardians.length }} records</span>
+      </div>
+
+      <div *ngIf="loadingLearners" class="state-card">Loading parent/guardian details...</div>
+      <div *ngIf="!loadingLearners && incompleteParentGuardians.length === 0" class="state-card">
+        No parent/guardian records with a one-character first name were found for this school.
+      </div>
+      <div class="table-wrap" *ngIf="!loadingLearners && incompleteParentGuardians.length > 0">
+        <table>
+          <thead>
+            <tr>
+              <th>Learner</th>
+              <th>Grade</th>
+              <th>Parent/Guardian</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>Relationship</th>
+              <th>Address</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let learner of incompleteParentGuardians; trackBy: trackByLearnerId">
+              <td>{{ learner.firstName }} {{ learner.surname }}</td>
+              <td>{{ learner.grade || '—' }}</td>
+              <td>{{ learner.parentGuardian.firstName }} {{ learner.parentGuardian.surname }}</td>
+              <td>{{ learner.parentGuardian.phoneNumber || '—' }}</td>
+              <td>{{ learner.parentGuardian.emailAddress || '—' }}</td>
+              <td>{{ learner.parentGuardian.relationshipToLearner || '—' }}</td>
+              <td>
+                <ng-container *ngIf="learner.parentGuardian.address as address">
+                  <ng-container *ngIf="address.addressLine1">{{ address.addressLine1 }}<br /></ng-container>
+                  <ng-container *ngIf="address.addressLine2">{{ address.addressLine2 }}<br /></ng-container>
+                  <ng-container *ngIf="address.city">{{ address.city }}<br /></ng-container>
+                  <ng-container *ngIf="address.provinceState">{{ address.provinceState }}<br /></ng-container>
+                  <ng-container *ngIf="address.postalCode">{{ address.postalCode }}<br /></ng-container>
+                  <ng-container *ngIf="address.country">{{ address.country }}</ng-container>
+                  <span *ngIf="!address.addressLine1 && !address.addressLine2 && !address.city && !address.provinceState && !address.postalCode && !address.country">—</span>
+                </ng-container>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
     <div *ngIf="loadingLearners" class="state-card">Loading learners...</div>
 
     <div *ngIf="!loadingLearners && filteredLearners.length === 0" class="state-card empty">

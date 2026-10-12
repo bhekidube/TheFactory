@@ -121,6 +121,12 @@ export class LearnerManagementComponent implements OnInit {
     return this.learners.filter(learner => learner.id > 0).length;
   }
 
+  get incompleteParentGuardians(): LearnerDto[] {
+    return this.learners.filter(learner =>
+      (learner.parentGuardian?.firstName || '').trim().length === 1
+    );
+  }
+
   get filteredClasses(): ClassDto[] {
     const term = this.classSearchTerm.trim().toLowerCase();
     if (!term) {
