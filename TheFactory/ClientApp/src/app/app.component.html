@@ -5,11 +5,10 @@
 <!-- <app-operator-route *ngIf="showOperatorRoute"></app-operator-route> -->
 
 <header class="header-banner">
-  <h1>HambaOnline</h1>
-  <p *ngIf="showTransportTagline">Plug yama bhasi</p>
-  <p *ngIf="signedInUserName" class="signed-in-status" role="status">
-    Logged in as <strong>{{ signedInUserName }}</strong>
-  </p>
+  <div class="header-brand">
+    <h1>HambaOnline</h1>
+    <p *ngIf="showTransportTagline">Plug yama bhasi</p>
+  </div>
   <nav class="hamba-nav" aria-label="HambaOnline navigation">
     <a
       class="hamba-nav-link"
@@ -25,6 +24,9 @@
       [routerLinkActive]="['is-active']">
       Learning
     </a>
+    <span *ngIf="signedInUserName" class="signed-in-status" role="status">
+      Logged in as <strong>{{ signedInUserName }}</strong>
+    </span>
   </nav>
 </header>
 

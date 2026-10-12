@@ -31,9 +31,14 @@ export class AppComponent {
   }
 
   get signedInUserName(): string {
-    return typeof localStorage === 'undefined'
-      ? ''
-      : localStorage.getItem('userName') || '';
+    if (typeof localStorage === 'undefined') {
+      return '';
+    }
+
+    const userName = localStorage.getItem('userName') || '';
+    const userRole = localStorage.getItem('userRole') || '';
+    const userId = localStorage.getItem('userId') || '';
+    return userName && userRole && userId ? userName : '';
   }
 
   // Call this method when you want to show the operator route component

@@ -1,12 +1,20 @@
 .header-banner {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 0.7rem;
   padding: 1.2rem 0.85rem 0.85rem;
   text-align: left;
   background-color: #004aad;
   color: #fff;
+}
+
+.header-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
 .header-banner h1 {
@@ -21,14 +29,12 @@
   font-size: clamp(0.94rem, 2.8vw, 1.06rem);
 }
 
-.header-banner .signed-in-status {
-  font-size: 0.9rem;
-}
-
 .hamba-nav {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
-  margin-top: 0.2rem;
+  margin-left: auto;
 }
 
 .hamba-nav-link {
@@ -47,4 +53,32 @@
   background: #fff;
   color: #0f4ea2;
   border-color: #fff;
+}
+
+.signed-in-status {
+  margin-left: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .header-banner {
+    align-items: flex-start;
+  }
+
+  .hamba-nav {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .signed-in-status {
+    margin-left: auto;
+    white-space: normal;
+    text-align: right;
+  }
 }
