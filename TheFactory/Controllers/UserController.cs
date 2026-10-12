@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using Google.Apis.Auth;
 using System.Security.Cryptography;
 using System.Text;
 using System.Data;
+using System.ComponentModel.DataAnnotations;
 using TheFactory.Contracts;
 using TheFactory.Services;
 
@@ -24,6 +26,12 @@ public class UserLoginModel
     public string Password { get; set; }
 }
 
+public sealed record GoogleLoginModel
+{
+    [Required]
+    public required string Credential { get; init; }
+}
+
 public class ChangeUserRoleModel
 {
     public string Email { get; set; }
@@ -35,10 +43,12 @@ public class ChangeUserRoleModel
 public class UserController : ControllerBase
 {
     private readonly SqlConnectionService _sqlService;
+    private readonly IConfiguration _configuration;
 
-    public UserController(SqlConnectionService sqlService)
+    public UserController(SqlConnectionService sqlService, IConfiguration configuration)
     {
         _sqlService = sqlService;
+        _configuration = configuration;
     }
 
     [HttpPost("Register")]
@@ -201,6 +211,101 @@ public class UserController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, new { error = "An unexpected error occurred.", details = ex.Message });
+        }
+    }
+
+    [HttpPost("GoogleLogin")]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginModel model)
+    {
+        var clientId = _configuration["Google:ClientId"];
+        if (string.IsNullOrWhiteSpace(clientId))
+        {
+            return StatusCode(
+                StatusCodes.Status503ServiceUnavailable,
+                new { error = "Google sign-in is not configured on the server." });
+        }
+
+        GoogleJsonWebSignature.Payload googleUser;
+        try
+        {
+            googleUser = await GoogleJsonWebSignature.ValidateAsync(
+                model.Credential,
+                new GoogleJsonWebSignature.ValidationSettings
+                {
+                    Audience = new[] { clientId }
+                });
+        }
+        catch (InvalidJwtException)
+        {
+            return Unauthorized(new { error = "The Google credential is invalid or expired." });
+        }
+
+        if (googleUser.EmailVerified != true || string.IsNullOrWhiteSpace(googleUser.Email))
+        {
+            return Unauthorized(new { error = "A verified Google email address is required." });
+        }
+
+        try
+        {
+            using (var conn = await _sqlService.GetSqlConnectionAsync())
+            using (var command = new SqlCommand(@"
+                SELECT u.UserId, u.Name, ur.Name AS UserRole, OU.OperatorId,
+                       u.AddressId, a.AddressLine1, a.AddressLine2, a.City, a.ProvinceState, a.PostalCode, a.Country
+                FROM [User] u
+                    INNER JOIN OperatorUser OU ON OU.UserId = u.UserId
+                    INNER JOIN OperatorUserRole OUR ON OU.OperatorUserId = OUR.OperatorUserId
+                    INNER JOIN [UserRole] ur ON ur.UserRoleId = OUR.UserRoleId
+                    LEFT JOIN institution.Addresses a ON a.AddressId = u.AddressId
+                WHERE u.Email = @Email
+                UNION
+                SELECT u.UserId, u.Name, ur.Name AS UserRole, 0,
+                       u.AddressId, a.AddressLine1, a.AddressLine2, a.City, a.ProvinceState, a.PostalCode, a.Country
+                FROM [User] u
+                    INNER JOIN SystemUserRole SUR ON SUR.UserId = u.UserId
+                    INNER JOIN [UserRole] ur ON ur.UserRoleId = SUR.UserRoleId
+                    LEFT JOIN institution.Addresses a ON a.AddressId = u.AddressId
+                WHERE u.Email = @Email
+            ", conn))
+            {
+                command.Parameters.Add("@Email", SqlDbType.NVarChar, 100).Value = googleUser.Email;
+
+                int userId;
+                string userName;
+                string userRole;
+                int operatorId;
+                AddressDto address;
+                using (var reader = await command.ExecuteReaderAsync(HttpContext.RequestAborted))
+                {
+                    if (!reader.HasRows)
+                    {
+                        return Unauthorized(new
+                        {
+                            error = "No HambaOnline account is linked to this Google email address."
+                        });
+                    }
+
+                    await reader.ReadAsync(HttpContext.RequestAborted);
+                    userId = reader.GetInt32(0);
+                    userName = reader.GetString(1);
+                    userRole = reader.GetString(2);
+                    operatorId = reader.GetInt32(3);
+                    address = AddressPersistence.ReadAddress(reader, 4);
+                }
+
+                using (var updateCmd = new SqlCommand(
+                    "UPDATE [User] SET LastLogin = SYSUTCDATETIME() WHERE Email = @Email",
+                    conn))
+                {
+                    updateCmd.Parameters.Add("@Email", SqlDbType.NVarChar, 100).Value = googleUser.Email;
+                    await updateCmd.ExecuteNonQueryAsync(HttpContext.RequestAborted);
+                }
+
+                return Ok(new { message = "Login successful.", userName, userRole, userId, operatorId, address });
+            }
+        }
+        catch (SqlException)
+        {
+            return StatusCode(500, new { error = "A database error occurred while signing in." });
         }
     }
 

@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { AddressDto } from '../learner-management/learner-management.models';
+import { AuthService, UserLoginResponse } from '../services/auth.service';
 
 @Component({
   selector: 'app-auth',
@@ -51,11 +53,27 @@ export class AuthComponent implements OnInit {
 
   error: string | null = null;
   operators: any[] = [];
+  googleSignInPending = false;
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    private authService: AuthService,
+    @Inject(PLATFORM_ID) private readonly platformId: object
+  ) {}
 
   ngOnInit(): void {
     this.fetchOperators();
+    if (isPlatformBrowser(this.platformId)) {
+      const button = document.getElementById('google-signin-button');
+      if (button) {
+        this.authService.initializeGoogleSignIn(button, (credential) => {
+          this.loginWithGoogleCredential(credential);
+        }).catch((error: Error) => {
+          this.error = error.message;
+        });
+      }
+    }
   }
 
   fetchOperators(): void {
@@ -88,10 +106,6 @@ export class AuthComponent implements OnInit {
       && new RegExp(this.emailPattern).test(email);
   }
 
-  continueWithGoogle(): void {
-    this.error = 'Google sign-in is not configured yet. Please use your email and password.';
-  }
-
   continueAsGuest(): void {
     this.error = null;
     this.router.navigate(['/']);
@@ -117,26 +131,47 @@ export class AuthComponent implements OnInit {
       return;
     }
 
-    this.http.post<{ userName: string, userRole: string, userId: number }>(
+    this.http.post<UserLoginResponse>(
       `${environment.apiBaseUrl}/api/User/Login`, this.loginModel
     ).subscribe({
       next: (response) => {
-        this.error = null;
-        localStorage.setItem('userName', response.userName);
-        localStorage.setItem('userRole', response.userRole);
-        localStorage.setItem('userId', response.userId?.toString() || '');
-        if (response.userRole === 'OperatorAdmin') {
-          this.viewOperator(response.userName, response.userId?.toString() || '');
-        } else if (response.userRole === 'SystemAdmin') {
-          this.router.navigate(['/admin-screen']);
-        } else {
-          // handle other roles if needed
-        }
+        this.completeLogin(response);
       },
       error: err => {
         this.error = err.error?.error || 'Login failed';
       }
     });
+  }
+
+  private loginWithGoogleCredential(credential: string): void {
+    if (this.googleSignInPending) {
+      return;
+    }
+    this.googleSignInPending = true;
+    this.error = null;
+
+    this.authService.loginWithGoogle(credential).subscribe({
+      next: (response) => this.completeLogin(response),
+      error: (err) => {
+        this.error = err.error?.error || 'Google sign-in failed. Please try again.';
+        this.googleSignInPending = false;
+      },
+      complete: () => {
+        this.googleSignInPending = false;
+      }
+    });
+  }
+
+  private completeLogin(response: UserLoginResponse): void {
+    this.error = null;
+    localStorage.setItem('userName', response.userName);
+    localStorage.setItem('userRole', response.userRole);
+    localStorage.setItem('userId', response.userId?.toString() || '');
+    if (response.userRole === 'OperatorAdmin') {
+      this.viewOperator(response.userName, response.userId?.toString() || '');
+    } else if (response.userRole === 'SystemAdmin') {
+      this.router.navigate(['/admin-screen']);
+    }
   }
 
 
