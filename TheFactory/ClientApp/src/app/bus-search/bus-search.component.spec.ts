@@ -59,6 +59,16 @@ describe('BusSearchComponent', () => {
     expect(fixture.nativeElement.querySelector('.account-card-role')?.textContent).toContain('OperatorAdmin');
   });
 
+  it('shows the promotional image card in the right sidebar', () => {
+    const promoCard = fixture.nativeElement.querySelector('.account-sidebar.promo-sidebar-card');
+    const promoImage = promoCard?.querySelector('.promo-card-img') as HTMLImageElement;
+
+    expect(promoCard).not.toBeNull();
+    expect(promoCard.classList).toContain('account-card');
+    expect(promoImage.getAttribute('src')).toBe('assets/hamba-insta-reel.jpeg');
+    expect(promoImage.alt).toBe('HambaOnline Instagram Reel featuring a traveler at a bus terminal');
+  });
+
   it('logs out through AuthService and navigates to the login page', () => {
     const authService = TestBed.inject(AuthService);
     const router = TestBed.inject(Router);

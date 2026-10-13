@@ -144,6 +144,20 @@
   box-shadow: 0 14px 38px rgba(10, 38, 82, 0.12);
 }
 
+.account-sidebar.promo-sidebar-card {
+  margin-top: 24px;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.promo-card-img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  display: block;
+  object-fit: cover;
+}
+
 .account-card-eyebrow {
   color: #526984;
   font-size: 0.75rem;

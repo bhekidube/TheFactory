@@ -161,12 +161,15 @@
         <app-auth></app-auth>
       </div>
     </section>
-    <section *ngIf="isLoggedIn" class="account-card" aria-labelledby="account-card-title">
+    <section *ngIf="isLoggedIn" class="account-card account-sidebar" aria-labelledby="account-card-title">
       <span class="account-card-eyebrow">Your HambaOnline account</span>
       <h2 id="account-card-title">Welcome back, {{ signedInUserName }}</h2>
       <p class="account-card-role">{{ signedInUserRole }}</p>
       <p class="account-card-message">You are signed in and ready to search bus schedules.</p>
       <button type="button" class="account-logout-btn" (click)="logout()">Log out</button>
+    </section>
+    <section class="account-card account-sidebar promo-sidebar-card" aria-label="Promotion">
+      <img src="assets/hamba-insta-reel.jpeg" alt="HambaOnline Instagram Reel featuring a traveler at a bus terminal" class="promo-card-img">
     </section>
   </aside>
 </section>
