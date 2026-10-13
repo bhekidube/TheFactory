@@ -48,6 +48,7 @@ import { LearnerDetailComponent } from './learner-detail/learner-detail.componen
 import { WorkManagementComponent } from './work-management/work-management.component';
 import { WorkDetailComponent } from './work-detail/work-detail.component';
 import { StaffManagementComponent } from './staff-management/staff-management.component';
+import { FinanceDashboardComponent } from './finance-dashboard/finance-dashboard.component';
 
 @NgModule({
   declarations: [
@@ -79,7 +80,8 @@ import { StaffManagementComponent } from './staff-management/staff-management.co
     LearnerDetailComponent,
     WorkManagementComponent,
     WorkDetailComponent,
-    StaffManagementComponent
+    StaffManagementComponent,
+    FinanceDashboardComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),

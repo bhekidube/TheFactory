@@ -1,0 +1,258 @@
+<section class="finance-page">
+  <header class="finance-header">
+    <div>
+      <h2>Finance</h2>
+      <p>Track school fees, payments, and learner balances.</p>
+    </div>
+    <button type="button" class="secondary-btn" (click)="loadDashboard()" [disabled]="loading">
+      {{ loading ? 'Refreshing...' : 'Refresh' }}
+    </button>
+  </header>
+
+  <div class="finance-message error" *ngIf="errorMessage" role="alert">{{ errorMessage }}</div>
+  <div class="finance-message success" *ngIf="successMessage" role="status">{{ successMessage }}</div>
+
+  <div class="finance-summary-grid" aria-label="Finance summary">
+    <article class="finance-summary-card">
+      <span>Total Billed</span>
+      <strong>{{ formatAmount(dashboard.totalBilled) }}</strong>
+    </article>
+    <article class="finance-summary-card">
+      <span>Total Collected</span>
+      <strong>{{ formatAmount(dashboard.totalCollected) }}</strong>
+    </article>
+    <article class="finance-summary-card outstanding">
+      <span>Outstanding Balance</span>
+      <strong>{{ formatAmount(dashboard.outstandingBalance) }}</strong>
+    </article>
+  </div>
+
+  <div class="finance-actions">
+    <button type="button" class="primary-btn" (click)="openPaymentForm()" [disabled]="!selectedLearner">
+      + Record Payment
+    </button>
+    <button type="button" class="secondary-btn" (click)="openInvoiceForm()">
+      + Bulk Invoice Generation
+    </button>
+    <button type="button" class="secondary-btn" (click)="openFeeForm()">
+      + Add Fee Structure
+    </button>
+  </div>
+
+  <section class="finance-ledger-layout">
+    <div class="finance-section learners-section">
+      <div class="finance-section-header">
+        <div>
+          <h3>Learners</h3>
+          <p>Select a learner to view their fee ledger.</p>
+        </div>
+        <span class="count-badge">{{ dashboard.learners.length }}</span>
+      </div>
+      <div class="finance-state" *ngIf="loading">Loading finance data...</div>
+      <div class="finance-state" *ngIf="!loading && dashboard.learners.length === 0">
+        No active learners were found for this school.
+      </div>
+      <div class="learner-list" *ngIf="dashboard.learners.length > 0">
+        <button
+          type="button"
+          class="learner-row"
+          *ngFor="let learner of dashboard.learners; trackBy: trackByLearnerId"
+          [class.is-selected]="selectedLearner?.learnerId === learner.learnerId"
+          (click)="selectLearner(learner)">
+          <span class="learner-ident">
+            <strong>{{ learner.firstName }} {{ learner.surname }}</strong>
+            <small>#{{ learner.learnerId }} · {{ learner.grade || 'Grade not set' }}</small>
+          </span>
+          <span class="learner-balance">
+            {{ formatAmount(learner.balance) }}
+            <small>balance</small>
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <section class="finance-section ledger-section" aria-labelledby="ledger-title">
+      <div class="finance-section-header">
+        <div>
+          <h3 id="ledger-title">{{ selectedLearner ? selectedLearner.firstName + ' ' + selectedLearner.surname : 'Student Fee Ledger' }}</h3>
+          <p *ngIf="selectedLearner">Learner #{{ selectedLearner.learnerId }} · {{ selectedLearner.grade }}</p>
+          <p *ngIf="!selectedLearner">Select a learner to view their ledger.</p>
+        </div>
+        <span class="balance-badge" *ngIf="selectedLearner">
+          Balance {{ formatAmount(selectedLearner.balance) }}
+        </span>
+      </div>
+
+      <div class="finance-state" *ngIf="loadingLedger">Loading learner ledger...</div>
+      <div class="finance-state" *ngIf="!loadingLedger && selectedLearner && ledger.length === 0">
+        No fee transactions recorded for this learner yet.
+      </div>
+
+      <div class="finance-table-wrap" *ngIf="!loadingLedger && ledger.length > 0">
+        <table class="ledger-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Reference / Description</th>
+              <th class="numeric-cell">Charge (Debit)</th>
+              <th class="numeric-cell">Payment (Credit)</th>
+              <th class="numeric-cell">Running Balance</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let entry of ledger; trackBy: trackByTransactionId" [class.voided-row]="entry.isVoided">
+              <td>{{ formatDate(entry.date) }}</td>
+              <td>
+                <strong>{{ entry.referenceNumber || entry.category }}</strong>
+                <small class="entry-description">{{ entry.notes || entry.category }}</small>
+                <span class="voided-label" *ngIf="entry.isVoided">VOIDED</span>
+              </td>
+              <td class="numeric-cell">{{ entry.type === 'DEBIT' && !entry.isVoided ? formatAmount(entry.amount) : '—' }}</td>
+              <td class="numeric-cell">{{ entry.type === 'CREDIT' && !entry.isVoided ? formatAmount(entry.amount) : '—' }}</td>
+              <td class="numeric-cell">{{ formatAmount(entry.runningBalance) }}</td>
+              <td>
+                <div class="ledger-actions">
+                  <button type="button" class="link-btn" (click)="openEditForm(entry)" [disabled]="entry.isVoided">Edit</button>
+                  <button type="button" class="danger-link-btn" (click)="voidTransaction(entry)" [disabled]="entry.isVoided">Void</button>
+                  <button type="button" class="link-btn" (click)="printReceipt(entry)">Receipt</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+
+  <section class="finance-section fee-structures-section">
+    <div class="finance-section-header">
+      <div>
+        <h3>Fee Structures</h3>
+        <p>Standard charges available for bulk invoice generation.</p>
+      </div>
+    </div>
+    <div class="finance-state" *ngIf="feeStructures.length === 0">
+      No fee structures yet. Add one to create invoices by grade and term.
+    </div>
+    <div class="finance-table-wrap" *ngIf="feeStructures.length > 0">
+      <table>
+        <thead>
+          <tr>
+            <th>Grade</th>
+            <th>Term / Year</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th class="numeric-cell">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let fee of feeStructures">
+            <td>{{ fee.grade }}</td>
+            <td>{{ fee.term }} {{ fee.academicYear }}</td>
+            <td>{{ fee.category }}</td>
+            <td>{{ fee.description }}</td>
+            <td class="numeric-cell">{{ formatAmount(fee.amount) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>
+
+<div class="finance-modal-backdrop" *ngIf="formMode" (click)="closeForm()">
+  <section class="finance-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+    <header class="modal-header">
+      <h3 *ngIf="formMode === 'payment'">Record Payment</h3>
+      <h3 *ngIf="formMode === 'edit'">Edit Ledger Entry</h3>
+      <h3 *ngIf="formMode === 'fee'">Add Fee Structure</h3>
+      <h3 *ngIf="formMode === 'invoice'">Bulk Invoice Generation</h3>
+      <button type="button" class="modal-close" aria-label="Close" (click)="closeForm()">×</button>
+    </header>
+
+    <form *ngIf="formMode === 'payment' || formMode === 'edit'" (ngSubmit)="saveTransaction()">
+      <p class="modal-context" *ngIf="selectedLearner">
+        Learner: <strong>{{ selectedLearner.firstName }} {{ selectedLearner.surname }} (#{{ selectedLearner.learnerId }})</strong>
+      </p>
+      <label>
+        Date
+        <input type="date" name="transactionDate" [(ngModel)]="paymentForm.date" required />
+      </label>
+      <label>
+        Entry Type
+        <select name="transactionType" [(ngModel)]="paymentForm.type" required>
+          <option value="CREDIT">Payment (Credit)</option>
+          <option value="DEBIT">Charge (Debit)</option>
+        </select>
+      </label>
+      <label>
+        Category
+        <input type="text" name="transactionCategory" [(ngModel)]="paymentForm.category" maxlength="80" required />
+      </label>
+      <label>
+        Amount
+        <input type="number" name="transactionAmount" [(ngModel)]="paymentForm.amount" min="0.01" step="0.01" required />
+      </label>
+      <label>
+        Reference
+        <input type="text" name="transactionReference" [(ngModel)]="paymentForm.referenceNumber" maxlength="80" />
+      </label>
+      <label>
+        Description / Notes
+        <textarea name="transactionNotes" [(ngModel)]="paymentForm.notes" maxlength="500" rows="3"></textarea>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="secondary-btn" (click)="closeForm()">Cancel</button>
+        <button type="submit" class="primary-btn" [disabled]="saving">{{ saving ? 'Saving...' : (formMode === 'edit' ? 'Save Changes' : 'Record Payment') }}</button>
+      </div>
+    </form>
+
+    <form *ngIf="formMode === 'fee'" (ngSubmit)="saveFeeStructure()">
+      <label>
+        Grade
+        <input type="text" name="feeGrade" [(ngModel)]="feeForm.grade" placeholder="e.g. ECD A" maxlength="100" required />
+      </label>
+      <label>
+        Term
+        <input type="text" name="feeTerm" [(ngModel)]="feeForm.term" placeholder="e.g. Term 1" maxlength="40" required />
+      </label>
+      <label>
+        Academic Year
+        <input type="number" name="feeYear" [(ngModel)]="feeForm.academicYear" min="2000" max="2100" required />
+      </label>
+      <label>
+        Category
+        <input type="text" name="feeCategory" [(ngModel)]="feeForm.category" maxlength="80" required />
+      </label>
+      <label>
+        Description
+        <input type="text" name="feeDescription" [(ngModel)]="feeForm.description" maxlength="240" required />
+      </label>
+      <label>
+        Amount
+        <input type="number" name="feeAmount" [(ngModel)]="feeForm.amount" min="0.01" step="0.01" required />
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="secondary-btn" (click)="closeForm()">Cancel</button>
+        <button type="submit" class="primary-btn" [disabled]="saving">{{ saving ? 'Saving...' : 'Create Fee Structure' }}</button>
+      </div>
+    </form>
+
+    <form *ngIf="formMode === 'invoice'" (ngSubmit)="generateInvoices()">
+      <p class="modal-context">Create one invoice for each active learner in the fee structure’s grade. Existing active invoices for the same structure are not duplicated.</p>
+      <label>
+        Fee Structure
+        <select name="feeStructure" [(ngModel)]="selectedFeeStructureId" required>
+          <option [ngValue]="0" disabled>Select grade and term</option>
+          <option *ngFor="let fee of feeStructures" [ngValue]="fee.feeStructureId">
+            {{ fee.grade }} · {{ fee.term }} {{ fee.academicYear }} · {{ fee.description }} ({{ formatAmount(fee.amount) }})
+          </option>
+        </select>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="secondary-btn" (click)="closeForm()">Cancel</button>
+        <button type="submit" class="primary-btn" [disabled]="saving || feeStructures.length === 0">{{ saving ? 'Generating...' : 'Generate Invoices' }}</button>
+      </div>
+    </form>
+  </section>
+</div>
