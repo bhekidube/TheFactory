@@ -168,6 +168,32 @@ export interface ClassDetailDto {
   subjects: ClassAssignedSubjectDto[];
 }
 
+export interface AttendanceRecordDto {
+  recordID: number;
+  learnerID: number;
+  learnerName: string;
+  status: 'Present' | 'Absent';
+}
+
+export interface AttendanceSessionDto {
+  sessionID: number;
+  classID: number;
+  sessionDate: string;
+  isSubmitted: boolean;
+  records: AttendanceRecordDto[];
+}
+
+export interface InitiateAttendanceRequestDto {
+  sessionDate: string;
+}
+
+export interface SaveAttendanceRequestDto {
+  records: Array<{
+    learnerID: number;
+    status: 'Present' | 'Absent';
+  }>;
+}
+
 export interface SubjectUpsertRequestDto {
   name: string;
   code: string;

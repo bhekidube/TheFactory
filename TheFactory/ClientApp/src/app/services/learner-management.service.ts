@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
+  AttendanceSessionDto,
   ClassAssignedSubjectDto,
   ClassDetailDto,
   ClassDto,
@@ -19,6 +20,8 @@ import {
   LearnerAcademicRecordDto,
   LearnerReportPreviewDto,
   LearnerReportResponseDto,
+  InitiateAttendanceRequestDto,
+  SaveAttendanceRequestDto,
   SubjectUpsertRequestDto,
   TeacherLookupDto,
   SubjectDto,
@@ -162,6 +165,40 @@ export class LearnerManagementService {
 
   getClassById(id: number): Observable<ClassDetailDto> {
     return this.http.get<ClassDetailDto>(`${this.baseUrl}/classes/${id}`, this.getRequestOptions());
+  }
+
+  getAttendanceHistory(classId: number): Observable<string[]> {
+    return this.http.get<string[]>(
+      `${this.baseUrl}/classes/${classId}/attendance/history`,
+      this.getRequestOptions()
+    ).pipe(map(dates => dates.map(date => date.slice(0, 10))));
+  }
+
+  getAttendanceRegisterForDate(classId: number, date: string): Observable<AttendanceSessionDto> {
+    return this.http.get<AttendanceSessionDto>(
+      `${this.baseUrl}/classes/${classId}/attendance/by-date?date=${encodeURIComponent(date)}`,
+      this.getRequestOptions()
+    );
+  }
+
+  initiateAttendanceRegister(classId: number, payload: InitiateAttendanceRequestDto): Observable<AttendanceSessionDto> {
+    return this.http.post<AttendanceSessionDto>(
+      `${this.baseUrl}/classes/${classId}/attendance/initiate`,
+      payload,
+      this.getRequestOptions()
+    );
+  }
+
+  saveAttendanceRegister(
+    classId: number,
+    sessionId: number,
+    payload: SaveAttendanceRequestDto
+  ): Observable<AttendanceSessionDto> {
+    return this.http.post<AttendanceSessionDto>(
+      `${this.baseUrl}/classes/${classId}/attendance/${sessionId}/save`,
+      payload,
+      this.getRequestOptions()
+    );
   }
 
   searchTeachers(query: string): Observable<TeacherLookupDto[]> {

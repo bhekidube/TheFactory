@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ClassAssignedSubjectDto, ClassDetailDto, LearnerDto, LearnerLookupDto, WorkDto, WorkTypeLookupDto, WorkUpsertRequestDto } from '../learner-management/learner-management.models';
+import { AttendanceSessionDto, ClassAssignedSubjectDto, ClassDetailDto, LearnerDto, LearnerLookupDto, WorkDto, WorkTypeLookupDto, WorkUpsertRequestDto } from '../learner-management/learner-management.models';
 import { LearnerManagementService } from '../services/learner-management.service';
 import { TableSortController } from '../table-sorting';
 
@@ -15,7 +15,17 @@ export class ClassDetailComponent implements OnInit {
   readonly termOptions = ['Term 1', 'Term 2', 'Term 3', 'Term 4'];
   classId = 0;
   classDetail: ClassDetailDto | null = null;
+  attendanceDate = this.getTodayAsLocalDate();
+  attendanceHistoryDates: string[] = [];
+  selectedHistoryDate = '';
+  attendanceSession: AttendanceSessionDto | null = null;
+  generatingRegister = false;
+  savingRegister = false;
+  loadingAttendanceHistory = false;
+  loadingHistoricalRegister = false;
+  viewingHistoricalRegister = false;
   loading = false;
+  registerErrorMessage = '';
   loadingWork = false;
   assigningSubject = false;
   searchingSubjects = false;
@@ -51,6 +61,11 @@ export class ClassDetailComponent implements OnInit {
     this.route.paramMap.subscribe(params => {
       const id = Number(params.get('id'));
       this.classId = Number.isFinite(id) ? id : 0;
+      this.attendanceSession = null;
+      this.attendanceHistoryDates = [];
+      this.selectedHistoryDate = '';
+      this.viewingHistoricalRegister = false;
+      this.registerErrorMessage = '';
       this.loadClassDetail();
     });
   }
@@ -68,6 +83,7 @@ export class ClassDetailComponent implements OnInit {
       next: detail => {
         this.classDetail = detail;
         this.loading = false;
+        this.loadAttendanceHistory();
         this.loadAvailableLearners();
         this.loadWorkTypes();
         this.loadWorkItems();
@@ -77,6 +93,130 @@ export class ClassDetailComponent implements OnInit {
         this.errorMessage = this.mapHttpError(err, 'Failed to load class details.');
       }
     });
+  }
+
+  generateAttendanceRegister(): void {
+    if (!this.classId || !this.attendanceDate || this.generatingRegister || this.savingRegister || this.loadingHistoricalRegister) {
+      return;
+    }
+
+    this.generatingRegister = true;
+    this.registerErrorMessage = '';
+    this.successMessage = '';
+    this.viewingHistoricalRegister = false;
+    this.selectedHistoryDate = '';
+    this.learnerService.initiateAttendanceRegister(this.classId, { sessionDate: this.attendanceDate }).subscribe({
+      next: session => {
+        this.attendanceSession = session;
+        this.generatingRegister = false;
+      },
+      error: err => {
+        this.generatingRegister = false;
+        this.registerErrorMessage = this.mapHttpError(err, 'Failed to generate the attendance register.');
+      }
+    });
+  }
+
+  onAttendanceDateChange(): void {
+    if (this.attendanceSession && !this.attendanceSession.isSubmitted) {
+      const confirmed = confirm('Changing the register date will discard unsaved attendance selections. Continue?');
+      if (!confirmed) {
+        this.attendanceDate = this.attendanceSession.sessionDate.slice(0, 10);
+        return;
+      }
+    }
+
+    this.attendanceSession = null;
+    this.viewingHistoricalRegister = false;
+    this.selectedHistoryDate = '';
+    this.registerErrorMessage = '';
+    this.successMessage = '';
+  }
+
+  loadAttendanceHistory(): void {
+    this.loadingAttendanceHistory = true;
+    this.learnerService.getAttendanceHistory(this.classId).subscribe({
+      next: dates => {
+        this.attendanceHistoryDates = dates;
+        this.loadingAttendanceHistory = false;
+      },
+      error: err => {
+        this.loadingAttendanceHistory = false;
+        this.registerErrorMessage = this.mapHttpError(err, 'Failed to load attendance history.');
+      }
+    });
+  }
+
+  loadHistoricalAttendance(date: string): void {
+    if (!date || !this.classId || this.loadingHistoricalRegister || this.generatingRegister || this.savingRegister) {
+      return;
+    }
+
+    if (this.attendanceSession && !this.attendanceSession.isSubmitted && !this.viewingHistoricalRegister) {
+      const confirmed = confirm('Loading a past register will discard unsaved attendance selections. Continue?');
+      if (!confirmed) {
+        this.selectedHistoryDate = '';
+        return;
+      }
+    }
+
+    this.loadingHistoricalRegister = true;
+    this.registerErrorMessage = '';
+    this.successMessage = '';
+    this.learnerService.getAttendanceRegisterForDate(this.classId, date).subscribe({
+      next: session => {
+        this.attendanceSession = session;
+        this.attendanceDate = date;
+        this.viewingHistoricalRegister = true;
+        this.loadingHistoricalRegister = false;
+      },
+      error: err => {
+        this.loadingHistoricalRegister = false;
+        this.registerErrorMessage = this.mapHttpError(err, 'Failed to load the selected attendance register.');
+      }
+    });
+  }
+
+  saveAttendanceRegister(): void {
+    if (!this.attendanceSession || this.attendanceSession.isSubmitted || this.viewingHistoricalRegister || this.savingRegister) {
+      return;
+    }
+
+    this.savingRegister = true;
+    this.registerErrorMessage = '';
+    this.successMessage = '';
+    const records = this.attendanceSession.records.map(record => ({
+      learnerID: record.learnerID,
+      status: record.status
+    }));
+
+    this.learnerService.saveAttendanceRegister(
+      this.classId,
+      this.attendanceSession.sessionID,
+      { records }
+    ).subscribe({
+      next: session => {
+        this.attendanceSession = session;
+        this.savingRegister = false;
+        this.successMessage = 'Attendance register saved successfully.';
+        this.loadAttendanceHistory();
+      },
+      error: err => {
+        this.savingRegister = false;
+        this.registerErrorMessage = this.mapHttpError(err, 'Failed to save the attendance register.');
+      }
+    });
+  }
+
+  setAttendanceStatus(learnerId: number, status: 'Present' | 'Absent'): void {
+    if (!this.attendanceSession || this.attendanceSession.isSubmitted || this.viewingHistoricalRegister) {
+      return;
+    }
+
+    const record = this.attendanceSession.records.find(item => item.learnerID === learnerId);
+    if (record) {
+      record.status = status;
+    }
   }
 
   get filteredAvailableLearners(): LearnerLookupDto[] {
@@ -384,6 +524,14 @@ export class ClassDetailComponent implements OnInit {
     };
   }
 
+  private getTodayAsLocalDate(): string {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   private mapHttpError(error: unknown, fallback: string): string {
     const httpError = error as HttpErrorResponse;
 
@@ -405,6 +553,10 @@ export class ClassDetailComponent implements OnInit {
 
     if (httpError.status === 404) {
       return 'The requested class or subject could not be found.';
+    }
+
+    if (httpError.status === 409) {
+      return 'This attendance register has already been submitted. Generate it again to view the saved register.';
     }
 
     if (httpError.status === 0) {
