@@ -28,15 +28,23 @@
     <table>
       <thead>
         <tr>
-          <th scope="col">Name</th>
-          <th scope="col">Email</th>
-          <th scope="col">User Type</th>
-          <th scope="col">Address</th>
+          <th scope="col" class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('name')">
+            <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('name')">Name <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('name') }}</span></button>
+          </th>
+          <th scope="col" class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('email')">
+            <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('email')">Email <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('email') }}</span></button>
+          </th>
+          <th scope="col" class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('userType')">
+            <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('userType')">User Type <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('userType') }}</span></button>
+          </th>
+          <th scope="col" class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('address')">
+            <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('address')">Address <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('address') }}</span></button>
+          </th>
           <th scope="col" class="actions-column">Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let user of filteredUsers; trackBy: trackBySource">
+        <tr *ngFor="let user of filteredUsers | tableSort: tableSort.sortColumn:tableSort.sortDirection; trackBy: trackBySource">
           <td>{{ user.name || '—' }}</td>
           <td>{{ user.email || '—' }}</td>
           <td>{{ user.userType }}</td>

@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ClassAssignedSubjectDto, ClassDetailDto, LearnerDto, LearnerLookupDto, WorkDto, WorkTypeLookupDto, WorkUpsertRequestDto } from '../learner-management/learner-management.models';
 import { LearnerManagementService } from '../services/learner-management.service';
+import { TableSortController } from '../table-sorting';
 
 @Component({
   selector: 'app-class-detail',
@@ -10,6 +11,7 @@ import { LearnerManagementService } from '../services/learner-management.service
   styleUrls: ['./class-detail.component.css']
 })
 export class ClassDetailComponent implements OnInit {
+  readonly tableSort = new TableSortController();
   readonly termOptions = ['Term 1', 'Term 2', 'Term 3', 'Term 4'];
   classId = 0;
   classDetail: ClassDetailDto | null = null;

@@ -7,14 +7,22 @@
 <table class='table table-striped' aria-labelledby="tableLabel" *ngIf="forecasts">
   <thead>
     <tr>
-      <th>Date</th>
-      <th>Temp. (C)</th>
-      <th>Temp. (F)</th>
-      <th>Summary</th>
+      <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('date')">
+        <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('date')">Date <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('date') }}</span></button>
+      </th>
+      <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('temperatureC')">
+        <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('temperatureC')">Temp. (C) <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('temperatureC') }}</span></button>
+      </th>
+      <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('temperatureF')">
+        <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('temperatureF')">Temp. (F) <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('temperatureF') }}</span></button>
+      </th>
+      <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('summary')">
+        <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('summary')">Summary <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('summary') }}</span></button>
+      </th>
     </tr>
   </thead>
   <tbody>
-    <tr *ngFor="let forecast of forecasts">
+    <tr *ngFor="let forecast of forecasts | tableSort: tableSort.sortColumn:tableSort.sortDirection">
       <td>{{ forecast.date }}</td>
       <td>{{ forecast.temperatureC }}</td>
       <td>{{ forecast.temperatureF }}</td>
@@ -22,4 +30,3 @@
     </tr>
   </tbody>
 </table>
-

@@ -2,6 +2,7 @@ import { Component, Input } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
+import { TableSortController } from '../table-sorting';
 
 @Component({
   selector: 'app-operator-admin',
@@ -9,6 +10,7 @@ import { environment } from '../../environments/environment';
   styleUrls: ['./operator-admin.component.css']
 })
 export class OperatorAdminComponent {
+  readonly tableSort = new TableSortController();
   @Input() operatorName: string = '';
   @Input() summary: any;
    showForm = false;

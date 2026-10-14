@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SaveWorkMarksRequestDto, WorkDetailDto, WorkLearnerMarkDto } from '../learner-management/learner-management.models';
 import { LearnerManagementService } from '../services/learner-management.service';
+import { TableSortController } from '../table-sorting';
 
 @Component({
   selector: 'app-work-detail',
@@ -10,6 +11,7 @@ import { LearnerManagementService } from '../services/learner-management.service
   styleUrls: ['./work-detail.component.css']
 })
 export class WorkDetailComponent implements OnInit {
+  readonly tableSort = new TableSortController();
   classId = 0;
   workId = 0;
   workDetail: WorkDetailDto | null = null;

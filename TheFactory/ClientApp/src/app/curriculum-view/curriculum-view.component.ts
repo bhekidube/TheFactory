@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { SubjectDto, SubjectUpsertRequestDto } from '../learner-management/learner-management.models';
 import { LearnerManagementService } from '../services/learner-management.service';
+import { TableSortController } from '../table-sorting';
 
 @Component({
   selector: 'app-curriculum-view',
@@ -9,6 +10,7 @@ import { LearnerManagementService } from '../services/learner-management.service
   styleUrls: ['./curriculum-view.component.css']
 })
 export class CurriculumViewComponent implements OnInit {
+  readonly tableSort = new TableSortController();
   subjects: SubjectDto[] = [];
   searchTerm = '';
   loading = false;

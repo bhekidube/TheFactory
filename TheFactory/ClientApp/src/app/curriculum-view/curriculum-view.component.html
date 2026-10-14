@@ -30,14 +30,20 @@
     <table>
       <thead>
         <tr>
-          <th>Code</th>
-          <th>Name</th>
-          <th>Status</th>
+          <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('code')">
+            <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('code')">Code <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('code') }}</span></button>
+          </th>
+          <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('name')">
+            <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('name')">Name <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('name') }}</span></button>
+          </th>
+          <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('isActive')">
+            <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('isActive')">Status <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('isActive') }}</span></button>
+          </th>
           <th class="actions-col">Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let subject of filteredSubjects">
+        <tr *ngFor="let subject of filteredSubjects | tableSort: tableSort.sortColumn:tableSort.sortDirection">
           <td>{{ subject.code }}</td>
           <td>{{ subject.name }}</td>
           <td>{{ subject.isActive ? 'Active' : 'Inactive' }}</td>

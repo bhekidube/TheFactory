@@ -63,17 +63,31 @@
         <table>
           <thead>
             <tr>
-              <th>Learner</th>
-              <th>Grade</th>
-              <th>Parent/Guardian</th>
-              <th>Phone</th>
-              <th>Email</th>
-              <th>Relationship</th>
-              <th>Address</th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('learnerName', 'guardians')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('learnerName', 'guardians')">Learner <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('learnerName', 'guardians') }}</span></button>
+              </th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('grade', 'guardians')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('grade', 'guardians')">Grade <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('grade', 'guardians') }}</span></button>
+              </th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('guardianName', 'guardians')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('guardianName', 'guardians')">Parent/Guardian <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('guardianName', 'guardians') }}</span></button>
+              </th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('parentGuardian.phoneNumber', 'guardians')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('parentGuardian.phoneNumber', 'guardians')">Phone <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('parentGuardian.phoneNumber', 'guardians') }}</span></button>
+              </th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('parentGuardian.emailAddress', 'guardians')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('parentGuardian.emailAddress', 'guardians')">Email <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('parentGuardian.emailAddress', 'guardians') }}</span></button>
+              </th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('parentGuardian.relationshipToLearner', 'guardians')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('parentGuardian.relationshipToLearner', 'guardians')">Relationship <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('parentGuardian.relationshipToLearner', 'guardians') }}</span></button>
+              </th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('parentGuardian.address', 'guardians')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('parentGuardian.address', 'guardians')">Address <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('parentGuardian.address', 'guardians') }}</span></button>
+              </th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let learner of incompleteParentGuardians; trackBy: trackByLearnerId">
+            <tr *ngFor="let learner of incompleteParentGuardians | tableSort: tableSort.getGridSortColumn('guardians'):tableSort.getGridSortDirection('guardians'); trackBy: trackByLearnerId">
               <td>{{ learner.firstName }} {{ learner.surname }}</td>
               <td>{{ learner.grade || '—' }}</td>
               <td>{{ learner.parentGuardian.firstName }} {{ learner.parentGuardian.surname }}</td>
@@ -213,16 +227,26 @@
       <table class="classes-table">
         <thead>
           <tr>
-            <th>Class ID</th>
-            <th>Class Name</th>
-            <th>Grade</th>
-            <th>Teacher</th>
-            <th>Learners</th>
+            <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('id', 'classes')">
+              <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('id', 'classes')">Class ID <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('id', 'classes') }}</span></button>
+            </th>
+            <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('name', 'classes')">
+              <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('name', 'classes')">Class Name <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('name', 'classes') }}</span></button>
+            </th>
+            <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('grade', 'classes')">
+              <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('grade', 'classes')">Grade <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('grade', 'classes') }}</span></button>
+            </th>
+            <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('teacherName', 'classes')">
+              <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('teacherName', 'classes')">Teacher <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('teacherName', 'classes') }}</span></button>
+            </th>
+            <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('learnerIds.length', 'classes')">
+              <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('learnerIds.length', 'classes')">Learners <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('learnerIds.length', 'classes') }}</span></button>
+            </th>
             <th class="actions-col text-end">Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let schoolClass of filteredClasses; trackBy: trackByClassId">
+          <tr *ngFor="let schoolClass of filteredClasses | tableSort: tableSort.getGridSortColumn('classes'):tableSort.getGridSortDirection('classes'); trackBy: trackByClassId">
             <td>{{ schoolClass.id }}</td>
             <td>
               <a
@@ -517,17 +541,29 @@
             <table>
               <thead>
                 <tr>
-                  <th>Subject</th>
-                  <th>Possible Mark</th>
-                  <th>Pupil Mark</th>
-                  <th>Percentage</th>
-                  <th>Grade</th>
-                  <th>Teacher Comments</th>
+                  <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('subject', 'report')">
+                    <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('subject', 'report')">Subject <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('subject', 'report') }}</span></button>
+                  </th>
+                  <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('possibleMark', 'report')">
+                    <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('possibleMark', 'report')">Possible Mark <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('possibleMark', 'report') }}</span></button>
+                  </th>
+                  <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('pupilMark', 'report')">
+                    <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('pupilMark', 'report')">Pupil Mark <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('pupilMark', 'report') }}</span></button>
+                  </th>
+                  <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('percentage', 'report')">
+                    <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('percentage', 'report')">Percentage <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('percentage', 'report') }}</span></button>
+                  </th>
+                  <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('grade', 'report')">
+                    <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('grade', 'report')">Grade <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('grade', 'report') }}</span></button>
+                  </th>
+                  <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('teacherComments', 'report')">
+                    <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('teacherComments', 'report')">Teacher Comments <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('teacherComments', 'report') }}</span></button>
+                  </th>
                   <th class="actions-col">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let subject of selectedReport.subjects">
+                <tr *ngFor="let subject of selectedReport.subjects | tableSort: tableSort.getGridSortColumn('report'):tableSort.getGridSortDirection('report')">
                   <td>{{ subject.subject }}</td>
                   <td>{{ subject.possibleMark }}</td>
                   <td>{{ subject.pupilMark }}</td>

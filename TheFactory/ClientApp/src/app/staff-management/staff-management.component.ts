@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { LearnerManagementService } from '../services/learner-management.service';
 import { StaffDto, StaffUpsertRequest } from '../learner-management/learner-management.models';
+import { TableSortController } from '../table-sorting';
 
 @Component({
   selector: 'app-staff-management',
@@ -10,6 +11,7 @@ import { StaffDto, StaffUpsertRequest } from '../learner-management/learner-mana
   styleUrls: ['./staff-management.component.css']
 })
 export class StaffManagementComponent implements OnInit, OnDestroy {
+  readonly tableSort = new TableSortController();
   schoolId = 0;
   staff: StaffDto[] = [];
   searchTerm = '';

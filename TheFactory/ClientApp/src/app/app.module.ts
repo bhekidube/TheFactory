@@ -49,6 +49,7 @@ import { WorkManagementComponent } from './work-management/work-management.compo
 import { WorkDetailComponent } from './work-detail/work-detail.component';
 import { StaffManagementComponent } from './staff-management/staff-management.component';
 import { FinanceDashboardComponent } from './finance-dashboard/finance-dashboard.component';
+import { TableSortPipe } from './table-sorting';
 
 @NgModule({
   declarations: [
@@ -81,7 +82,8 @@ import { FinanceDashboardComponent } from './finance-dashboard/finance-dashboard
     WorkManagementComponent,
     WorkDetailComponent,
     StaffManagementComponent,
-    FinanceDashboardComponent
+    FinanceDashboardComponent,
+    TableSortPipe
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),

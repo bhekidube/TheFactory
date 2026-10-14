@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { environment } from '../../environments/environment';
 import { AuthService } from '../services/auth.service';
+import { TableSortController } from '../table-sorting';
 
 @Component({
   selector: 'app-bus-search',
@@ -28,6 +29,7 @@ import { AuthService } from '../services/auth.service';
   ]
 })
 export class BusSearchComponent implements OnInit {
+  readonly tableSort = new TableSortController();
   showZimraForm = false;
   showForm = true;
   hasSearched = false;

@@ -7,7 +7,7 @@
   </div>
 
   <div class="d-block d-md-none">
-    <div *ngFor="let bus of busData" class="card mb-3 border-start border-primary border-4 shadow-sm">
+    <div *ngFor="let bus of busData | tableSort: tableSort.sortColumn:tableSort.sortDirection" class="card mb-3 border-start border-primary border-4 shadow-sm">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center">
           <h5 class="fw-bold mb-1 text-primary">{{bus.operator}}</h5>
@@ -25,15 +25,23 @@
     <table class="table table-hover align-middle mb-0">
       <thead class="table-light">
         <tr>
-          <th>Operator</th>
-          <th>Departure Time</th>
-          <th>Rank / Pickup</th>
-          <th>Est. Price</th>
+          <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('operator')">
+            <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('operator')">Operator <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('operator') }}</span></button>
+          </th>
+          <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('time')">
+            <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('time')">Departure Time <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('time') }}</span></button>
+          </th>
+          <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('pickup')">
+            <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('pickup')">Rank / Pickup <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('pickup') }}</span></button>
+          </th>
+          <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('priceRange')">
+            <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('priceRange')">Est. Price <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('priceRange') }}</span></button>
+          </th>
           <th>Status</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let bus of busData">
+        <tr *ngFor="let bus of busData | tableSort: tableSort.sortColumn:tableSort.sortDirection">
           <td><strong>{{bus.operator}}</strong></td>
           <td>{{bus.time}}</td>
           <td>{{bus.pickup}}</td>

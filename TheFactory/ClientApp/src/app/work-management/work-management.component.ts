@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ClassDto, SubjectDto, WorkDto, WorkTypeLookupDto, WorkUpsertRequestDto } from '../learner-management/learner-management.models';
 import { LearnerManagementService } from '../services/learner-management.service';
+import { TableSortController } from '../table-sorting';
 
 @Component({
   selector: 'app-work-management',
@@ -9,6 +10,7 @@ import { LearnerManagementService } from '../services/learner-management.service
   styleUrls: ['./work-management.component.css']
 })
 export class WorkManagementComponent implements OnInit {
+  readonly tableSort = new TableSortController();
   readonly termOptions = ['Term 1', 'Term 2', 'Term 3', 'Term 4'];
   workItems: WorkDto[] = [];
   classes: ClassDto[] = [];

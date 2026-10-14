@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { LearnerAcademicRecordDto, LearnerDetailDto, LearnerReportPreviewDto } from '../learner-management/learner-management.models';
 import { LearnerManagementService } from '../services/learner-management.service';
+import { TableSortController } from '../table-sorting';
 
 @Component({
   selector: 'app-learner-detail',
@@ -11,6 +12,7 @@ import { LearnerManagementService } from '../services/learner-management.service
   styleUrls: ['./learner-detail.component.css']
 })
 export class LearnerDetailComponent implements OnInit {
+  readonly tableSort = new TableSortController();
   learnerId = 0;
   learner: LearnerDetailDto | null = null;
   academicRecords: LearnerAcademicRecordDto[] = [];

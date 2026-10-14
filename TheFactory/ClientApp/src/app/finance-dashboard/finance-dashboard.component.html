@@ -92,16 +92,26 @@
         <table class="ledger-table">
           <thead>
             <tr>
-              <th>Date</th>
-              <th>Reference / Description</th>
-              <th class="numeric-cell">Charge (Debit)</th>
-              <th class="numeric-cell">Payment (Credit)</th>
-              <th class="numeric-cell">Running Balance</th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('date', 'ledger')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('date', 'ledger')">Date <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('date', 'ledger') }}</span></button>
+              </th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('referenceNumber', 'ledger')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('referenceNumber', 'ledger')">Reference / Description <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('referenceNumber', 'ledger') }}</span></button>
+              </th>
+              <th class="numeric-cell sortable-header" [attr.aria-sort]="tableSort.getAriaSort('debitAmount', 'ledger')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('debitAmount', 'ledger')">Charge (Debit) <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('debitAmount', 'ledger') }}</span></button>
+              </th>
+              <th class="numeric-cell sortable-header" [attr.aria-sort]="tableSort.getAriaSort('creditAmount', 'ledger')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('creditAmount', 'ledger')">Payment (Credit) <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('creditAmount', 'ledger') }}</span></button>
+              </th>
+              <th class="numeric-cell sortable-header" [attr.aria-sort]="tableSort.getAriaSort('runningBalance', 'ledger')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('runningBalance', 'ledger')">Running Balance <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('runningBalance', 'ledger') }}</span></button>
+              </th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let entry of ledger; trackBy: trackByTransactionId" [class.voided-row]="entry.isVoided">
+            <tr *ngFor="let entry of ledger | tableSort: tableSort.getGridSortColumn('ledger'):tableSort.getGridSortDirection('ledger'); trackBy: trackByTransactionId" [class.voided-row]="entry.isVoided">
               <td>{{ formatDate(entry.date) }}</td>
               <td>
                 <strong>{{ entry.referenceNumber || entry.category }}</strong>
@@ -139,15 +149,25 @@
       <table>
         <thead>
           <tr>
-            <th>Grade</th>
-            <th>Term / Year</th>
-            <th>Category</th>
-            <th>Description</th>
-            <th class="numeric-cell">Amount</th>
+            <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('grade', 'fees')">
+              <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('grade', 'fees')">Grade <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('grade', 'fees') }}</span></button>
+            </th>
+            <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('termYear', 'fees')">
+              <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('termYear', 'fees')">Term / Year <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('termYear', 'fees') }}</span></button>
+            </th>
+            <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('category', 'fees')">
+              <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('category', 'fees')">Category <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('category', 'fees') }}</span></button>
+            </th>
+            <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('description', 'fees')">
+              <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('description', 'fees')">Description <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('description', 'fees') }}</span></button>
+            </th>
+            <th class="numeric-cell sortable-header" [attr.aria-sort]="tableSort.getAriaSort('amount', 'fees')">
+              <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('amount', 'fees')">Amount <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('amount', 'fees') }}</span></button>
+            </th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let fee of feeStructures">
+          <tr *ngFor="let fee of feeStructures | tableSort: tableSort.getGridSortColumn('fees'):tableSort.getGridSortDirection('fees')">
             <td>{{ fee.grade }}</td>
             <td>{{ fee.term }} {{ fee.academicYear }}</td>
             <td>{{ fee.category }}</td>
