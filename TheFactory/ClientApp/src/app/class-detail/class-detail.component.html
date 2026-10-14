@@ -89,6 +89,82 @@
 
     <div class="section-card">
       <div class="section-header">
+        <h3>Attendance Register</h3>
+        <span *ngIf="attendanceSession">{{ attendanceSession.records.length }} enrolled</span>
+      </div>
+      <div class="attendance-controls">
+        <label>
+          Register date
+          <input
+            type="date"
+            name="attendanceDate"
+            [(ngModel)]="attendanceDate"
+            (ngModelChange)="onAttendanceDateChange()"
+            [disabled]="generatingRegister || savingRegister" />
+        </label>
+        <button
+          type="button"
+          class="primary-btn"
+          [disabled]="!attendanceDate || generatingRegister || savingRegister"
+          (click)="generateAttendanceRegister()">
+          {{ generatingRegister ? 'Generating...' : 'Generate Attendance Register' }}
+        </button>
+      </div>
+      <div class="message error" *ngIf="registerErrorMessage" role="alert">{{ registerErrorMessage }}</div>
+      <div class="state-card" *ngIf="!attendanceSession && !generatingRegister">
+        Choose a date and generate a register when you are ready to take attendance.
+      </div>
+      <div class="table-wrap" *ngIf="attendanceSession">
+        <table class="attendance-table">
+          <thead>
+            <tr>
+              <th>Learner</th>
+              <th>Present</th>
+              <th>Absent</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let record of attendanceSession.records">
+              <td>{{ record.learnerName }}</td>
+              <td>
+                <input
+                  type="radio"
+                  [name]="'attendance-' + record.learnerID"
+                  [ngModel]="record.status"
+                  (ngModelChange)="setAttendanceStatus(record.learnerID, $event)"
+                  value="Present"
+                  [disabled]="attendanceSession.isSubmitted || savingRegister"
+                  [attr.aria-label]="'Mark ' + record.learnerName + ' present'" />
+              </td>
+              <td>
+                <input
+                  type="radio"
+                  [name]="'attendance-' + record.learnerID"
+                  [ngModel]="record.status"
+                  (ngModelChange)="setAttendanceStatus(record.learnerID, $event)"
+                  value="Absent"
+                  [disabled]="attendanceSession.isSubmitted || savingRegister"
+                  [attr.aria-label]="'Mark ' + record.learnerName + ' absent'" />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="attendance-actions">
+          <span class="submitted-label" *ngIf="attendanceSession.isSubmitted">Register submitted</span>
+          <button
+            type="button"
+            class="primary-btn"
+            *ngIf="!attendanceSession.isSubmitted"
+            [disabled]="savingRegister || attendanceSession.records.length === 0"
+            (click)="saveAttendanceRegister()">
+            {{ savingRegister ? 'Saving...' : 'Save Register' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-header">
         <h3>Subjects</h3>
         <button type="button" class="primary-btn" (click)="openAddSubjectModal()">+ Add Subject</button>
       </div>
