@@ -217,6 +217,15 @@ export class ClassDetailComponent implements OnInit {
     }
   }
 
+  get attendancePresentCount(): number {
+    return this.attendanceSession?.records.filter(record => record.status === 'Present').length || 0;
+  }
+
+  get attendancePercentage(): number {
+    const total = this.attendanceSession?.records.length || 0;
+    return total === 0 ? 0 : this.attendancePresentCount / total * 100;
+  }
+
   get filteredAvailableLearners(): LearnerLookupDto[] {
     const term = this.learnerSearchTerm.trim().toLowerCase();
     if (!term) {
