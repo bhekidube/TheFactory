@@ -11,7 +11,7 @@ import {
   StudentLedgerEntryDto
 } from './finance.models';
 
-type FinanceFormMode = 'payment' | 'edit' | 'fee' | 'invoice' | null;
+type FinanceFormMode = 'payment' | 'edit' | 'ad-hoc-invoice' | 'fee' | 'invoice' | null;
 
 @Component({
   selector: 'app-finance-dashboard',
@@ -133,6 +133,26 @@ export class FinanceDashboardComponent implements OnInit {
     this.formMode = 'payment';
   }
 
+  openAdHocInvoiceForm(): void {
+    if (!this.selectedLearner) {
+      this.errorMessage = 'Select a learner before adding an invoice.';
+      return;
+    }
+
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.editingTransaction = null;
+    this.paymentForm = {
+      date: this.getToday(),
+      type: 'DEBIT',
+      category: 'Ad-hoc Invoice',
+      amount: 0,
+      notes: '',
+      referenceNumber: ''
+    };
+    this.formMode = 'ad-hoc-invoice';
+  }
+
   openEditForm(entry: StudentLedgerEntryDto): void {
     if (entry.isVoided) {
       return;
@@ -194,6 +214,42 @@ export class FinanceDashboardComponent implements OnInit {
       error: error => {
         this.saving = false;
         this.errorMessage = this.getErrorMessage(error, 'Unable to save the ledger transaction.');
+      }
+    });
+  }
+
+  saveAdHocInvoice(): void {
+    if (!this.selectedLearner
+      || !this.paymentForm.date
+      || !Number.isFinite(Number(this.paymentForm.amount))
+      || Number(this.paymentForm.amount) <= 0
+      || !this.paymentForm.notes.trim()) {
+      this.errorMessage = 'Enter a description, valid date, and amount greater than zero.';
+      return;
+    }
+
+    const learnerName = `${this.selectedLearner.firstName} ${this.selectedLearner.surname}`;
+    const request: LedgerTransactionUpsertRequest = {
+      ...this.paymentForm,
+      type: 'DEBIT',
+      category: 'Ad-hoc Invoice',
+      notes: this.paymentForm.notes.trim(),
+      amount: Number(this.paymentForm.amount)
+    };
+
+    this.saving = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.financeApi.recordTransaction(this.schoolId, this.selectedLearner.learnerId, request).subscribe({
+      next: () => {
+        this.saving = false;
+        this.formMode = null;
+        this.successMessage = `Ad-hoc invoice added for ${learnerName}.`;
+        this.refreshSelectedLearner();
+      },
+      error: error => {
+        this.saving = false;
+        this.errorMessage = this.getErrorMessage(error, 'Unable to add the ad-hoc invoice.');
       }
     });
   }

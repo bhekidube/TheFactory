@@ -7,6 +7,7 @@
 .finance-actions{justify-content:flex-start;flex-wrap:wrap;margin-bottom:14px}
 .finance-section{min-width:0;padding:12px}.finance-ledger-layout{display:grid;grid-template-columns:minmax(230px,300px) minmax(0,1fr);gap:12px;align-items:start}
 .finance-section-header{margin-bottom:10px}.finance-section-header h3{margin:0;color:#1f3557;font-size:17px}.finance-section-header p{font-size:13px}
+.ledger-header-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
 .count-badge,.balance-badge{flex:0 0 auto;padding:4px 9px;border-radius:999px;background:#e9eef8;color:#1f4f97;font-size:12px;font-weight:700}.balance-badge{background:#eaf7ef;color:#1e6b3a}
 .learner-list{display:grid;gap:6px;max-height:460px;overflow:auto}.learner-row{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:9px;border:1px solid #e4eaf3;border-radius:6px;background:#fff;text-align:left;color:#1f3557;cursor:pointer}.learner-row:hover,.learner-row.is-selected{border-color:#8bb8f4;background:#f2f7ff}.learner-ident{display:grid;gap:3px;min-width:0}.learner-ident strong{overflow-wrap:anywhere}.learner-ident small,.learner-balance small{font-size:11px;color:#68778c}.learner-balance{display:grid;gap:2px;text-align:right;white-space:nowrap;font-weight:700}
 .finance-state{padding:12px;color:#5f6979;border-style:dashed}.finance-table-wrap{width:100%;overflow:auto;border:1px solid #e6ebf3;border-radius:6px}

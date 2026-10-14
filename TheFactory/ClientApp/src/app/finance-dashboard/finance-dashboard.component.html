@@ -78,9 +78,12 @@
           <p *ngIf="selectedLearner">Learner #{{ selectedLearner.learnerId }} · {{ selectedLearner.grade }}</p>
           <p *ngIf="!selectedLearner">Select a learner to view their ledger.</p>
         </div>
-        <span class="balance-badge" *ngIf="selectedLearner">
-          Balance {{ formatAmount(selectedLearner.balance) }}
-        </span>
+        <div class="ledger-header-actions" *ngIf="selectedLearner">
+          <span class="balance-badge">Balance {{ formatAmount(selectedLearner.balance) }}</span>
+          <button type="button" class="primary-btn" (click)="openAdHocInvoiceForm()" [disabled]="saving">
+            + Add Ad-hoc Invoice
+          </button>
+        </div>
       </div>
 
       <div class="finance-state" *ngIf="loadingLedger">Loading learner ledger...</div>
@@ -165,6 +168,7 @@
     <header class="modal-header">
       <h3 *ngIf="formMode === 'payment'">Record Payment</h3>
       <h3 *ngIf="formMode === 'edit'">Edit Ledger Entry</h3>
+      <h3 *ngIf="formMode === 'ad-hoc-invoice'">Add Ad-hoc Invoice</h3>
       <h3 *ngIf="formMode === 'fee'">Add Fee Structure</h3>
       <h3 *ngIf="formMode === 'invoice'">Bulk Invoice Generation</h3>
       <button type="button" class="modal-close" aria-label="Close" (click)="closeForm()">×</button>
@@ -204,6 +208,34 @@
       <div class="modal-actions">
         <button type="button" class="secondary-btn" (click)="closeForm()">Cancel</button>
         <button type="submit" class="primary-btn" [disabled]="saving">{{ saving ? 'Saving...' : (formMode === 'edit' ? 'Save Changes' : 'Record Payment') }}</button>
+      </div>
+    </form>
+
+    <form *ngIf="formMode === 'ad-hoc-invoice'" (ngSubmit)="saveAdHocInvoice()">
+      <p class="modal-context" *ngIf="selectedLearner">
+        Invoice learner: <strong>{{ selectedLearner.firstName }} {{ selectedLearner.surname }} (#{{ selectedLearner.learnerId }})</strong>
+      </p>
+      <label>
+        Invoice Date
+        <input type="date" name="adhocInvoiceDate" [(ngModel)]="paymentForm.date" required />
+      </label>
+      <label>
+        Description
+        <textarea
+          name="adhocInvoiceDescription"
+          [(ngModel)]="paymentForm.notes"
+          maxlength="500"
+          rows="3"
+          placeholder="Describe the individual charge"
+          required></textarea>
+      </label>
+      <label>
+        Amount
+        <input type="number" name="adhocInvoiceAmount" [(ngModel)]="paymentForm.amount" min="0.01" step="0.01" required />
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="secondary-btn" (click)="closeForm()">Cancel</button>
+        <button type="submit" class="primary-btn" [disabled]="saving">{{ saving ? 'Adding...' : 'Add Invoice' }}</button>
       </div>
     </form>
 
