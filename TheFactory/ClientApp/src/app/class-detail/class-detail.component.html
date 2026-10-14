@@ -100,15 +100,34 @@
             name="attendanceDate"
             [(ngModel)]="attendanceDate"
             (ngModelChange)="onAttendanceDateChange()"
-            [disabled]="generatingRegister || savingRegister" />
+            [disabled]="generatingRegister || savingRegister || loadingHistoricalRegister" />
         </label>
         <button
           type="button"
           class="primary-btn"
-          [disabled]="!attendanceDate || generatingRegister || savingRegister"
+          [disabled]="!attendanceDate || generatingRegister || savingRegister || loadingHistoricalRegister"
           (click)="generateAttendanceRegister()">
           {{ generatingRegister ? 'Generating...' : 'Generate Attendance Register' }}
         </button>
+      </div>
+      <div class="attendance-controls attendance-history-controls">
+        <label>
+          View Past Register
+          <select
+            name="attendanceHistory"
+            [(ngModel)]="selectedHistoryDate"
+            (ngModelChange)="loadHistoricalAttendance($event)"
+            [disabled]="loadingAttendanceHistory || loadingHistoricalRegister || generatingRegister || savingRegister">
+            <option value="">Select a recorded date</option>
+            <option *ngFor="let date of attendanceHistoryDates" [value]="date">{{ date }}</option>
+          </select>
+        </label>
+        <span class="history-loading" *ngIf="loadingAttendanceHistory || loadingHistoricalRegister" aria-live="polite">
+          {{ loadingHistoricalRegister ? 'Loading register...' : 'Loading dates...' }}
+        </span>
+      </div>
+      <div class="historical-register-notice" *ngIf="viewingHistoricalRegister">
+        Viewing a saved historical register. This view is read-only.
       </div>
       <div class="message error" *ngIf="registerErrorMessage" role="alert">{{ registerErrorMessage }}</div>
       <div class="state-card" *ngIf="!attendanceSession && !generatingRegister">
@@ -133,7 +152,7 @@
                   [ngModel]="record.status"
                   (ngModelChange)="setAttendanceStatus(record.learnerID, $event)"
                   value="Present"
-                  [disabled]="attendanceSession.isSubmitted || savingRegister"
+                  [disabled]="attendanceSession.isSubmitted || viewingHistoricalRegister || savingRegister"
                   [attr.aria-label]="'Mark ' + record.learnerName + ' present'" />
               </td>
               <td>
@@ -143,18 +162,18 @@
                   [ngModel]="record.status"
                   (ngModelChange)="setAttendanceStatus(record.learnerID, $event)"
                   value="Absent"
-                  [disabled]="attendanceSession.isSubmitted || savingRegister"
+                  [disabled]="attendanceSession.isSubmitted || viewingHistoricalRegister || savingRegister"
                   [attr.aria-label]="'Mark ' + record.learnerName + ' absent'" />
               </td>
             </tr>
           </tbody>
         </table>
         <div class="attendance-actions">
-          <span class="submitted-label" *ngIf="attendanceSession.isSubmitted">Register submitted</span>
+          <span class="submitted-label" *ngIf="attendanceSession.isSubmitted && !viewingHistoricalRegister">Register submitted</span>
           <button
             type="button"
             class="primary-btn"
-            *ngIf="!attendanceSession.isSubmitted"
+            *ngIf="!attendanceSession.isSubmitted && !viewingHistoricalRegister"
             [disabled]="savingRegister || attendanceSession.records.length === 0"
             (click)="saveAttendanceRegister()">
             {{ savingRegister ? 'Saving...' : 'Save Register' }}

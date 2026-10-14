@@ -14,9 +14,14 @@ export class ClassDetailComponent implements OnInit {
   classId = 0;
   classDetail: ClassDetailDto | null = null;
   attendanceDate = this.getTodayAsLocalDate();
+  attendanceHistoryDates: string[] = [];
+  selectedHistoryDate = '';
   attendanceSession: AttendanceSessionDto | null = null;
   generatingRegister = false;
   savingRegister = false;
+  loadingAttendanceHistory = false;
+  loadingHistoricalRegister = false;
+  viewingHistoricalRegister = false;
   loading = false;
   registerErrorMessage = '';
   loadingWork = false;
@@ -55,6 +60,9 @@ export class ClassDetailComponent implements OnInit {
       const id = Number(params.get('id'));
       this.classId = Number.isFinite(id) ? id : 0;
       this.attendanceSession = null;
+      this.attendanceHistoryDates = [];
+      this.selectedHistoryDate = '';
+      this.viewingHistoricalRegister = false;
       this.registerErrorMessage = '';
       this.loadClassDetail();
     });
@@ -73,6 +81,7 @@ export class ClassDetailComponent implements OnInit {
       next: detail => {
         this.classDetail = detail;
         this.loading = false;
+        this.loadAttendanceHistory();
         this.loadAvailableLearners();
         this.loadWorkTypes();
         this.loadWorkItems();
@@ -85,13 +94,15 @@ export class ClassDetailComponent implements OnInit {
   }
 
   generateAttendanceRegister(): void {
-    if (!this.classId || !this.attendanceDate || this.generatingRegister || this.savingRegister) {
+    if (!this.classId || !this.attendanceDate || this.generatingRegister || this.savingRegister || this.loadingHistoricalRegister) {
       return;
     }
 
     this.generatingRegister = true;
     this.registerErrorMessage = '';
     this.successMessage = '';
+    this.viewingHistoricalRegister = false;
+    this.selectedHistoryDate = '';
     this.learnerService.initiateAttendanceRegister(this.classId, { sessionDate: this.attendanceDate }).subscribe({
       next: session => {
         this.attendanceSession = session;
@@ -114,12 +125,58 @@ export class ClassDetailComponent implements OnInit {
     }
 
     this.attendanceSession = null;
+    this.viewingHistoricalRegister = false;
+    this.selectedHistoryDate = '';
     this.registerErrorMessage = '';
     this.successMessage = '';
   }
 
+  loadAttendanceHistory(): void {
+    this.loadingAttendanceHistory = true;
+    this.learnerService.getAttendanceHistory(this.classId).subscribe({
+      next: dates => {
+        this.attendanceHistoryDates = dates;
+        this.loadingAttendanceHistory = false;
+      },
+      error: err => {
+        this.loadingAttendanceHistory = false;
+        this.registerErrorMessage = this.mapHttpError(err, 'Failed to load attendance history.');
+      }
+    });
+  }
+
+  loadHistoricalAttendance(date: string): void {
+    if (!date || !this.classId || this.loadingHistoricalRegister || this.generatingRegister || this.savingRegister) {
+      return;
+    }
+
+    if (this.attendanceSession && !this.attendanceSession.isSubmitted && !this.viewingHistoricalRegister) {
+      const confirmed = confirm('Loading a past register will discard unsaved attendance selections. Continue?');
+      if (!confirmed) {
+        this.selectedHistoryDate = '';
+        return;
+      }
+    }
+
+    this.loadingHistoricalRegister = true;
+    this.registerErrorMessage = '';
+    this.successMessage = '';
+    this.learnerService.getAttendanceRegisterForDate(this.classId, date).subscribe({
+      next: session => {
+        this.attendanceSession = session;
+        this.attendanceDate = date;
+        this.viewingHistoricalRegister = true;
+        this.loadingHistoricalRegister = false;
+      },
+      error: err => {
+        this.loadingHistoricalRegister = false;
+        this.registerErrorMessage = this.mapHttpError(err, 'Failed to load the selected attendance register.');
+      }
+    });
+  }
+
   saveAttendanceRegister(): void {
-    if (!this.attendanceSession || this.attendanceSession.isSubmitted || this.savingRegister) {
+    if (!this.attendanceSession || this.attendanceSession.isSubmitted || this.viewingHistoricalRegister || this.savingRegister) {
       return;
     }
 
@@ -140,6 +197,7 @@ export class ClassDetailComponent implements OnInit {
         this.attendanceSession = session;
         this.savingRegister = false;
         this.successMessage = 'Attendance register saved successfully.';
+        this.loadAttendanceHistory();
       },
       error: err => {
         this.savingRegister = false;
@@ -149,7 +207,7 @@ export class ClassDetailComponent implements OnInit {
   }
 
   setAttendanceStatus(learnerId: number, status: 'Present' | 'Absent'): void {
-    if (!this.attendanceSession || this.attendanceSession.isSubmitted) {
+    if (!this.attendanceSession || this.attendanceSession.isSubmitted || this.viewingHistoricalRegister) {
       return;
     }
 

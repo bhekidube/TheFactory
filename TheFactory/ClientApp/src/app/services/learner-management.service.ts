@@ -167,6 +167,20 @@ export class LearnerManagementService {
     return this.http.get<ClassDetailDto>(`${this.baseUrl}/classes/${id}`, this.getRequestOptions());
   }
 
+  getAttendanceHistory(classId: number): Observable<string[]> {
+    return this.http.get<string[]>(
+      `${this.baseUrl}/classes/${classId}/attendance/history`,
+      this.getRequestOptions()
+    ).pipe(map(dates => dates.map(date => date.slice(0, 10))));
+  }
+
+  getAttendanceRegisterForDate(classId: number, date: string): Observable<AttendanceSessionDto> {
+    return this.http.get<AttendanceSessionDto>(
+      `${this.baseUrl}/classes/${classId}/attendance/by-date?date=${encodeURIComponent(date)}`,
+      this.getRequestOptions()
+    );
+  }
+
   initiateAttendanceRegister(classId: number, payload: InitiateAttendanceRequestDto): Observable<AttendanceSessionDto> {
     return this.http.post<AttendanceSessionDto>(
       `${this.baseUrl}/classes/${classId}/attendance/initiate`,

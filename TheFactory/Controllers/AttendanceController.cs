@@ -20,6 +20,60 @@ public sealed class AttendanceController : ControllerBase
         _learnerService = learnerService;
     }
 
+    [HttpGet("history")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<DateTime>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<IReadOnlyCollection<DateTime>>> GetHistory(
+        int classId,
+        CancellationToken cancellationToken)
+    {
+        var classDetail = await _learnerService.GetClassByIdAsync(classId, cancellationToken);
+        if (classId <= 0 || classDetail is null)
+        {
+            return NotFound();
+        }
+
+        var dates = await _dbContext.AttendanceSessions
+            .AsNoTracking()
+            .Where(session => session.ClassID == classId && session.IsSubmitted)
+            .OrderByDescending(session => session.SessionDate)
+            .Select(session => session.SessionDate)
+            .ToListAsync(cancellationToken);
+
+        return Ok(dates);
+    }
+
+    [HttpGet("by-date")]
+    [ProducesResponseType(typeof(AttendanceSessionDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<AttendanceSessionDto>> GetByDate(
+        int classId,
+        [FromQuery] DateTime date,
+        CancellationToken cancellationToken)
+    {
+        if (classId <= 0 || date == default)
+        {
+            return BadRequest("A valid class id and attendance date are required.");
+        }
+
+        var classDetail = await _learnerService.GetClassByIdAsync(classId, cancellationToken);
+        if (classDetail is null)
+        {
+            return NotFound();
+        }
+
+        var session = await _dbContext.AttendanceSessions
+            .AsNoTracking()
+            .Include(item => item.Records)
+            .SingleOrDefaultAsync(
+                item => item.ClassID == classId
+                    && item.SessionDate == date.Date
+                    && item.IsSubmitted,
+                cancellationToken);
+        return session is null ? NotFound() : Ok(ToDto(session, classDetail.Learners));
+    }
+
     [HttpPost("initiate")]
     [ProducesResponseType(typeof(AttendanceSessionDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
