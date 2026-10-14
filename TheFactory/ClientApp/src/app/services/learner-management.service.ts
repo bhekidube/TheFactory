@@ -201,6 +201,17 @@ export class LearnerManagementService {
     );
   }
 
+  downloadAttendanceRegisterPdf(classId: number, sessionId: number): Observable<HttpResponse<Blob>> {
+    return this.http.get(
+      `${this.baseUrl}/classes/${classId}/attendance/${sessionId}/download`,
+      {
+        observe: 'response',
+        responseType: 'blob',
+        headers: this.getHeaders()
+      }
+    );
+  }
+
   searchTeachers(query: string): Observable<TeacherLookupDto[]> {
     return this.http.get<TeacherLookupDto[]>(
       `${this.baseUrl}/teachers/search?q=${encodeURIComponent(query)}`,

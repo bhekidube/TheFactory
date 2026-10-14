@@ -135,7 +135,22 @@
         </span>
       </div>
       <div class="historical-register-notice" *ngIf="viewingHistoricalRegister">
-        Viewing a saved historical register. This view is read-only.
+        <div>
+          <strong>Historical register — {{ selectedHistoryDate }}</strong>
+          <span>This view is read-only.</span>
+        </div>
+        <div class="attendance-summary" aria-label="Overall attendance">
+          <strong>{{ attendancePercentage | number:'1.0-1' }}%</strong>
+          <span>attendance</span>
+          <small>{{ attendancePresentCount }} present of {{ attendanceSession?.records?.length || 0 }} learners</small>
+        </div>
+        <button
+          type="button"
+          class="secondary-btn attendance-download-btn"
+          [disabled]="downloadingHistoricalRegister"
+          (click)="downloadHistoricalRegister()">
+          {{ downloadingHistoricalRegister ? 'Preparing PDF...' : 'Download as PDF' }}
+        </button>
       </div>
       <div class="message error" *ngIf="registerErrorMessage" role="alert">{{ registerErrorMessage }}</div>
       <div class="state-card" *ngIf="!attendanceSession && !generatingRegister">

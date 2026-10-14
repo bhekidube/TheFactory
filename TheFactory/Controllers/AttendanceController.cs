@@ -13,11 +13,16 @@ public sealed class AttendanceController : ControllerBase
 {
     private readonly AppDbContext _dbContext;
     private readonly ILearnerService _learnerService;
+    private readonly IPdfGeneratorService _pdfGeneratorService;
 
-    public AttendanceController(AppDbContext dbContext, ILearnerService learnerService)
+    public AttendanceController(
+        AppDbContext dbContext,
+        ILearnerService learnerService,
+        IPdfGeneratorService pdfGeneratorService)
     {
         _dbContext = dbContext;
         _learnerService = learnerService;
+        _pdfGeneratorService = pdfGeneratorService;
     }
 
     [HttpGet("history")]
@@ -72,6 +77,41 @@ public sealed class AttendanceController : ControllerBase
                     && item.IsSubmitted,
                 cancellationToken);
         return session is null ? NotFound() : Ok(ToDto(session, classDetail.Learners));
+    }
+
+    [HttpGet("{sessionId:int}/download")]
+    [Produces("application/pdf")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Download(
+        int classId,
+        int sessionId,
+        CancellationToken cancellationToken)
+    {
+        var classDetail = await _learnerService.GetClassByIdAsync(classId, cancellationToken);
+        if (classId <= 0 || sessionId <= 0 || classDetail is null)
+        {
+            return NotFound();
+        }
+
+        var session = await _dbContext.AttendanceSessions
+            .AsNoTracking()
+            .Include(item => item.Records)
+            .SingleOrDefaultAsync(
+                item => item.ClassID == classId && item.SessionID == sessionId && item.IsSubmitted,
+                cancellationToken);
+        if (session is null)
+        {
+            return NotFound();
+        }
+
+        var pdfBytes = await _pdfGeneratorService.GenerateAttendanceRegisterPdfAsync(
+            classDetail.Name,
+            ToDto(session, classDetail.Learners),
+            cancellationToken);
+        var safeClassName = string.Concat(classDetail.Name.Select(character =>
+            char.IsLetterOrDigit(character) ? character : '_')).Trim('_');
+        return File(pdfBytes, "application/pdf", $"Attendance_{safeClassName}_{session.SessionDate:yyyy-MM-dd}.pdf");
     }
 
     [HttpPost("initiate")]
