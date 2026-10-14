@@ -135,12 +135,22 @@
             <td class="col-price" data-label="Price">{{ getPriceDisplay(row) }}</td>
             <td class="col-action" data-label="Action">
               <button
+                *ngIf="isLoggedIn"
                 type="button"
                 class="trip-action-btn"
                 [class.is-disabled]="isTripUnavailable(row)"
                 [disabled]="isTripUnavailable(row)"
                 (click)="onSelectSeat(row)">
                 {{ getActionLabel(row) }}
+              </button>
+              <button
+                *ngIf="!isLoggedIn"
+                type="button"
+                class="trip-action-btn"
+                [class.is-disabled]="isTripUnavailable(row)"
+                [disabled]="isTripUnavailable(row)"
+                (click)="onSelectSeat(row)">
+                {{ getLoginActionLabel(row) }}
               </button>
             </td>
           </tr>

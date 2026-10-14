@@ -82,6 +82,9 @@ describe('BusSearchComponent', () => {
   });
 
   it('should render a seat-selection CTA for each future search result', () => {
+    localStorage.setItem('userName', 'Bheki');
+    localStorage.setItem('userRole', 'OperatorAdmin');
+    localStorage.setItem('userId', '42');
     const futureDeparture = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
     component.searchResults = [{
@@ -95,6 +98,42 @@ describe('BusSearchComponent', () => {
     const button = fixture.nativeElement.querySelector('.trip-action-btn') as HTMLButtonElement;
     expect(button).not.toBeNull();
     expect(button.textContent).toContain('Select Seat');
+  });
+
+  it('offers guests a sign-in action instead of Select Seat', () => {
+    component.searchResults = [{
+      operatorName: 'Bravo Coach',
+      departureDateTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      price: 120
+    }];
+
+    fixture.detectChanges();
+
+    const button = fixture.nativeElement.querySelector('.trip-action-btn') as HTMLButtonElement;
+    expect(button.textContent).toContain('Sign in to select seat');
+    expect(button.textContent).not.toContain('Select Seat');
+    expect(button.disabled).toBeFalse();
+  });
+
+  it('does not treat an incomplete stored session as authenticated', () => {
+    localStorage.setItem('userName', 'Bheki');
+    localStorage.setItem('userRole', 'OperatorAdmin');
+
+    expect(component.isLoggedIn).toBeFalse();
+  });
+
+  it('redirects guests to the login page when they activate the seat action', () => {
+    const router = TestBed.inject(Router);
+    const navigateSpy = spyOn(router, 'navigate').and.resolveTo(true);
+    const trip = {
+      operatorName: 'Bravo Coach',
+      departureDateTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      price: 120
+    };
+
+    component.onSelectSeat(trip);
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/auth']);
   });
 
   it('does not render the Facebook posting button beneath bus schedules', () => {

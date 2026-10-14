@@ -64,7 +64,7 @@ export class BusSearchComponent implements OnInit {
     const userName = localStorage.getItem('userName') || '';
     const userRole = localStorage.getItem('userRole') || '';
     const userId = localStorage.getItem('userId') || '';
-    return userName && userRole && userId ? userName : '';
+    return userName.trim() && userRole.trim() && userId.trim() ? userName : '';
   }
 
   get signedInUserRole(): string {
@@ -262,6 +262,10 @@ export class BusSearchComponent implements OnInit {
     return 'Select Seat';
   }
 
+  getLoginActionLabel(row: any): string {
+    return this.isTripUnavailable(row) ? this.getActionLabel(row) : 'Sign in to select seat';
+  }
+
   getPriceDisplay(row: any): string {
     const rawPrice = row?.price ?? row?.fare ?? row?.amount;
     const parsedPrice = Number(rawPrice);
@@ -274,6 +278,11 @@ export class BusSearchComponent implements OnInit {
   }
 
   onSelectSeat(row: any): void {
+    if (!this.isLoggedIn) {
+      this.router.navigate(['/auth']);
+      return;
+    }
+
     if (this.isTripUnavailable(row)) {
       return;
     }
