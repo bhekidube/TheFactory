@@ -107,7 +107,11 @@ public sealed class FinanceController : ControllerBase
         }
         catch (SqlException ex) when (ex.Number is 2601 or 2627)
         {
-            return Conflict(new { error = "A fee structure already exists for this grade, term, year, and category." });
+            return Conflict(new { error = "A fee structure already exists for this grade, term, year, category, and description." });
+        }
+        catch (DuplicateFeeStructureException ex)
+        {
+            return Conflict(new { error = ex.Message });
         }
     }
 
