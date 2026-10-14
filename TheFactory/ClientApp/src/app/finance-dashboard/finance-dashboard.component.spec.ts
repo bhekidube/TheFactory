@@ -124,4 +124,33 @@ describe('FinanceDashboardComponent', () => {
     expect(financeApi.getDashboard).toHaveBeenCalledTimes(2);
     expect(financeApi.getLedger).toHaveBeenCalledWith(12, 3);
   });
+
+  it('populates ad-hoc invoice description and amount from the selected fee structure', () => {
+    fixture = TestBed.createComponent(FinanceDashboardComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    const feeStructure = {
+      feeStructureId: 7,
+      schoolId: 12,
+      grade: 'ECD A',
+      term: 'Term 1',
+      academicYear: 2026,
+      category: 'Books',
+      description: 'Workbook pack',
+      amount: 45
+    };
+
+    component.openAdHocInvoiceForm();
+    component.onAdHocFeeStructureChange(feeStructure);
+
+    expect(component.selectedFeeStructure).toBe(feeStructure);
+    expect(component.paymentForm.notes).toBe('Workbook pack');
+    expect(component.paymentForm.amount).toBe(45);
+
+    component.onAdHocFeeStructureChange(null);
+
+    expect(component.selectedFeeStructure).toBeNull();
+    expect(component.paymentForm.notes).toBe('');
+    expect(component.paymentForm.amount).toBe(0);
+  });
 });

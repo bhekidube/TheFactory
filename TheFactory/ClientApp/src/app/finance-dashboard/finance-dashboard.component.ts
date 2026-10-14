@@ -42,6 +42,7 @@ export class FinanceDashboardComponent implements OnInit {
   paymentForm = this.emptyTransactionForm();
   feeForm = this.emptyFeeForm();
   selectedFeeStructureId = 0;
+  selectedFeeStructure: FeeStructureDto | null = null;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -144,6 +145,7 @@ export class FinanceDashboardComponent implements OnInit {
     this.errorMessage = '';
     this.successMessage = '';
     this.editingTransaction = null;
+    this.selectedFeeStructure = null;
     this.paymentForm = {
       date: this.getToday(),
       type: 'DEBIT',
@@ -153,6 +155,12 @@ export class FinanceDashboardComponent implements OnInit {
       referenceNumber: ''
     };
     this.formMode = 'ad-hoc-invoice';
+  }
+
+  onAdHocFeeStructureChange(feeStructure: FeeStructureDto | null): void {
+    this.selectedFeeStructure = feeStructure;
+    this.paymentForm.notes = feeStructure?.description ?? '';
+    this.paymentForm.amount = feeStructure?.amount ?? 0;
   }
 
   openEditForm(entry: StudentLedgerEntryDto): void {

@@ -236,6 +236,18 @@
         Invoice learner: <strong>{{ selectedLearner.firstName }} {{ selectedLearner.surname }} (#{{ selectedLearner.learnerId }})</strong>
       </p>
       <label>
+        Fee Structure
+        <select
+          name="adhocFeeStructure"
+          [(ngModel)]="selectedFeeStructure"
+          (ngModelChange)="onAdHocFeeStructureChange($event)">
+          <option [ngValue]="null">No fee structure (enter manually)</option>
+          <option *ngFor="let fee of feeStructures" [ngValue]="fee">
+            {{ fee.grade }} · {{ fee.term }} {{ fee.academicYear }} · {{ fee.category }} · {{ formatAmount(fee.amount) }}
+          </option>
+        </select>
+      </label>
+      <label>
         Invoice Date
         <input type="date" name="adhocInvoiceDate" [(ngModel)]="paymentForm.date" required />
       </label>
