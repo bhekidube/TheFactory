@@ -21,6 +21,7 @@ export class ClassDetailComponent implements OnInit {
   savingRegister = false;
   loadingAttendanceHistory = false;
   loadingHistoricalRegister = false;
+  downloadingHistoricalRegister = false;
   viewingHistoricalRegister = false;
   loading = false;
   registerErrorMessage = '';
@@ -202,6 +203,39 @@ export class ClassDetailComponent implements OnInit {
       error: err => {
         this.savingRegister = false;
         this.registerErrorMessage = this.mapHttpError(err, 'Failed to save the attendance register.');
+      }
+    });
+  }
+
+  downloadHistoricalRegister(): void {
+    if (!this.viewingHistoricalRegister || !this.attendanceSession || this.downloadingHistoricalRegister) {
+      return;
+    }
+
+    this.downloadingHistoricalRegister = true;
+    this.registerErrorMessage = '';
+    this.learnerService.downloadAttendanceRegisterPdf(this.classId, this.attendanceSession.sessionID).subscribe({
+      next: response => {
+        const blob = response.body;
+        if (!blob) {
+          this.downloadingHistoricalRegister = false;
+          this.registerErrorMessage = 'The server returned an empty PDF file.';
+          return;
+        }
+
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `Attendance_Class_${this.classId}_${this.attendanceSession?.sessionDate.slice(0, 10)}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+        this.downloadingHistoricalRegister = false;
+      },
+      error: err => {
+        this.downloadingHistoricalRegister = false;
+        this.registerErrorMessage = this.mapHttpError(err, 'Failed to download the attendance register PDF.');
       }
     });
   }

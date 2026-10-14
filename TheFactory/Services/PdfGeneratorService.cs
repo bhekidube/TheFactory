@@ -202,6 +202,82 @@ public sealed class PdfGeneratorService : IPdfGeneratorService
         return Task.FromResult(stream.ToArray());
     }
 
+    public Task<byte[]> GenerateAttendanceRegisterPdfAsync(
+        string className,
+        AttendanceSessionDto session,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        using var document = new PdfDocument();
+        var titleFont = new XFont("Helvetica", 16, XFontStyle.Bold);
+        var headerFont = new XFont("Helvetica", 10, XFontStyle.Bold);
+        var bodyFont = new XFont("Helvetica", 10, XFontStyle.Regular);
+        var borderPen = new XPen(XColor.FromArgb(75, 75, 75), 0.7);
+        var margin = 40d;
+        var rowHeight = 25d;
+        var records = session.Records.ToList();
+        var presentCount = records.Count(record =>
+            record.Status.Equals("Present", StringComparison.OrdinalIgnoreCase));
+        var totalCount = records.Count;
+        var percentage = totalCount == 0 ? 0 : presentCount * 100d / totalCount;
+        const int RowsPerPdfPage = 22;
+
+        void AddPage(int pageNumber)
+        {
+            var page = document.AddPage();
+            page.Size = PageSize.A4;
+            page.Orientation = PageOrientation.Landscape;
+            var graphics = XGraphics.FromPdfPage(page);
+            var width = page.Width - (margin * 2);
+            var y = 35d;
+
+            graphics.DrawString("Attendance Register", titleFont, XBrushes.Black,
+                new XRect(margin, y, width, 25), XStringFormats.TopCenter);
+            y += 35d;
+            graphics.DrawString($"Class: {className}", headerFont, XBrushes.Black, new XPoint(margin, y));
+            graphics.DrawString($"Date: {session.SessionDate:yyyy-MM-dd}", headerFont, XBrushes.Black, new XPoint(margin + 300d, y));
+            y += 18d;
+            graphics.DrawString(
+                $"Attendance: {presentCount} present of {totalCount} learners ({percentage:0.0}%)",
+                headerFont,
+                XBrushes.Black,
+                new XPoint(margin, y));
+            y += 20d;
+
+            var numberWidth = 60d;
+            var nameWidth = width - 180d;
+            var statusWidth = 120d;
+            DrawCell(graphics, borderPen, XBrushes.LightGray, margin, y, numberWidth, rowHeight, "#", headerFont, XStringFormats.Center, 0);
+            DrawCell(graphics, borderPen, XBrushes.LightGray, margin + numberWidth, y, nameWidth, rowHeight, "LEARNER", headerFont, XStringFormats.CenterLeft, 6);
+            DrawCell(graphics, borderPen, XBrushes.LightGray, margin + numberWidth + nameWidth, y, statusWidth, rowHeight, "STATUS", headerFont, XStringFormats.Center, 0);
+            y += rowHeight;
+
+            for (var index = pageNumber * RowsPerPdfPage; index < Math.Min((pageNumber + 1) * RowsPerPdfPage, totalCount); index++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var record = records[index];
+                var fill = index % 2 == 0 ? XBrushes.White : XBrushes.WhiteSmoke;
+                DrawCell(graphics, borderPen, fill, margin, y, numberWidth, rowHeight, (index + 1).ToString(), bodyFont, XStringFormats.Center, 0);
+                DrawCell(graphics, borderPen, fill, margin + numberWidth, y, nameWidth, rowHeight, record.LearnerName, bodyFont, XStringFormats.CenterLeft, 6);
+                DrawCell(graphics, borderPen, fill, margin + numberWidth + nameWidth, y, statusWidth, rowHeight, record.Status, bodyFont, XStringFormats.Center, 0);
+                y += rowHeight;
+            }
+
+            graphics.Dispose();
+        }
+
+        var pageCount = Math.Max(1, (int)Math.Ceiling(totalCount / (double)RowsPerPdfPage));
+        for (var pageNumber = 0; pageNumber < pageCount; pageNumber++)
+        {
+            AddPage(pageNumber);
+        }
+
+        using var stream = new MemoryStream();
+        document.Save(stream, false);
+        return Task.FromResult(stream.ToArray());
+    }
+
     private static IReadOnlyList<AssessmentRow> BuildAssessmentRows(LearnerReportDto report)
     {
         var reportSubjects = report.Subjects.ToList();

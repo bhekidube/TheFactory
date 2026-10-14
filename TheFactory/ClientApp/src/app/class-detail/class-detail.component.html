@@ -136,6 +136,13 @@
           <span>attendance</span>
           <small>{{ attendancePresentCount }} present of {{ attendanceSession?.records?.length || 0 }} learners</small>
         </div>
+        <button
+          type="button"
+          class="secondary-btn attendance-download-btn"
+          [disabled]="downloadingHistoricalRegister"
+          (click)="downloadHistoricalRegister()">
+          {{ downloadingHistoricalRegister ? 'Preparing PDF...' : 'Download as PDF' }}
+        </button>
       </div>
       <div class="message error" *ngIf="registerErrorMessage" role="alert">{{ registerErrorMessage }}</div>
       <div class="state-card" *ngIf="!attendanceSession && !generatingRegister">
