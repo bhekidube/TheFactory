@@ -69,7 +69,7 @@ describe('BusSearchComponent', () => {
     expect(promoImage.alt).toBe('HambaOnline Instagram Reel featuring a traveler at a bus terminal');
   });
 
-  it('logs out through AuthService and navigates to the login page', () => {
+  it('logs out through AuthService and navigates to the home page', () => {
     const authService = TestBed.inject(AuthService);
     const router = TestBed.inject(Router);
     const logoutSpy = spyOn(authService, 'logout');
@@ -78,7 +78,7 @@ describe('BusSearchComponent', () => {
     component.logout();
 
     expect(logoutSpy).toHaveBeenCalled();
-    expect(navigateSpy).toHaveBeenCalledWith(['/auth']);
+    expect(navigateSpy).toHaveBeenCalledWith(['/']);
   });
 
   it('should render a seat-selection CTA for each future search result', () => {

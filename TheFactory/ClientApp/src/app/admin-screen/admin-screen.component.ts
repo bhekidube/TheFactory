@@ -107,7 +107,7 @@ export class AdminScreenComponent implements OnInit {
   logout(): void {
     this.authService.logout();
     this.isLoggedIn = false;
-    this.router.navigate(['/auth']);
+    this.router.navigate(['/']);
   }
 
   requestPermission(): void {

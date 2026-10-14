@@ -90,7 +90,7 @@ export class BusSearchComponent implements OnInit {
 
   logout(): void {
     this.authService.logout();
-    this.router.navigate(['/auth']);
+    this.router.navigate(['/']);
   }
 
   // Dynamic active filter badge count

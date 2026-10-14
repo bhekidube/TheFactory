@@ -23,6 +23,6 @@ export class LogoutLinkComponent {
   logout(event: Event): void {
     event.preventDefault();
     this.authService.logout();
-    this.router.navigate(['/auth']);
+    this.router.navigate(['/']);
   }
 }
