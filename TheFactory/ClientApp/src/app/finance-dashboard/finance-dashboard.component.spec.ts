@@ -6,6 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { FinanceDashboardComponent } from './finance-dashboard.component';
 import { FinanceApiService } from '../services/finance-api.service';
+import { TableSortPipe } from '../table-sorting';
 
 describe('FinanceDashboardComponent', () => {
   let fixture: ComponentFixture<FinanceDashboardComponent>;
@@ -48,7 +49,7 @@ describe('FinanceDashboardComponent', () => {
     }]));
 
     await TestBed.configureTestingModule({
-      declarations: [FinanceDashboardComponent],
+      declarations: [FinanceDashboardComponent, TableSortPipe],
       imports: [FormsModule],
       providers: [
         { provide: FinanceApiService, useValue: financeApi },
