@@ -31,8 +31,8 @@ BEGIN
         CONSTRAINT FK_fee_structures_user FOREIGN KEY (created_by) REFERENCES dbo.[User] (UserId),
         CONSTRAINT CK_fee_structures_amount CHECK (amount > 0),
         CONSTRAINT CK_fee_structures_academic_year CHECK (academic_year BETWEEN 2000 AND 2100),
-        CONSTRAINT UQ_fee_structures_school_grade_term_year_category
-            UNIQUE (school_id, grade, term, academic_year, category)
+        CONSTRAINT UQ_fee_structures_school_grade_term_year_category_description
+            UNIQUE (school_id, grade, term, academic_year, category, description)
     );
 END;
 

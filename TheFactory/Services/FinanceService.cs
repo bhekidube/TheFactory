@@ -4,6 +4,14 @@ using TheFactory.Contracts;
 
 namespace TheFactory.Services;
 
+public sealed class DuplicateFeeStructureException : Exception
+{
+    public DuplicateFeeStructureException()
+        : base("A fee structure already exists for this grade, term, year, category, and description.")
+    {
+    }
+}
+
 public sealed class FinanceService : IFinanceService
 {
     private readonly SqlConnectionService _sqlConnectionService;
@@ -110,21 +118,53 @@ public sealed class FinanceService : IFinanceService
         CancellationToken cancellationToken = default)
     {
         using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
+        var grade = request.Grade.Trim();
+        var term = request.Term.Trim();
+        var category = request.Category.Trim();
+        var description = request.Description.Trim();
+
+        using (var duplicateCommand = new SqlCommand(
+            @"SELECT 1
+              FROM institution.fee_structures WITH (UPDLOCK, HOLDLOCK)
+              WHERE school_id = @SchoolId
+                AND grade = @Grade
+                AND term = @Term
+                AND academic_year = @AcademicYear
+                AND category = @Category
+                AND description = @Description;",
+            connection,
+            transaction))
+        {
+            AddInt(duplicateCommand, "@SchoolId", schoolId);
+            AddString(duplicateCommand, "@Grade", grade, 100);
+            AddString(duplicateCommand, "@Term", term, 40);
+            AddInt(duplicateCommand, "@AcademicYear", request.AcademicYear);
+            AddString(duplicateCommand, "@Category", category, 80);
+            AddString(duplicateCommand, "@Description", description, 240);
+            if (await duplicateCommand.ExecuteScalarAsync(cancellationToken) is not null)
+            {
+                throw new DuplicateFeeStructureException();
+            }
+        }
+
         using var command = new SqlCommand(
             @"INSERT INTO institution.fee_structures
                 (school_id, grade, term, academic_year, category, description, amount, created_by)
               OUTPUT INSERTED.fee_structure_id
               VALUES (@SchoolId, @Grade, @Term, @AcademicYear, @Category, @Description, @Amount, @RecordedBy);",
             connection);
+        command.Transaction = transaction;
         AddInt(command, "@SchoolId", schoolId);
-        AddString(command, "@Grade", request.Grade.Trim(), 100);
-        AddString(command, "@Term", request.Term.Trim(), 40);
+        AddString(command, "@Grade", grade, 100);
+        AddString(command, "@Term", term, 40);
         AddInt(command, "@AcademicYear", request.AcademicYear);
-        AddString(command, "@Category", request.Category.Trim(), 80);
-        AddString(command, "@Description", request.Description.Trim(), 240);
+        AddString(command, "@Category", category, 80);
+        AddString(command, "@Description", description, 240);
         AddDecimal(command, "@Amount", request.Amount);
         AddInt(command, "@RecordedBy", recordedBy);
         var feeStructureId = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken));
+        await transaction.CommitAsync(cancellationToken);
 
         return (await GetFeeStructuresAsync(schoolId, cancellationToken))
             .Single(feeStructure => feeStructure.FeeStructureId == feeStructureId);
