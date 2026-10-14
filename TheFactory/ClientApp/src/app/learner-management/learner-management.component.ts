@@ -28,6 +28,8 @@ import { LearnerManagementService } from '../services/learner-management.service
 export class LearnerManagementComponent implements OnInit {
   learners: LearnerDto[] = [];
   filteredLearners: LearnerDto[] = [];
+  sortColumn: string = '';
+  sortDirection: 'asc' | 'desc' = 'asc';
   classes: ClassDto[] = [];
   searchTerm = '';
   classSearchTerm = '';
@@ -239,19 +241,90 @@ export class LearnerManagementComponent implements OnInit {
 
     if (!term) {
       this.filteredLearners = [...this.learners];
-      return;
+    } else {
+      this.filteredLearners = this.learners.filter(learner => {
+        const fullName = `${learner.firstName} ${learner.surname}`.toLowerCase();
+        return (
+          learner.firstName.toLowerCase().includes(term) ||
+          learner.surname.toLowerCase().includes(term) ||
+          fullName.includes(term) ||
+          learner.id.toString().includes(term) ||
+          learner.grade.toLowerCase().includes(term)
+        );
+      });
     }
 
-    this.filteredLearners = this.learners.filter(learner => {
-      const fullName = `${learner.firstName} ${learner.surname}`.toLowerCase();
-      return (
-        learner.firstName.toLowerCase().includes(term) ||
-        learner.surname.toLowerCase().includes(term) ||
-        fullName.includes(term) ||
-        learner.id.toString().includes(term) ||
-        learner.grade.toLowerCase().includes(term)
-      );
+    if (this.sortColumn) {
+      this.sortFilteredLearners();
+    }
+  }
+
+  sort(column: string): void {
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+
+    this.sortFilteredLearners();
+  }
+
+  private sortFilteredLearners(): void {
+    const column = this.sortColumn;
+    const direction = this.sortDirection === 'asc' ? 1 : -1;
+    const stringCollator = new Intl.Collator(undefined, {
+      numeric: true,
+      sensitivity: 'base'
     });
+
+    this.filteredLearners = [...this.filteredLearners].sort((left, right) => {
+      const leftValue = this.getLearnerSortValue(left, column);
+      const rightValue = this.getLearnerSortValue(right, column);
+      const leftEmpty = this.isEmptySortValue(leftValue);
+      const rightEmpty = this.isEmptySortValue(rightValue);
+
+      if (leftEmpty || rightEmpty) {
+        return leftEmpty === rightEmpty ? 0 : leftEmpty ? 1 : -1;
+      }
+
+      let comparison: number;
+      if (column === 'id') {
+        comparison = Number(leftValue) - Number(rightValue);
+      } else if (column === 'dateOfBirth') {
+        const leftDate = Date.parse(String(leftValue));
+        const rightDate = Date.parse(String(rightValue));
+        comparison = Number.isNaN(leftDate) || Number.isNaN(rightDate)
+          ? stringCollator.compare(String(leftValue), String(rightValue))
+          : leftDate - rightDate;
+      } else {
+        comparison = stringCollator.compare(String(leftValue), String(rightValue));
+      }
+
+      return comparison * direction;
+    });
+  }
+
+  private getLearnerSortValue(learner: LearnerDto, column: string): string | number | null {
+    switch (column) {
+      case 'id':
+        return learner.id;
+      case 'firstName':
+        return learner.firstName;
+      case 'surname':
+        return learner.surname;
+      case 'grade':
+        return learner.grade;
+      case 'dateOfBirth':
+        return learner.dateOfBirth;
+      default:
+        return null;
+    }
+  }
+
+  private isEmptySortValue(value: string | number | null): boolean {
+    return value === null
+      || (typeof value === 'string' && (!value.trim() || value.trim() === '—' || value.trim() === '-'));
   }
 
   openAddLearner(): void {

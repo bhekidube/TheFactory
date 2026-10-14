@@ -109,11 +109,56 @@
       <table>
         <thead>
           <tr>
-            <th>Learner ID</th>
-            <th>First Name</th>
-            <th>Surname</th>
-            <th>Grade</th>
-            <th>Date of Birth</th>
+            <th
+              class="sortable-header"
+              [attr.aria-sort]="sortColumn === 'id' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'"
+              tabindex="0"
+              (click)="sort('id')"
+              (keydown.enter)="sort('id')"
+              (keydown.space)="sort('id'); $event.preventDefault()">
+              Learner ID
+              <span class="sort-indicator" aria-hidden="true">{{ sortColumn === 'id' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕' }}</span>
+            </th>
+            <th
+              class="sortable-header"
+              [attr.aria-sort]="sortColumn === 'firstName' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'"
+              tabindex="0"
+              (click)="sort('firstName')"
+              (keydown.enter)="sort('firstName')"
+              (keydown.space)="sort('firstName'); $event.preventDefault()">
+              First Name
+              <span class="sort-indicator" aria-hidden="true">{{ sortColumn === 'firstName' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕' }}</span>
+            </th>
+            <th
+              class="sortable-header"
+              [attr.aria-sort]="sortColumn === 'surname' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'"
+              tabindex="0"
+              (click)="sort('surname')"
+              (keydown.enter)="sort('surname')"
+              (keydown.space)="sort('surname'); $event.preventDefault()">
+              Surname
+              <span class="sort-indicator" aria-hidden="true">{{ sortColumn === 'surname' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕' }}</span>
+            </th>
+            <th
+              class="sortable-header"
+              [attr.aria-sort]="sortColumn === 'grade' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'"
+              tabindex="0"
+              (click)="sort('grade')"
+              (keydown.enter)="sort('grade')"
+              (keydown.space)="sort('grade'); $event.preventDefault()">
+              Grade
+              <span class="sort-indicator" aria-hidden="true">{{ sortColumn === 'grade' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕' }}</span>
+            </th>
+            <th
+              class="sortable-header"
+              [attr.aria-sort]="sortColumn === 'dateOfBirth' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'"
+              tabindex="0"
+              (click)="sort('dateOfBirth')"
+              (keydown.enter)="sort('dateOfBirth')"
+              (keydown.space)="sort('dateOfBirth'); $event.preventDefault()">
+              Date of Birth
+              <span class="sort-indicator" aria-hidden="true">{{ sortColumn === 'dateOfBirth' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕' }}</span>
+            </th>
             <th class="actions-col text-end">Actions</th>
           </tr>
         </thead>
