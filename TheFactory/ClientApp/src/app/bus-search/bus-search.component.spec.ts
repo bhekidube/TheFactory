@@ -96,4 +96,17 @@ describe('BusSearchComponent', () => {
     expect(button).not.toBeNull();
     expect(button.textContent).toContain('Select Seat');
   });
+
+  it('does not render the Facebook posting button beneath bus schedules', () => {
+    component.searchResults = [{
+      operatorName: 'Bravo Coach',
+      departureDateTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      price: 120
+    }];
+
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.facebook-share-btn')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Post to Facebook');
+  });
 });

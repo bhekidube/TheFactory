@@ -575,21 +575,6 @@
   letter-spacing: 0;
 }
 
-.facebook-share-wrap {
-  text-align: center;
-  margin-top: 16px;
-}
-
-.facebook-share-btn {
-  background-color: #4267b2;
-  color: #fff;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  font-size: 16px;
-  cursor: pointer;
-}
-
 .screenshot-table tbody tr:hover {
   background: #edf4ff;
 }

@@ -1,4 +1,3 @@
-import html2canvas from 'html2canvas';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
@@ -281,24 +280,5 @@ export class BusSearchComponent implements OnInit {
 
     // Hook this to your booking flow endpoint/route when available.
     alert(`Booking flow not connected yet for ${row?.operatorName ?? 'this bus'}.`);
-  }
-
-  async postToFacebook() {
-    const tableElement = document.querySelector('.screenshot-table-container') as HTMLElement;
-    if (!tableElement) {
-      alert('Could not find the bus schedule table.');
-      return;
-    }
-    try {
-      const canvas = await html2canvas(tableElement);
-      const imageData = canvas.toDataURL('image/png');
-      // Send image to backend API
-      this.http.post('/api/facebook/post', { image: imageData }).subscribe({
-        next: () => alert('Posted to Facebook successfully!'),
-        error: () => alert('Failed to post to Facebook.')
-      });
-    } catch (err) {
-      alert('Error capturing table image.');
-    }
   }
 }

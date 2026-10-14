@@ -66,6 +66,75 @@
   white-space: nowrap;
 }
 
+.site-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+}
+
+.footer-copyright {
+  line-height: 1.5;
+}
+
+.footer-social-links {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.footer-social-links a {
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  transition: color 150ms ease, transform 150ms ease;
+}
+
+.footer-social-links a:hover {
+  transform: translateY(-2px);
+}
+
+.footer-social-links a:first-child:hover,
+.footer-social-links a:first-child:focus-visible {
+  color: #1877f2;
+}
+
+.footer-social-links a:last-child:hover,
+.footer-social-links a:last-child:focus-visible {
+  color: #e4405f;
+}
+
+.footer-social-links a:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+.footer-social-links svg {
+  display: block;
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.footer-social-links a:first-child svg {
+  fill: currentColor;
+}
+
+.footer-social-links a:last-child svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+}
+
+.footer-social-links .instagram-icon-dot {
+  fill: currentColor;
+  stroke: none;
+}
+
 @media (max-width: 520px) {
   .header-banner {
     align-items: flex-start;
