@@ -90,6 +90,43 @@ public sealed class FinanceService : IFinanceService
         return ledger;
     }
 
+    public async Task<FinanceTransactionDocumentDto?> GetTransactionDocumentAsync(
+        int schoolId,
+        int learnerId,
+        int transactionId,
+        CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        using var command = new SqlCommand(
+            @"SELECT ledger.transaction_id, ledger.learner_id, ledger.[date], ledger.[type],
+                     ledger.category, ledger.amount, ledger.running_balance, ledger.notes,
+                     ledger.reference_number, ledger.recorded_by, ledger.is_voided,
+                     learner.FirstName, learner.Surname, learner.Grade
+              FROM institution.student_ledgers AS ledger
+              INNER JOIN institution.Learner AS learner
+                ON learner.Id = ledger.learner_id AND learner.TenantId = ledger.school_id
+              WHERE ledger.school_id = @SchoolId
+                AND ledger.learner_id = @LearnerId
+                AND ledger.transaction_id = @TransactionId;",
+            connection);
+        AddInt(command, "@SchoolId", schoolId);
+        AddInt(command, "@LearnerId", learnerId);
+        AddInt(command, "@TransactionId", transactionId);
+
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        return new FinanceTransactionDocumentDto
+        {
+            Transaction = MapLedgerEntry(reader),
+            LearnerName = $"{(reader.IsDBNull(11) ? string.Empty : reader.GetString(11))} {(reader.IsDBNull(12) ? string.Empty : reader.GetString(12))}".Trim(),
+            Grade = reader.IsDBNull(13) ? string.Empty : reader.GetString(13)
+        };
+    }
+
     public async Task<IReadOnlyCollection<FeeStructureDto>> GetFeeStructuresAsync(int schoolId, CancellationToken cancellationToken = default)
     {
         using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);

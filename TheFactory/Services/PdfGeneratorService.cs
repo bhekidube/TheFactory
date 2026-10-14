@@ -2,6 +2,7 @@ using PdfSharpCore.Drawing;
 using PdfSharpCore;
 using PdfSharpCore.Pdf;
 using PdfSharpCore.Pdf.IO;
+using System.Globalization;
 using TheFactory.Contracts;
 
 namespace TheFactory.Services;
@@ -32,22 +33,9 @@ public sealed class PdfGeneratorService : IPdfGeneratorService
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var templatePath = Path.Combine(_environment.ContentRootPath, TemplateRelativePath);
-        if (!File.Exists(templatePath))
-        {
-            throw new FileNotFoundException($"PDF template was not found at '{templatePath}'.", templatePath);
-        }
-
-        using var templateDocument = PdfReader.Open(templatePath, PdfDocumentOpenMode.Import);
-        if (templateDocument.PageCount == 0)
-        {
-            throw new InvalidOperationException("PDF template does not contain any pages.");
-        }
-
+        using var templateDocument = OpenTemplateDocument();
         using var outputDocument = new PdfDocument();
-        var page = outputDocument.AddPage(templateDocument.Pages[0]);
-        page.Size = PageSize.A4;
-        page.Orientation = PageOrientation.Portrait;
+        var page = AddTemplatePage(outputDocument, templateDocument);
 
         using var graphics = XGraphics.FromPdfPage(page, XGraphicsPdfPageOptions.Append);
         var titleFont = new XFont("Helvetica", 14, XFontStyle.Bold);
@@ -135,66 +123,69 @@ public sealed class PdfGeneratorService : IPdfGeneratorService
     {
         cancellationToken.ThrowIfCancellationRequested();
 
+        using var templateDocument = OpenTemplateDocument();
         using var document = new PdfDocument();
-        var page = document.AddPage();
-        page.Size = PageSize.A4;
-        page.Orientation = PageOrientation.Portrait;
-
-        using var graphics = XGraphics.FromPdfPage(page);
+        var assessments = report.Assessments.ToList();
+        const int RowsPerPdfPage = 12;
+        var pageCount = Math.Max(1, (int)Math.Ceiling(assessments.Count / (double)RowsPerPdfPage));
         var titleFont = new XFont("Helvetica", 14, XFontStyle.Bold);
         var headerFont = new XFont("Helvetica", 9, XFontStyle.Bold);
         var bodyFont = new XFont("Helvetica", 9, XFontStyle.Regular);
-        var brush = XBrushes.Black;
         var borderPen = new XPen(XColor.FromArgb(75, 75, 75), 0.7);
-
-        var margin = 40d;
-        var width = page.Width - (margin * 2);
-        var y = 50d;
-
-        graphics.DrawString("Learner Term Report", titleFont, brush, new XRect(margin, y, width, 24), XStringFormats.TopCenter);
-        y += 34d;
-
-        graphics.DrawString($"Learner: {report.LearnerName}", headerFont, brush, new XPoint(margin, y));
-        y += 16d;
-        graphics.DrawString($"Grade: {report.Grade}", headerFont, brush, new XPoint(margin, y));
-        y += 16d;
-        graphics.DrawString($"Term: {report.Term}", headerFont, brush, new XPoint(margin, y));
-        y += 16d;
-        graphics.DrawString($"Year: {report.Year}", headerFont, brush, new XPoint(margin, y));
-        y += 22d;
-
-        var titleW = width * 0.45;
-        var typeW = width * 0.2;
-        var markW = width * 0.15;
-        var totalW = width * 0.2;
+        var margin = PageMargin;
         var headerH = 26d;
         var rowH = 24d;
 
-        DrawCell(graphics, borderPen, XBrushes.LightGray, margin, y, titleW, headerH, "TITLE", headerFont, XStringFormats.CenterLeft, 4d);
-        DrawCell(graphics, borderPen, XBrushes.LightGray, margin + titleW, y, typeW, headerH, "WORK TYPE", headerFont, XStringFormats.CenterLeft, 4d);
-        DrawCell(graphics, borderPen, XBrushes.LightGray, margin + titleW + typeW, y, markW, headerH, "MARK", headerFont, XStringFormats.Center, 0d);
-        DrawCell(graphics, borderPen, XBrushes.LightGray, margin + titleW + typeW + markW, y, totalW, headerH, "TOTAL MARK", headerFont, XStringFormats.Center, 0d);
-        y += headerH;
-
-        foreach (var item in report.Assessments)
+        for (var pageNumber = 0; pageNumber < pageCount; pageNumber++)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            DrawCell(graphics, borderPen, XBrushes.White, margin, y, titleW, rowH, item.Title, bodyFont, XStringFormats.CenterLeft, 4d);
-            DrawCell(graphics, borderPen, XBrushes.White, margin + titleW, y, typeW, rowH, item.WorkType, bodyFont, XStringFormats.CenterLeft, 4d);
-            DrawCell(graphics, borderPen, XBrushes.White, margin + titleW + typeW, y, markW, rowH, item.Mark.ToString(), bodyFont, XStringFormats.Center, 0d);
-            DrawCell(graphics, borderPen, XBrushes.White, margin + titleW + typeW + markW, y, totalW, rowH, item.TotalMark.ToString(), bodyFont, XStringFormats.Center, 0d);
-            y += rowH;
+            var page = AddTemplatePage(document, templateDocument);
+            using var graphics = XGraphics.FromPdfPage(page, XGraphicsPdfPageOptions.Append);
+            var width = page.Width - (margin * 2);
+            var y = ContentStartY;
+            graphics.DrawString("Learner Term Report", titleFont, XBrushes.Black,
+                new XRect(margin, y, width, 24), XStringFormats.TopCenter);
+            y += 34d;
 
-            if (y > page.Height - 50d)
+            graphics.DrawString($"Learner: {report.LearnerName}", headerFont, XBrushes.Black, new XPoint(margin, y));
+            y += 16d;
+            graphics.DrawString($"Grade: {report.Grade}", headerFont, XBrushes.Black, new XPoint(margin, y));
+            y += 16d;
+            graphics.DrawString($"Term: {report.Term}", headerFont, XBrushes.Black, new XPoint(margin, y));
+            y += 16d;
+            graphics.DrawString($"Year: {report.Year}", headerFont, XBrushes.Black, new XPoint(margin, y));
+            y += 22d;
+
+            var titleW = width * 0.45;
+            var typeW = width * 0.2;
+            var markW = width * 0.15;
+            var totalW = width * 0.2;
+            DrawCell(graphics, borderPen, XBrushes.LightGray, margin, y, titleW, headerH, "TITLE", headerFont, XStringFormats.CenterLeft, 4d);
+            DrawCell(graphics, borderPen, XBrushes.LightGray, margin + titleW, y, typeW, headerH, "WORK TYPE", headerFont, XStringFormats.CenterLeft, 4d);
+            DrawCell(graphics, borderPen, XBrushes.LightGray, margin + titleW + typeW, y, markW, headerH, "MARK", headerFont, XStringFormats.Center, 0d);
+            DrawCell(graphics, borderPen, XBrushes.LightGray, margin + titleW + typeW + markW, y, totalW, headerH, "TOTAL MARK", headerFont, XStringFormats.Center, 0d);
+            y += headerH;
+
+            var firstRow = pageNumber * RowsPerPdfPage;
+            var endRow = Math.Min(firstRow + RowsPerPdfPage, assessments.Count);
+            if (assessments.Count == 0)
             {
-                break;
+                DrawCell(graphics, borderPen, XBrushes.WhiteSmoke, margin, y, width, rowH,
+                    "No assessment records found for this term/year.", bodyFont, XStringFormats.CenterLeft, 4d);
+                continue;
             }
-        }
 
-        if (report.Assessments.Count == 0)
-        {
-            DrawCell(graphics, borderPen, XBrushes.WhiteSmoke, margin, y, width, rowH, "No assessment records found for this term/year.", bodyFont, XStringFormats.CenterLeft, 4d);
+            for (var index = firstRow; index < endRow; index++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var item = assessments[index];
+                DrawCell(graphics, borderPen, XBrushes.White, margin, y, titleW, rowH, item.Title, bodyFont, XStringFormats.CenterLeft, 4d);
+                DrawCell(graphics, borderPen, XBrushes.White, margin + titleW, y, typeW, rowH, item.WorkType, bodyFont, XStringFormats.CenterLeft, 4d);
+                DrawCell(graphics, borderPen, XBrushes.White, margin + titleW + typeW, y, markW, rowH, item.Mark.ToString(), bodyFont, XStringFormats.Center, 0d);
+                DrawCell(graphics, borderPen, XBrushes.White, margin + titleW + typeW + markW, y, totalW, rowH, item.TotalMark.ToString(), bodyFont, XStringFormats.Center, 0d);
+                y += rowH;
+            }
         }
 
         using var stream = new MemoryStream();
@@ -209,45 +200,44 @@ public sealed class PdfGeneratorService : IPdfGeneratorService
     {
         cancellationToken.ThrowIfCancellationRequested();
 
+        using var templateDocument = OpenTemplateDocument();
         using var document = new PdfDocument();
-        var titleFont = new XFont("Helvetica", 16, XFontStyle.Bold);
-        var headerFont = new XFont("Helvetica", 10, XFontStyle.Bold);
-        var bodyFont = new XFont("Helvetica", 10, XFontStyle.Regular);
+        var titleFont = new XFont("Helvetica", 14, XFontStyle.Bold);
+        var headerFont = new XFont("Helvetica", 9, XFontStyle.Bold);
+        var bodyFont = new XFont("Helvetica", 9, XFontStyle.Regular);
         var borderPen = new XPen(XColor.FromArgb(75, 75, 75), 0.7);
-        var margin = 40d;
-        var rowHeight = 25d;
+        var margin = PageMargin;
+        var rowHeight = 22d;
         var records = session.Records.ToList();
         var presentCount = records.Count(record =>
             record.Status.Equals("Present", StringComparison.OrdinalIgnoreCase));
         var totalCount = records.Count;
         var percentage = totalCount == 0 ? 0 : presentCount * 100d / totalCount;
-        const int RowsPerPdfPage = 22;
+        const int RowsPerPdfPage = 14;
 
         void AddPage(int pageNumber)
         {
-            var page = document.AddPage();
-            page.Size = PageSize.A4;
-            page.Orientation = PageOrientation.Landscape;
-            var graphics = XGraphics.FromPdfPage(page);
+            var page = AddTemplatePage(document, templateDocument);
+            using var graphics = XGraphics.FromPdfPage(page, XGraphicsPdfPageOptions.Append);
             var width = page.Width - (margin * 2);
-            var y = 35d;
+            var y = ContentStartY;
 
             graphics.DrawString("Attendance Register", titleFont, XBrushes.Black,
-                new XRect(margin, y, width, 25), XStringFormats.TopCenter);
-            y += 35d;
+                new XRect(margin, y, width, 24), XStringFormats.TopCenter);
+            y += 34d;
             graphics.DrawString($"Class: {className}", headerFont, XBrushes.Black, new XPoint(margin, y));
-            graphics.DrawString($"Date: {session.SessionDate:yyyy-MM-dd}", headerFont, XBrushes.Black, new XPoint(margin + 300d, y));
-            y += 18d;
+            graphics.DrawString($"Date: {session.SessionDate:yyyy-MM-dd}", headerFont, XBrushes.Black, new XPoint(margin + width * 0.55, y));
+            y += 16d;
             graphics.DrawString(
                 $"Attendance: {presentCount} present of {totalCount} learners ({percentage:0.0}%)",
                 headerFont,
                 XBrushes.Black,
                 new XPoint(margin, y));
-            y += 20d;
+            y += 18d;
 
-            var numberWidth = 60d;
-            var nameWidth = width - 180d;
-            var statusWidth = 120d;
+            var numberWidth = 32d;
+            var statusWidth = 82d;
+            var nameWidth = width - numberWidth - statusWidth;
             DrawCell(graphics, borderPen, XBrushes.LightGray, margin, y, numberWidth, rowHeight, "#", headerFont, XStringFormats.Center, 0);
             DrawCell(graphics, borderPen, XBrushes.LightGray, margin + numberWidth, y, nameWidth, rowHeight, "LEARNER", headerFont, XStringFormats.CenterLeft, 6);
             DrawCell(graphics, borderPen, XBrushes.LightGray, margin + numberWidth + nameWidth, y, statusWidth, rowHeight, "STATUS", headerFont, XStringFormats.Center, 0);
@@ -263,8 +253,6 @@ public sealed class PdfGeneratorService : IPdfGeneratorService
                 DrawCell(graphics, borderPen, fill, margin + numberWidth + nameWidth, y, statusWidth, rowHeight, record.Status, bodyFont, XStringFormats.Center, 0);
                 y += rowHeight;
             }
-
-            graphics.Dispose();
         }
 
         var pageCount = Math.Max(1, (int)Math.Ceiling(totalCount / (double)RowsPerPdfPage));
@@ -276,6 +264,102 @@ public sealed class PdfGeneratorService : IPdfGeneratorService
         using var stream = new MemoryStream();
         document.Save(stream, false);
         return Task.FromResult(stream.ToArray());
+    }
+
+    public Task<byte[]> GenerateFinanceTransactionPdfAsync(
+        FinanceTransactionDocumentDto report,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        using var templateDocument = OpenTemplateDocument();
+        using var document = new PdfDocument();
+        var page = AddTemplatePage(document, templateDocument);
+        var transaction = report.Transaction;
+        var isPayment = transaction.Type.Equals("CREDIT", StringComparison.OrdinalIgnoreCase);
+        var title = isPayment ? "Payment Receipt" : "Fee Invoice";
+        document.Info.Title = $"{title} {transaction.TransactionId}";
+
+        using (var graphics = XGraphics.FromPdfPage(page, XGraphicsPdfPageOptions.Append))
+        {
+            var titleFont = new XFont("Helvetica", 14, XFontStyle.Bold);
+            var labelFont = new XFont("Helvetica", 9, XFontStyle.Bold);
+            var bodyFont = new XFont("Helvetica", 9, XFontStyle.Regular);
+            var borderPen = new XPen(XColor.FromArgb(75, 75, 75), 0.7);
+            var margin = PageMargin;
+            var width = page.Width - (margin * 2);
+            var rowHeight = 30d;
+            var y = ContentStartY;
+
+            graphics.DrawString(title, titleFont, XBrushes.Black,
+                new XRect(margin, y, width, 24), XStringFormats.TopCenter);
+            y += 44d;
+
+            var reference = string.IsNullOrWhiteSpace(transaction.ReferenceNumber)
+                ? $"TRX-{transaction.TransactionId}"
+                : transaction.ReferenceNumber;
+            var description = string.IsNullOrWhiteSpace(transaction.Notes)
+                ? transaction.Category
+                : transaction.Notes;
+            var amountLabel = isPayment ? "Amount received" : "Amount charged";
+            var rows = new (string Label, string Value)[]
+            {
+                ("Reference", reference),
+                ("Learner", $"{report.LearnerName} (#{transaction.LearnerId})"),
+                ("Grade", report.Grade),
+                ("Date", transaction.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)),
+                ("Description", description),
+                (amountLabel, transaction.Amount.ToString("N2", CultureInfo.GetCultureInfo("en-ZA"))),
+                ("Running balance", transaction.RunningBalance.ToString("N2", CultureInfo.GetCultureInfo("en-ZA")))
+            };
+
+            foreach (var row in rows)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                DrawCell(graphics, borderPen, XBrushes.WhiteSmoke, margin, y, width * 0.32, rowHeight,
+                    row.Label, labelFont, XStringFormats.CenterLeft, 8d);
+                DrawCell(graphics, borderPen, XBrushes.White, margin + width * 0.32, y, width * 0.68, rowHeight,
+                    row.Value, bodyFont, XStringFormats.CenterLeft, 8d);
+                y += rowHeight;
+            }
+
+            if (transaction.IsVoided)
+            {
+                y += 18d;
+                graphics.DrawString("VOIDED TRANSACTION", labelFont, XBrushes.Black,
+                    new XRect(margin, y, width, 18), XStringFormats.Center);
+            }
+        }
+
+        using var stream = new MemoryStream();
+        document.Save(stream, false);
+        return Task.FromResult(stream.ToArray());
+    }
+
+    private PdfDocument OpenTemplateDocument()
+    {
+        var templatePath = Path.Combine(_environment.ContentRootPath, TemplateRelativePath);
+        if (!File.Exists(templatePath))
+        {
+            throw new FileNotFoundException($"PDF template was not found at '{templatePath}'.", templatePath);
+        }
+
+        var templateDocument = PdfReader.Open(templatePath, PdfDocumentOpenMode.Import);
+        if (templateDocument.PageCount == 0)
+        {
+            templateDocument.Dispose();
+            throw new InvalidOperationException("PDF template does not contain any pages.");
+        }
+
+        return templateDocument;
+    }
+
+    private static PdfPage AddTemplatePage(PdfDocument document, PdfDocument templateDocument)
+    {
+        var page = document.AddPage(templateDocument.Pages[0]);
+        page.Size = PageSize.A4;
+        page.Orientation = PageOrientation.Portrait;
+        return page;
     }
 
     private static IReadOnlyList<AssessmentRow> BuildAssessmentRows(LearnerReportDto report)

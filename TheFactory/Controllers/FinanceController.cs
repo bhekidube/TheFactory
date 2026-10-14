@@ -18,10 +18,12 @@ public sealed class FinanceController : ControllerBase
     };
 
     private readonly IFinanceService _financeService;
+    private readonly IPdfGeneratorService _pdfGeneratorService;
 
-    public FinanceController(IFinanceService financeService)
+    public FinanceController(IFinanceService financeService, IPdfGeneratorService pdfGeneratorService)
     {
         _financeService = financeService;
+        _pdfGeneratorService = pdfGeneratorService;
     }
 
     [HttpGet]
@@ -59,6 +61,45 @@ public sealed class FinanceController : ControllerBase
         }
 
         return Ok(await _financeService.GetLedgerAsync(schoolId, learnerId, cancellationToken));
+    }
+
+    [HttpGet("learners/{learnerId:int}/transactions/{transactionId:int}/pdf")]
+    [Produces("application/pdf")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetTransactionPdf(
+        int schoolId,
+        int learnerId,
+        int transactionId,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetRequestUserId(out _))
+        {
+            return Forbid();
+        }
+
+        if (schoolId <= 0 || learnerId <= 0 || transactionId <= 0)
+        {
+            return BadRequest(new { error = "A valid school, learner, and transaction id are required." });
+        }
+
+        var report = await _financeService.GetTransactionDocumentAsync(
+            schoolId,
+            learnerId,
+            transactionId,
+            cancellationToken);
+        if (report is null)
+        {
+            return NotFound();
+        }
+
+        var pdfBytes = await _pdfGeneratorService.GenerateFinanceTransactionPdfAsync(report, cancellationToken);
+        var documentType = report.Transaction.Type.Equals("CREDIT", StringComparison.OrdinalIgnoreCase)
+            ? "Payment_Receipt"
+            : "Fee_Invoice";
+        Response.Headers.ContentDisposition =
+            $"inline; filename=\"{documentType}_{report.Transaction.TransactionId}.pdf\"";
+        return File(pdfBytes, "application/pdf");
     }
 
     [HttpGet("fee-structures")]

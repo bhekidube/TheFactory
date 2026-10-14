@@ -56,6 +56,13 @@ public sealed class StudentLedgerEntryDto
     public bool IsVoided { get; set; }
 }
 
+public sealed class FinanceTransactionDocumentDto
+{
+    public string LearnerName { get; set; } = string.Empty;
+    public string Grade { get; set; } = string.Empty;
+    public StudentLedgerEntryDto Transaction { get; set; } = new();
+}
+
 public sealed class LedgerTransactionUpsertRequest
 {
     public DateTime Date { get; set; }

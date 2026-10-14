@@ -17,7 +17,8 @@ describe('FinanceDashboardComponent', () => {
       'getDashboard',
       'getFeeStructures',
       'getLedger',
-      'recordTransaction'
+      'recordTransaction',
+      'getTransactionPdf'
     ]);
     financeApi.getDashboard.and.returnValue(of({
       totalBilled: 300,

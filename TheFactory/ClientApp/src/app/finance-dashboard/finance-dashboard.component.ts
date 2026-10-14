@@ -328,31 +328,30 @@ export class FinanceDashboardComponent implements OnInit {
       return;
     }
 
-    const receiptWindow = window.open('', '_blank', 'width=720,height=800');
+    const receiptWindow = window.open('about:blank', '_blank');
     if (!receiptWindow) {
       this.errorMessage = 'Allow pop-ups to print the receipt.';
       return;
     }
 
-    const htmlReplacements: Record<string, string> = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;'
-    };
-    const escape = (value: string): string => value.replace(/[&<>"']/g, character => htmlReplacements[character]);
-    const learnerName = escape(`${this.selectedLearner.firstName} ${this.selectedLearner.surname}`);
-    const description = escape(entry.notes || entry.category);
-    const reference = escape(entry.referenceNumber || `TRX-${entry.transactionId}`);
-    const date = escape(this.formatDate(entry.date));
-    const receiptType = entry.type === 'CREDIT' ? 'Payment Receipt' : 'Fee Invoice';
-    const amountLabel = entry.type === 'CREDIT' ? 'Amount received' : 'Amount charged';
+    this.errorMessage = '';
+    this.financeApi.getTransactionPdf(this.schoolId, this.selectedLearner.learnerId, entry.transactionId).subscribe({
+      next: pdf => {
+        const pdfUrl = URL.createObjectURL(pdf);
+        if (receiptWindow.closed) {
+          URL.revokeObjectURL(pdfUrl);
+          return;
+        }
 
-    receiptWindow.document.write(
-      `<!doctype html><html><head><title>HambaOnline ${receiptType}</title><style>body{font:16px Arial,sans-serif;color:#1f3557;padding:32px}.receipt{max-width:560px;margin:auto;border:1px solid #d9e1ef;border-radius:10px;padding:24px}h1{color:#004aad}small{color:#5f6979}</style></head><body><main class="receipt"><h1>HambaOnline</h1><h2>${receiptType}</h2><p><strong>Reference:</strong> ${reference}</p><p><strong>Learner:</strong> ${learnerName} (#${this.selectedLearner.learnerId})</p><p><strong>Date:</strong> ${date}</p><p><strong>Description:</strong> ${description}</p><p><strong>${amountLabel}:</strong> ${this.formatAmount(entry.amount)}</p><small>Printed from the school finance ledger.</small></main><script>window.onload=()=>window.print();</script></body></html>`
-    );
-    receiptWindow.document.close();
+        receiptWindow.location.href = pdfUrl;
+        receiptWindow.focus();
+        window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 5 * 60 * 1000);
+      },
+      error: error => {
+        receiptWindow.close();
+        this.errorMessage = this.getErrorMessage(error, 'Unable to open the invoice or payment receipt.');
+      }
+    });
   }
 
   formatAmount(amount: number): string {

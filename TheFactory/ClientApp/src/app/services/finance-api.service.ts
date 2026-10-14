@@ -28,6 +28,13 @@ export class FinanceApiService {
     );
   }
 
+  getTransactionPdf(schoolId: number, learnerId: number, transactionId: number): Observable<Blob> {
+    return this.http.get(
+      `${this.baseUrl}/schools/${schoolId}/finance/learners/${learnerId}/transactions/${transactionId}/pdf`,
+      { ...this.options(schoolId), responseType: 'blob' }
+    );
+  }
+
   getFeeStructures(schoolId: number): Observable<FeeStructureDto[]> {
     return this.http.get<FeeStructureDto[]>(
       `${this.baseUrl}/schools/${schoolId}/finance/fee-structures`,
