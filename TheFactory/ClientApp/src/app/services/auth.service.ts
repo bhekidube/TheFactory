@@ -131,7 +131,7 @@ export class AuthService {
     if (!this.googleScriptPromise) {
       this.googleScriptPromise = new Promise<GoogleIdentityServices>((resolve, reject) => {
         const existingScript = document.querySelector<HTMLScriptElement>(
-          'script[data-google-identity-services]'
+          'script[data-google-identity-services], script[src^="https://accounts.google.com/gsi/client"]'
         );
         const script = existingScript ?? document.createElement('script');
 
@@ -147,7 +147,10 @@ export class AuthService {
         script.addEventListener('load', resolveWhenLoaded, { once: true });
         script.addEventListener(
           'error',
-          () => reject(new Error('Google Identity Services could not be loaded.')),
+          () => {
+            this.googleScriptPromise = undefined;
+            reject(new Error('Google Identity Services could not be loaded.'));
+          },
           { once: true }
         );
 

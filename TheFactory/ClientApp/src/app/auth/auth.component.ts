@@ -1,5 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Inject, OnInit, PLATFORM_ID, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
@@ -11,7 +11,10 @@ import { AuthService, UserLoginResponse } from '../services/auth.service';
   templateUrl: './auth.component.html',
   styleUrls: ['./auth.component.css']
 })
-export class AuthComponent implements OnInit {
+export class AuthComponent implements OnInit, AfterViewInit {
+  @ViewChild('googleSignInButton')
+  private googleSignInButton?: ElementRef<HTMLDivElement>;
+
   showRegister = false; // Controls register form visibility
   loginPasswordVisible = false;
   registerPasswordVisible = false;
@@ -64,8 +67,11 @@ export class AuthComponent implements OnInit {
 
   ngOnInit(): void {
     this.fetchOperators();
+  }
+
+  ngAfterViewInit(): void {
     if (isPlatformBrowser(this.platformId)) {
-      const button = document.getElementById('google-signin-button');
+      const button = this.googleSignInButton?.nativeElement;
       if (button) {
         this.authService.initializeGoogleSignIn(button, (credential) => {
           this.loginWithGoogleCredential(credential);
