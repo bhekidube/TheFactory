@@ -1,11 +1,13 @@
 import { Component, Inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { TableSortController } from '../table-sorting';
 
 @Component({
   selector: 'app-fetch-data',
   templateUrl: './fetch-data.component.html'
 })
 export class FetchDataComponent {
+  readonly tableSort = new TableSortController();
   public forecasts: WeatherForecast[] = [];
 
   constructor(http: HttpClient, @Inject('BASE_URL') baseUrl: string) {
@@ -21,4 +23,3 @@ interface WeatherForecast {
   temperatureF: number;
   summary: string;
 }
-

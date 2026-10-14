@@ -122,14 +122,20 @@
       <table class="screenshot-table">
         <thead>
           <tr>
-            <th scope="col" class="col-bus">BUS</th>
-            <th scope="col" class="col-departure">DEPARTURE</th>
-            <th scope="col" class="col-price">PRICE</th>
+            <th scope="col" class="col-bus sortable-header" [attr.aria-sort]="tableSort.getAriaSort('operatorName')">
+              <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('operatorName')">BUS <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('operatorName') }}</span></button>
+            </th>
+            <th scope="col" class="col-departure sortable-header" [attr.aria-sort]="tableSort.getAriaSort('departureDateTime')">
+              <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('departureDateTime')">DEPARTURE <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('departureDateTime') }}</span></button>
+            </th>
+            <th scope="col" class="col-price sortable-header" [attr.aria-sort]="tableSort.getAriaSort('price')">
+              <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('price')">PRICE <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('price') }}</span></button>
+            </th>
             <th scope="col" class="col-action">ACTION</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let row of searchResults; let i = index" [class.alt-row]="i % 2 === 1">
+          <tr *ngFor="let row of searchResults | tableSort: tableSort.sortColumn:tableSort.sortDirection; let i = index" [class.alt-row]="i % 2 === 1">
             <td class="col-bus" data-label="Bus">{{ row.operatorName }}</td>
             <td class="col-departure" data-label="Departure">{{ row.departureDateTime | date:'EEE, d MMM' }}<br>{{ row.departureDateTime | date:'HH:mm' }}</td>
             <td class="col-price" data-label="Price">{{ getPriceDisplay(row) }}</td>

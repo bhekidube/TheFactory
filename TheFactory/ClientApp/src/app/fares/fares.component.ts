@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { TableSortController } from '../table-sorting';
 
 @Component({
   selector: 'app-fares',
@@ -6,6 +7,7 @@ import { Component } from '@angular/core';
   styleUrls: ['./fares.component.css']
 })
 export class FaresComponent {
+  readonly tableSort = new TableSortController();
   busData = [
     { operator: 'Mzansi Express', time: '14:00', pickup: 'Powerhouse / 88 Simmonds', priceRange: '540 - 650' },
     { operator: 'Brooklyn Express', time: '12:00', pickup: 'Park Station (Bay 21)', priceRange: '560 - 680' },

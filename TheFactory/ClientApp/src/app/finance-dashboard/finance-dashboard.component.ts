@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FinanceApiService } from '../services/finance-api.service';
+import { TableSortController } from '../table-sorting';
 import {
   FeeStructureDto,
   FeeStructureUpsertRequest,
@@ -19,6 +20,7 @@ type FinanceFormMode = 'payment' | 'edit' | 'ad-hoc-invoice' | 'fee' | 'invoice'
   styleUrls: ['./finance-dashboard.component.css']
 })
 export class FinanceDashboardComponent implements OnInit {
+  readonly tableSort = new TableSortController();
   schoolId = 0;
   dashboard: FinanceDashboardDto = {
     totalBilled: 0,

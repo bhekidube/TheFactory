@@ -69,14 +69,22 @@
         <table>
           <thead>
             <tr>
-              <th>Learner ID</th>
-              <th>First Name</th>
-              <th>Surname</th>
-              <th>Grade</th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('learnerId', 'learners')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('learnerId', 'learners')">Learner ID <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('learnerId', 'learners') }}</span></button>
+              </th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('firstName', 'learners')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('firstName', 'learners')">First Name <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('firstName', 'learners') }}</span></button>
+              </th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('surname', 'learners')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('surname', 'learners')">Surname <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('surname', 'learners') }}</span></button>
+              </th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('grade', 'learners')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('grade', 'learners')">Grade <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('grade', 'learners') }}</span></button>
+              </th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let learner of classDetail.learners">
+            <tr *ngFor="let learner of classDetail.learners | tableSort: tableSort.getGridSortColumn('learners'):tableSort.getGridSortDirection('learners')">
               <td><a [routerLink]="['/school/admin/learners', learner.learnerId]">{{ learner.learnerId }}</a></td>
               <td><a [routerLink]="['/school/admin/learners', learner.learnerId]">{{ learner.firstName }}</a></td>
               <td><a [routerLink]="['/school/admin/learners', learner.learnerId]">{{ learner.surname }}</a></td>
@@ -208,12 +216,16 @@
         <table>
           <thead>
             <tr>
-              <th>Subject</th>
-              <th>Code</th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('name', 'subjects')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('name', 'subjects')">Subject <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('name', 'subjects') }}</span></button>
+              </th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('code', 'subjects')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('code', 'subjects')">Code <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('code', 'subjects') }}</span></button>
+              </th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let subject of classDetail.subjects">
+            <tr *ngFor="let subject of classDetail.subjects | tableSort: tableSort.getGridSortColumn('subjects'):tableSort.getGridSortDirection('subjects')">
               <td>{{ subject.name }}</td>
               <td>{{ subject.code || '-' }}</td>
             </tr>
@@ -234,17 +246,29 @@
         <table>
           <thead>
             <tr>
-              <th>Title</th>
-              <th>Subject</th>
-              <th>Work Type</th>
-              <th>Term</th>
-              <th>Due Date</th>
-              <th>Total Mark</th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('title', 'work')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('title', 'work')">Title <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('title', 'work') }}</span></button>
+              </th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('subjectName', 'work')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('subjectName', 'work')">Subject <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('subjectName', 'work') }}</span></button>
+              </th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('workType', 'work')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('workType', 'work')">Work Type <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('workType', 'work') }}</span></button>
+              </th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('term', 'work')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('term', 'work')">Term <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('term', 'work') }}</span></button>
+              </th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('dueDate', 'work')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('dueDate', 'work')">Due Date <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('dueDate', 'work') }}</span></button>
+              </th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('totalMark', 'work')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('totalMark', 'work')">Total Mark <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('totalMark', 'work') }}</span></button>
+              </th>
               <th class="actions-col">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let work of workItems; trackBy: trackByWorkId">
+            <tr *ngFor="let work of workItems | tableSort: tableSort.getGridSortColumn('work'):tableSort.getGridSortDirection('work'); trackBy: trackByWorkId">
               <td><a [routerLink]="['/school/admin/classes', classId, 'work', work.id]">{{ work.title }}</a></td>
               <td>{{ work.subjectName || '-' }}</td>
               <td>{{ work.workType || '-' }}</td>

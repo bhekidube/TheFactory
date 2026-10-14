@@ -212,3 +212,53 @@ body {
         }
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+.sortable-header {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.sortable-header:hover {
+  background-color: #e5efff;
+  color: #004aad;
+}
+
+.table-sort-button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.table-sort-button:focus-visible {
+  outline: 2px solid #005ecf;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.sort-indicator {
+  flex: 0 0 auto;
+  min-width: 1em;
+  color: #52709a;
+  font-size: 0.72em;
+  text-align: center;
+}
+
+.sortable-header[aria-sort="ascending"] .sort-indicator,
+.sortable-header[aria-sort="descending"] .sort-indicator {
+  color: #004aad;
+}
+
+.numeric-cell .table-sort-button {
+  justify-content: flex-end;
+}

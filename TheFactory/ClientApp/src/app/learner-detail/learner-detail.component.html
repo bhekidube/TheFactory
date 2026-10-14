@@ -29,15 +29,25 @@
         <table>
           <thead>
             <tr>
-              <th>Subject</th>
-              <th>Assessment / Exam Name</th>
-              <th>Term / Period</th>
-              <th>Score / Percentage</th>
-              <th>Grade</th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('subjectName', 'academic')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('subjectName', 'academic')">Subject <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('subjectName', 'academic') }}</span></button>
+              </th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('assessmentOrExamName', 'academic')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('assessmentOrExamName', 'academic')">Assessment / Exam Name <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('assessmentOrExamName', 'academic') }}</span></button>
+              </th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('termOrPeriod', 'academic')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('termOrPeriod', 'academic')">Term / Period <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('termOrPeriod', 'academic') }}</span></button>
+              </th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('gradeOrMarkPercent', 'academic')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('gradeOrMarkPercent', 'academic')">Score / Percentage <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('gradeOrMarkPercent', 'academic') }}</span></button>
+              </th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('grade', 'academic')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('grade', 'academic')">Grade <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('grade', 'academic') }}</span></button>
+              </th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let record of academicRecords">
+            <tr *ngFor="let record of academicRecords | tableSort: tableSort.getGridSortColumn('academic'):tableSort.getGridSortDirection('academic')">
               <td>{{ record.subjectName }}</td>
               <td>{{ record.assessmentOrExamName || '-' }}</td>
               <td>{{ record.termOrPeriod || '-' }}</td>
@@ -57,13 +67,17 @@
         <table>
           <thead>
             <tr>
-              <th>Term</th>
-              <th>Year</th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('term', 'reports')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('term', 'reports')">Term <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('term', 'reports') }}</span></button>
+              </th>
+              <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('year', 'reports')">
+                <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('year', 'reports')">Year <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('year', 'reports') }}</span></button>
+              </th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let item of reportPreviews">
+            <tr *ngFor="let item of reportPreviews | tableSort: tableSort.getGridSortColumn('reports'):tableSort.getGridSortDirection('reports')">
               <td>{{ item.term }}</td>
               <td>{{ item.year }}</td>
               <td>

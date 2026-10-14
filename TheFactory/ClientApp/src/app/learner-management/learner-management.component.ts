@@ -19,6 +19,7 @@ import {
   UpdateClassRequestDto
 } from './learner-management.models';
 import { LearnerManagementService } from '../services/learner-management.service';
+import { TableSortController } from '../table-sorting';
 
 @Component({
   selector: 'app-learner-management',
@@ -26,6 +27,7 @@ import { LearnerManagementService } from '../services/learner-management.service
   styleUrls: ['./learner-management.component.css']
 })
 export class LearnerManagementComponent implements OnInit {
+  readonly tableSort = new TableSortController();
   learners: LearnerDto[] = [];
   filteredLearners: LearnerDto[] = [];
   sortColumn: string = '';

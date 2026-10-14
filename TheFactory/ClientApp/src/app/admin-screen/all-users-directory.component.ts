@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AllUsersDirectoryDto } from '../learner-management/learner-management.models';
 import { LearnerManagementService } from '../services/learner-management.service';
+import { TableSortController } from '../table-sorting';
 
 @Component({
   selector: 'app-all-users-directory',
@@ -8,6 +9,7 @@ import { LearnerManagementService } from '../services/learner-management.service
   styleUrls: ['./all-users-directory.component.css']
 })
 export class AllUsersDirectoryComponent implements OnInit {
+  readonly tableSort = new TableSortController();
   users: AllUsersDirectoryDto[] = [];
   pendingDeleteUser: AllUsersDirectoryDto | null = null;
   reassignUserId: number | null = null;

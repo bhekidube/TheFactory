@@ -36,18 +36,32 @@
     <table>
       <thead>
         <tr>
-          <th>Work ID</th>
-          <th>Title</th>
-          <th>Work Type</th>
-          <th>Term</th>
-          <th>Class</th>
-          <th>Due Date</th>
-          <th>Total Mark</th>
+          <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('id')">
+            <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('id')">Work ID <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('id') }}</span></button>
+          </th>
+          <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('title')">
+            <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('title')">Title <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('title') }}</span></button>
+          </th>
+          <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('workType')">
+            <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('workType')">Work Type <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('workType') }}</span></button>
+          </th>
+          <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('term')">
+            <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('term')">Term <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('term') }}</span></button>
+          </th>
+          <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('className')">
+            <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('className')">Class <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('className') }}</span></button>
+          </th>
+          <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('dueDate')">
+            <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('dueDate')">Due Date <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('dueDate') }}</span></button>
+          </th>
+          <th class="sortable-header" [attr.aria-sort]="tableSort.getAriaSort('totalMark')">
+            <button type="button" class="table-sort-button" (click)="tableSort.sortGrid('totalMark')">Total Mark <span class="sort-indicator" aria-hidden="true">{{ tableSort.getSortIndicator('totalMark') }}</span></button>
+          </th>
           <th class="actions-col">Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let work of filteredWorkItems; trackBy: trackByWorkId">
+        <tr *ngFor="let work of filteredWorkItems | tableSort: tableSort.sortColumn:tableSort.sortDirection; trackBy: trackByWorkId">
           <td>{{ work.id }}</td>
           <td>{{ work.title }}</td>
           <td>{{ work.workType }}</td>
