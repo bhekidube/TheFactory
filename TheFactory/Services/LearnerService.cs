@@ -1902,6 +1902,7 @@ public sealed class LearnerService : ILearnerService
         var hasParentUserId = await HasColumnAsync(connection, "institution", "Learner", "ParentUserId", cancellationToken);
         var hasAddressId = await HasColumnAsync(connection, "institution", "Learner", "AddressId", cancellationToken);
         var hasUserAddressId = await HasColumnAsync(connection, "dbo", "User", "AddressId", cancellationToken);
+        var hasLearnerType = await HasColumnAsync(connection, "institution", "Learner", "LearnerType", cancellationToken);
         var hasLearnerParentGuardianTable = await HasTableAsync(connection, "institution", "LearnerParentGuardian", cancellationToken);
         var parentContactSelect = hasParentGuardianContact
             ? "ParentGuardianContact"
