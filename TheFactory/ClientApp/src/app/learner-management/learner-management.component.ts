@@ -317,6 +317,8 @@ export class LearnerManagementComponent implements OnInit {
         return learner.surname;
       case 'grade':
         return learner.grade;
+      case 'learnerType':
+        return learner.learnerType;
       case 'dateOfBirth':
         return learner.dateOfBirth;
       default:

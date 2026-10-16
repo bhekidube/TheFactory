@@ -217,6 +217,7 @@ export interface LearnerDetailDto {
   firstName: string;
   surname: string;
   grade: string;
+  learnerType: string;
   dateOfBirth: string;
   parentGuardianContact: string;
   address: AddressDto;
