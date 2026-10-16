@@ -7,6 +7,7 @@ public sealed class LearnerDto
     public string Surname { get; set; } = string.Empty;
     public string Grade { get; set; } = string.Empty;
     public string DateOfBirth { get; set; } = string.Empty;
+    public string LearnerType { get; set; } = "FullDay";
     public AddressDto Address { get; set; } = new();
     public ParentGuardianDto ParentGuardian { get; set; } = new();
 }
@@ -198,6 +199,7 @@ public sealed class LearnerDetailDto
     public string Surname { get; set; } = string.Empty;
     public string Grade { get; set; } = string.Empty;
     public string DateOfBirth { get; set; } = string.Empty;
+    public string LearnerType { get; set; } = "FullDay";
     public string ParentGuardianContact { get; set; } = string.Empty;
     public AddressDto Address { get; set; } = new();
     public ParentGuardianDto ParentGuardian { get; set; } = new();

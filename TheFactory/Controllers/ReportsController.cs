@@ -1194,6 +1194,13 @@ public class ReportsController : ControllerBase
             return false;
         }
 
+        if (!string.Equals(learnerDto.LearnerType, "FullDay", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(learnerDto.LearnerType, "HalfDay", StringComparison.OrdinalIgnoreCase))
+        {
+            error = "LearnerType must be FullDay or HalfDay.";
+            return false;
+        }
+
         if (!string.IsNullOrWhiteSpace(learnerDto.DateOfBirth)
             && (!DateTime.TryParseExact(
                     learnerDto.DateOfBirth,

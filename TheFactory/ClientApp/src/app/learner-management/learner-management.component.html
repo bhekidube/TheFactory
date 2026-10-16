@@ -302,6 +302,13 @@
             Grade is required.
           </div>
         </label>
+        <label>
+          Learner Type
+          <select name="learnerType" [(ngModel)]="learnerForm.learnerType" required>
+            <option value="FullDay">Full Day</option>
+            <option value="HalfDay">Half Day</option>
+          </select>
+        </label>
 
         <div class="form-section-title">Learner Address</div>
         <label>

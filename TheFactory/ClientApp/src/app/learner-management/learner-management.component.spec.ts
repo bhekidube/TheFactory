@@ -75,6 +75,7 @@ function createLearner(
     surname,
     grade,
     dateOfBirth,
+    learnerType: 'FullDay',
     address,
     parentGuardian: {
       firstName: '',

@@ -716,14 +716,19 @@ public sealed class LearnerService : ILearnerService
         }
 
         var hasDateOfBirth = await HasColumnAsync(connection, "institution", "Learner", "DateOfBirth", cancellationToken);
+        var hasLearnerType = await HasColumnAsync(connection, "institution", "Learner", "LearnerType", cancellationToken);
         var hasAddressId = await HasColumnAsync(connection, "institution", "Learner", "AddressId", cancellationToken);
+        var learnerTypeSelect = hasLearnerType
+            ? "l.LearnerType"
+            : "CAST('FullDay' AS NVARCHAR(20)) AS LearnerType";
         var addressColumns = hasAddressId
             ? "l.AddressId, a.AddressLine1, a.AddressLine2, a.City, a.ProvinceState, a.PostalCode, a.Country"
             : "CAST(NULL AS INT), CAST(NULL AS NVARCHAR(200)), CAST(NULL AS NVARCHAR(200)), CAST(NULL AS NVARCHAR(100)), CAST(NULL AS NVARCHAR(100)), CAST(NULL AS NVARCHAR(20)), CAST(NULL AS NVARCHAR(100))";
         using var command = new SqlCommand(
             $@"SELECT l.Id, l.FirstName, l.Surname, l.Grade,
                       {(hasDateOfBirth ? "CONVERT(NVARCHAR(10), l.DateOfBirth, 23)" : "CAST(NULL AS NVARCHAR(10))")} AS DateOfBirth,
-                      {addressColumns}
+                      {addressColumns},
+                      {learnerTypeSelect}
               FROM institution.Learner l
               {(hasAddressId ? "LEFT JOIN institution.Addresses a ON a.AddressId = l.AddressId" : string.Empty)}
               WHERE l.TenantId = @TenantId
@@ -743,6 +748,7 @@ public sealed class LearnerService : ILearnerService
                 Surname = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
                 Grade = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
                 DateOfBirth = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
+                LearnerType = reader.IsDBNull(12) ? "FullDay" : reader.GetString(12),
                 Address = AddressPersistence.ReadAddress(reader, 5)
             });
         }
@@ -1608,6 +1614,7 @@ public sealed class LearnerService : ILearnerService
         }
 
         var hasDateOfBirth = await HasColumnAsync(connection, "institution", "Learner", "DateOfBirth", cancellationToken);
+        var hasLearnerType = await HasColumnAsync(connection, "institution", "Learner", "LearnerType", cancellationToken);
         var hasParentGuardianContact = await HasColumnAsync(connection, "institution", "Learner", "ParentGuardianContact", cancellationToken);
         var hasParentUserId = await HasColumnAsync(connection, "institution", "Learner", "ParentUserId", cancellationToken);
         var hasAddressId = await HasColumnAsync(connection, "institution", "Learner", "AddressId", cancellationToken);
@@ -1655,7 +1662,8 @@ public sealed class LearnerService : ILearnerService
             hasAddressId ? "la.City AS City" : "CAST(NULL AS NVARCHAR(100)) AS City",
             hasAddressId ? "la.ProvinceState AS ProvinceState" : "CAST(NULL AS NVARCHAR(100)) AS ProvinceState",
             hasAddressId ? "la.PostalCode AS PostalCode" : "CAST(NULL AS NVARCHAR(20)) AS PostalCode",
-            hasAddressId ? "la.Country AS Country" : "CAST(NULL AS NVARCHAR(100)) AS Country"
+            hasAddressId ? "la.Country AS Country" : "CAST(NULL AS NVARCHAR(100)) AS Country",
+            hasLearnerType ? "l.LearnerType" : "CAST('FullDay' AS NVARCHAR(20)) AS LearnerType"
         };
 
         using var learnerCommand = new SqlCommand(
@@ -1694,6 +1702,7 @@ public sealed class LearnerService : ILearnerService
             parentGuardian.Address = linkedParentAddress;
         }
         var learnerAddress = AddressPersistence.ReadAddress(reader, 17);
+        var learnerType = reader.IsDBNull(24) ? "FullDay" : reader.GetString(24);
 
         reader.Close();
 
@@ -1713,6 +1722,7 @@ public sealed class LearnerService : ILearnerService
             Surname = surname,
             Grade = grade,
             DateOfBirth = dateOfBirth,
+            LearnerType = learnerType,
             Address = learnerAddress,
             ParentGuardianContact = parentGuardianContact,
             ParentGuardian = parentGuardian
@@ -1913,6 +1923,9 @@ public sealed class LearnerService : ILearnerService
             ? "l.AddressId, la.AddressLine1, la.AddressLine2, la.City, la.ProvinceState, la.PostalCode, la.Country"
             : "CAST(NULL AS INT), CAST(NULL AS NVARCHAR(200)), CAST(NULL AS NVARCHAR(200)), CAST(NULL AS NVARCHAR(100)), CAST(NULL AS NVARCHAR(100)), CAST(NULL AS NVARCHAR(20)), CAST(NULL AS NVARCHAR(100))";
         var learnerAddressJoin = hasAddressId ? "LEFT JOIN institution.Addresses la ON la.AddressId = l.AddressId" : string.Empty;
+        var learnerTypeSelect = hasLearnerType
+            ? "l.LearnerType"
+            : "CAST('FullDay' AS NVARCHAR(20)) AS LearnerType";
 
         using var command = new SqlCommand(
             $@"SELECT l.Id,
@@ -1924,7 +1937,8 @@ public sealed class LearnerService : ILearnerService
                       {parentUserIdSelect},
                       {parentUserDetailsSelect},
                       {parentAddressSelect},
-                      {learnerAddressSelect}
+                      {learnerAddressSelect},
+                      {learnerTypeSelect}
                FROM institution.Learner l
                {parentJoin}
                {parentAddressJoin}
@@ -1959,6 +1973,7 @@ public sealed class LearnerService : ILearnerService
             parentGuardian.Address = linkedParentAddress;
         }
         var learnerAddress = AddressPersistence.ReadAddress(reader, 17);
+        var learnerType = reader.IsDBNull(24) ? "FullDay" : reader.GetString(24);
 
         reader.Close();
 
@@ -1978,6 +1993,7 @@ public sealed class LearnerService : ILearnerService
             Surname = surname,
             Grade = grade,
             DateOfBirth = dateOfBirth,
+            LearnerType = learnerType,
             Address = learnerAddress,
             ParentGuardian = parentGuardian
         };
@@ -1995,12 +2011,17 @@ public sealed class LearnerService : ILearnerService
         var hasParentGuardianContact = await HasColumnAsync(connection, "institution", "Learner", "ParentGuardianContact", cancellationToken);
         var hasParentUserId = await HasColumnAsync(connection, "institution", "Learner", "ParentUserId", cancellationToken);
         var hasDateOfBirth = await HasColumnAsync(connection, "institution", "Learner", "DateOfBirth", cancellationToken);
+        var hasLearnerType = await HasColumnAsync(connection, "institution", "Learner", "LearnerType", cancellationToken);
         var hasAddressId = await HasColumnAsync(connection, "institution", "Learner", "AddressId", cancellationToken);
         var hasUserAddressId = await HasColumnAsync(connection, "dbo", "User", "AddressId", cancellationToken);
         var hasLearnerParentGuardianTable = await HasTableAsync(connection, "institution", "LearnerParentGuardian", cancellationToken);
         if (!hasDateOfBirth && !string.IsNullOrWhiteSpace(learner.DateOfBirth))
         {
             throw new InvalidOperationException("Learner DateOfBirth column is missing. Run the learner date-of-birth migration.");
+        }
+        if (!hasLearnerType)
+        {
+            throw new InvalidOperationException("Learner LearnerType column is missing. Run the learner type migration.");
         }
         if (!hasAddressId && !AddressIsEmpty(learner.Address))
         {
@@ -2014,13 +2035,14 @@ public sealed class LearnerService : ILearnerService
         using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
         try
         {
+            var learnerType = NormalizeLearnerType(learner.LearnerType);
             var linkedParentUserId = await TryFindExistingParentUserIdAsync(connection, transaction, learner.ParentGuardian, cancellationToken);
             var learnerAddressId = await AddressPersistence.GetOrCreateAddressIdAsync(connection, transaction, learner.Address, cancellationToken);
             var parentAddressId = await AddressPersistence.GetOrCreateAddressIdAsync(connection, transaction, learner.ParentGuardian?.Address, cancellationToken);
             var nextId = await GetNextIdAsync(connection, transaction, "institution.Learner", cancellationToken);
             await UpdateLinkedParentAddressAsync(connection, transaction, linkedParentUserId, parentAddressId, hasUserAddressId, cancellationToken);
             using var command = new SqlCommand(
-                BuildCreateLearnerInsertSql(hasParentGuardianContact, hasParentUserId, hasDateOfBirth, hasAddressId),
+                BuildCreateLearnerInsertSql(hasParentGuardianContact, hasParentUserId, hasDateOfBirth, hasAddressId, hasLearnerType),
                 connection,
                 transaction);
 
@@ -2029,6 +2051,7 @@ public sealed class LearnerService : ILearnerService
             command.Parameters.AddWithValue("@FirstName", learner.FirstName.Trim());
             command.Parameters.AddWithValue("@Surname", learner.Surname.Trim());
             command.Parameters.AddWithValue("@Grade", learner.Grade.Trim());
+            command.Parameters.AddWithValue("@LearnerType", learnerType);
             if (hasAddressId)
             {
                 command.Parameters.Add("@AddressId", SqlDbType.Int).Value = (object?)learnerAddressId ?? DBNull.Value;
@@ -2068,6 +2091,7 @@ public sealed class LearnerService : ILearnerService
                 Surname = learner.Surname.Trim(),
                 Grade = learner.Grade.Trim(),
                 DateOfBirth = learner.DateOfBirth?.Trim() ?? string.Empty,
+                LearnerType = learnerType,
                 Address = learner.Address,
                 ParentGuardian = NormalizeParentGuardian(learner.ParentGuardian)
             };
@@ -2091,12 +2115,17 @@ public sealed class LearnerService : ILearnerService
         var hasParentGuardianContact = await HasColumnAsync(connection, "institution", "Learner", "ParentGuardianContact", cancellationToken);
         var hasParentUserId = await HasColumnAsync(connection, "institution", "Learner", "ParentUserId", cancellationToken);
         var hasDateOfBirth = await HasColumnAsync(connection, "institution", "Learner", "DateOfBirth", cancellationToken);
+        var hasLearnerType = await HasColumnAsync(connection, "institution", "Learner", "LearnerType", cancellationToken);
         var hasAddressId = await HasColumnAsync(connection, "institution", "Learner", "AddressId", cancellationToken);
         var hasUserAddressId = await HasColumnAsync(connection, "dbo", "User", "AddressId", cancellationToken);
         var hasLearnerParentGuardianTable = await HasTableAsync(connection, "institution", "LearnerParentGuardian", cancellationToken);
         if (!hasDateOfBirth && !string.IsNullOrWhiteSpace(learner.DateOfBirth))
         {
             throw new InvalidOperationException("Learner DateOfBirth column is missing. Run the learner date-of-birth migration.");
+        }
+        if (!hasLearnerType)
+        {
+            throw new InvalidOperationException("Learner LearnerType column is missing. Run the learner type migration.");
         }
         if (!hasAddressId && !AddressIsEmpty(learner.Address))
         {
@@ -2110,13 +2139,14 @@ public sealed class LearnerService : ILearnerService
         using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
         try
         {
+            var learnerType = NormalizeLearnerType(learner.LearnerType);
             var linkedParentUserId = await TryFindExistingParentUserIdAsync(connection, transaction, learner.ParentGuardian, cancellationToken);
             var learnerAddressId = await AddressPersistence.GetOrCreateAddressIdAsync(connection, transaction, learner.Address, cancellationToken);
             var parentAddressId = await AddressPersistence.GetOrCreateAddressIdAsync(connection, transaction, learner.ParentGuardian?.Address, cancellationToken);
             await UpdateLinkedParentAddressAsync(connection, transaction, linkedParentUserId, parentAddressId, hasUserAddressId, cancellationToken);
 
             using var command = new SqlCommand(
-                BuildUpdateLearnerSql(hasParentGuardianContact, hasParentUserId, hasDateOfBirth, hasAddressId && !AddressIsEmpty(learner.Address)),
+                BuildUpdateLearnerSql(hasParentGuardianContact, hasParentUserId, hasDateOfBirth, hasAddressId && !AddressIsEmpty(learner.Address), hasLearnerType),
                 connection,
                 transaction);
 
@@ -2125,6 +2155,7 @@ public sealed class LearnerService : ILearnerService
             command.Parameters.AddWithValue("@FirstName", learner.FirstName.Trim());
             command.Parameters.AddWithValue("@Surname", learner.Surname.Trim());
             command.Parameters.AddWithValue("@Grade", learner.Grade.Trim());
+            command.Parameters.AddWithValue("@LearnerType", learnerType);
             if (hasDateOfBirth)
             {
                 command.Parameters.Add("@DateOfBirth", SqlDbType.Date).Value = ParseDateOfBirthOrDbNull(learner.DateOfBirth);
@@ -2167,6 +2198,7 @@ public sealed class LearnerService : ILearnerService
                 Surname = learner.Surname.Trim(),
                 Grade = learner.Grade.Trim(),
                 DateOfBirth = learner.DateOfBirth?.Trim() ?? string.Empty,
+                LearnerType = learnerType,
                 Address = learner.Address,
                 ParentGuardian = NormalizeParentGuardian(learner.ParentGuardian)
             };
@@ -2477,10 +2509,15 @@ public sealed class LearnerService : ILearnerService
         return Convert.ToInt32(result ?? 0) > 0;
     }
 
-    private static string BuildCreateLearnerInsertSql(bool hasParentGuardianContact, bool hasParentUserId, bool hasDateOfBirth, bool hasAddressId)
+    private static string BuildCreateLearnerInsertSql(bool hasParentGuardianContact, bool hasParentUserId, bool hasDateOfBirth, bool hasAddressId, bool hasLearnerType)
     {
         var columns = new List<string> { "Id", "TenantId", "FirstName", "Surname", "Grade" };
         var values = new List<string> { "@Id", "@TenantId", "@FirstName", "@Surname", "@Grade" };
+        if (hasLearnerType)
+        {
+            columns.Add("LearnerType");
+            values.Add("@LearnerType");
+        }
         if (hasDateOfBirth)
         {
             columns.Add("DateOfBirth");
@@ -2508,7 +2545,7 @@ public sealed class LearnerService : ILearnerService
                   VALUES ({string.Join(", ", values)});";
     }
 
-    private static string BuildUpdateLearnerSql(bool hasParentGuardianContact, bool hasParentUserId, bool hasDateOfBirth, bool hasAddressId)
+    private static string BuildUpdateLearnerSql(bool hasParentGuardianContact, bool hasParentUserId, bool hasDateOfBirth, bool hasAddressId, bool hasLearnerType)
     {
         var assignments = new List<string>
         {
@@ -2516,6 +2553,10 @@ public sealed class LearnerService : ILearnerService
             "Surname = @Surname",
             "Grade = @Grade"
         };
+        if (hasLearnerType)
+        {
+            assignments.Add("LearnerType = @LearnerType");
+        }
         if (hasDateOfBirth)
         {
             assignments.Add("DateOfBirth = @DateOfBirth");
@@ -2538,6 +2579,21 @@ public sealed class LearnerService : ILearnerService
                   WHERE Id = @LearnerId
                     AND TenantId = @TenantId
                     AND IsArchived = 0;";
+    }
+
+    private static string NormalizeLearnerType(string? learnerType)
+    {
+        if (string.Equals(learnerType, "FullDay", StringComparison.OrdinalIgnoreCase))
+        {
+            return "FullDay";
+        }
+
+        if (string.Equals(learnerType, "HalfDay", StringComparison.OrdinalIgnoreCase))
+        {
+            return "HalfDay";
+        }
+
+        throw new ArgumentException("LearnerType must be FullDay or HalfDay.", nameof(learnerType));
     }
 
     private static object ParseDateOfBirthOrDbNull(string? value)

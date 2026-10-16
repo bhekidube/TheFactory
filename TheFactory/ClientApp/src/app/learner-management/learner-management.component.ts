@@ -565,6 +565,7 @@ export class LearnerManagementComponent implements OnInit {
       surname: this.learnerForm.surname.trim(),
       grade: this.learnerForm.grade.trim(),
       dateOfBirth: this.learnerForm.dateOfBirth.trim(),
+      learnerType: this.learnerForm.learnerType,
       address: this.learnerForm.address,
       parentGuardian: {
         firstName: this.parentGuardianForm.firstName.trim(),
@@ -581,6 +582,7 @@ export class LearnerManagementComponent implements OnInit {
       surname: this.learnerForm.surname.trim(),
       grade: this.learnerForm.grade.trim(),
       dateOfBirth: this.learnerForm.dateOfBirth.trim(),
+      learnerType: this.learnerForm.learnerType,
       address: this.learnerForm.address,
       parentGuardian: {
         firstName: this.parentGuardianForm.firstName.trim(),
@@ -941,6 +943,7 @@ export class LearnerManagementComponent implements OnInit {
       surname: String(source.surname ?? source.Surname ?? ''),
       grade: String(source.grade ?? source.Grade ?? ''),
       dateOfBirth: String(source.dateOfBirth ?? source.DateOfBirth ?? ''),
+      learnerType: String(source.learnerType ?? source.LearnerType ?? 'FullDay'),
       address: this.normalizeAddress(source.address ?? source.Address),
       parentGuardian: {
         firstName: String(parentSource.firstName ?? parentSource.FirstName ?? ''),
@@ -960,6 +963,7 @@ export class LearnerManagementComponent implements OnInit {
       surname: '',
       grade: '',
       dateOfBirth: '',
+      learnerType: 'FullDay',
       address: this.getEmptyAddress(),
       parentGuardian: this.getEmptyParentGuardian()
     };
