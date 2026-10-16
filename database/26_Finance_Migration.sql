@@ -23,6 +23,7 @@ BEGIN
         academic_year INT NOT NULL,
         category NVARCHAR(80) NOT NULL,
         description NVARCHAR(240) NOT NULL,
+        learner_type NVARCHAR(20) NOT NULL CONSTRAINT DF_fee_structures_learner_type DEFAULT ('FullDay'),
         amount DECIMAL(18,2) NOT NULL,
         created_by INT NOT NULL,
         created_at DATETIME2(0) NOT NULL CONSTRAINT DF_fee_structures_created_at DEFAULT (SYSUTCDATETIME()),
@@ -31,9 +32,49 @@ BEGIN
         CONSTRAINT FK_fee_structures_user FOREIGN KEY (created_by) REFERENCES dbo.[User] (UserId),
         CONSTRAINT CK_fee_structures_amount CHECK (amount > 0),
         CONSTRAINT CK_fee_structures_academic_year CHECK (academic_year BETWEEN 2000 AND 2100),
-        CONSTRAINT UQ_fee_structures_school_grade_term_year_category_description
-            UNIQUE (school_id, grade, term, academic_year, category, description)
+        CONSTRAINT CK_fee_structures_learner_type CHECK (learner_type IN ('FullDay', 'HalfDay')),
+        CONSTRAINT UQ_fee_structures_school_grade_term_year_category_description_learner_type
+            UNIQUE (school_id, grade, term, academic_year, category, description, learner_type)
     );
+END;
+
+IF COL_LENGTH('institution.fee_structures', 'learner_type') IS NULL
+BEGIN
+    ALTER TABLE institution.fee_structures
+        ADD learner_type NVARCHAR(20) NOT NULL CONSTRAINT DF_fee_structures_learner_type DEFAULT ('FullDay');
+END;
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.check_constraints
+    WHERE parent_object_id = OBJECT_ID('institution.fee_structures')
+      AND name = 'CK_fee_structures_learner_type'
+)
+BEGIN
+    ALTER TABLE institution.fee_structures
+        ADD CONSTRAINT CK_fee_structures_learner_type CHECK (learner_type IN ('FullDay', 'HalfDay'));
+END;
+
+IF EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID('institution.fee_structures')
+      AND name = 'UQ_fee_structures_school_grade_term_year_category_description'
+)
+BEGIN
+    ALTER TABLE institution.fee_structures
+        DROP CONSTRAINT UQ_fee_structures_school_grade_term_year_category_description;
+END;
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID('institution.fee_structures')
+      AND name = 'UQ_fee_structures_school_grade_term_year_category_description_learner_type'
+)
+BEGIN
+    CREATE UNIQUE INDEX UQ_fee_structures_school_grade_term_year_category_description_learner_type
+        ON institution.fee_structures (school_id, grade, term, academic_year, category, description, learner_type);
 END;
 
 IF OBJECT_ID('institution.student_ledgers', 'U') IS NULL

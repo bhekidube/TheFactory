@@ -293,6 +293,12 @@
         <input type="text" name="feeDescription" [(ngModel)]="feeForm.description" maxlength="240" required />
       </label>
       <label>
+        Fee Structure
+        <select name="feeLearnerType" [(ngModel)]="feeForm.learnerType" required>
+          <option *ngFor="let option of learnerTypeOptions" [ngValue]="option">{{ option === 'FullDay' ? 'Full Day' : 'Half Day' }}</option>
+        </select>
+      </label>
+      <label>
         Amount
         <input type="number" name="feeAmount" [(ngModel)]="feeForm.amount" min="0.01" step="0.01" required />
       </label>

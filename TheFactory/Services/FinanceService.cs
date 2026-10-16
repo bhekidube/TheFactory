@@ -131,7 +131,7 @@ public sealed class FinanceService : IFinanceService
     {
         using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
         using var command = new SqlCommand(
-            @"SELECT fee_structure_id, school_id, grade, term, academic_year, category, description, amount
+            @"SELECT fee_structure_id, school_id, grade, term, academic_year, category, description, learner_type, amount
               FROM institution.fee_structures
               WHERE school_id = @SchoolId
               ORDER BY academic_year DESC, term, grade, category;",
@@ -161,6 +161,8 @@ public sealed class FinanceService : IFinanceService
         var category = request.Category.Trim();
         var description = request.Description.Trim();
 
+        var learnerType = NormalizeLearnerType(request.LearnerType);
+
         using (var duplicateCommand = new SqlCommand(
             @"SELECT 1
               FROM institution.fee_structures WITH (UPDLOCK, HOLDLOCK)
@@ -169,7 +171,8 @@ public sealed class FinanceService : IFinanceService
                 AND term = @Term
                 AND academic_year = @AcademicYear
                 AND category = @Category
-                AND description = @Description;",
+                AND description = @Description
+                AND learner_type = @LearnerType;",
             connection,
             transaction))
         {
@@ -179,6 +182,7 @@ public sealed class FinanceService : IFinanceService
             AddInt(duplicateCommand, "@AcademicYear", request.AcademicYear);
             AddString(duplicateCommand, "@Category", category, 80);
             AddString(duplicateCommand, "@Description", description, 240);
+            AddString(duplicateCommand, "@LearnerType", learnerType, 20);
             if (await duplicateCommand.ExecuteScalarAsync(cancellationToken) is not null)
             {
                 throw new DuplicateFeeStructureException();
@@ -187,9 +191,9 @@ public sealed class FinanceService : IFinanceService
 
         using var command = new SqlCommand(
             @"INSERT INTO institution.fee_structures
-                (school_id, grade, term, academic_year, category, description, amount, created_by)
+                (school_id, grade, term, academic_year, category, description, learner_type, amount, created_by)
               OUTPUT INSERTED.fee_structure_id
-              VALUES (@SchoolId, @Grade, @Term, @AcademicYear, @Category, @Description, @Amount, @RecordedBy);",
+              VALUES (@SchoolId, @Grade, @Term, @AcademicYear, @Category, @Description, @LearnerType, @Amount, @RecordedBy);",
             connection);
         command.Transaction = transaction;
         AddInt(command, "@SchoolId", schoolId);
@@ -198,6 +202,7 @@ public sealed class FinanceService : IFinanceService
         AddInt(command, "@AcademicYear", request.AcademicYear);
         AddString(command, "@Category", category, 80);
         AddString(command, "@Description", description, 240);
+        AddString(command, "@LearnerType", learnerType, 20);
         AddDecimal(command, "@Amount", request.Amount);
         AddInt(command, "@RecordedBy", recordedBy);
         var feeStructureId = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken));
@@ -354,22 +359,24 @@ public sealed class FinanceService : IFinanceService
         try
         {
             string grade;
+            string learnerType;
             using (var feeCommand = new SqlCommand(
-                @"SELECT grade FROM institution.fee_structures WITH (UPDLOCK, HOLDLOCK)
+                @"SELECT grade, learner_type FROM institution.fee_structures WITH (UPDLOCK, HOLDLOCK)
                   WHERE fee_structure_id = @FeeStructureId AND school_id = @SchoolId;",
                 connection,
                 transaction))
             {
                 AddInt(feeCommand, "@FeeStructureId", feeStructureId);
                 AddInt(feeCommand, "@SchoolId", schoolId);
-                var feeGrade = await feeCommand.ExecuteScalarAsync(cancellationToken);
-                if (feeGrade is null || feeGrade == DBNull.Value)
+                using var feeReader = await feeCommand.ExecuteReaderAsync(cancellationToken);
+                if (!await feeReader.ReadAsync(cancellationToken))
                 {
                     await transaction.RollbackAsync(cancellationToken);
                     return null;
                 }
 
-                grade = Convert.ToString(feeGrade) ?? string.Empty;
+                grade = feeReader.IsDBNull(0) ? string.Empty : feeReader.GetString(0);
+                learnerType = feeReader.IsDBNull(1) ? "FullDay" : feeReader.GetString(1);
             }
 
             using var command = new SqlCommand(
@@ -387,6 +394,7 @@ public sealed class FinanceService : IFinanceService
                   WHERE learner.TenantId = @SchoolId
                     AND learner.Grade = @Grade
                     AND ISNULL(learner.IsArchived, 0) = 0
+                    AND ISNULL(learner.LearnerType, 'FullDay') = @LearnerType
                     AND NOT EXISTS (
                         SELECT 1 FROM institution.student_ledgers AS existing
                         WHERE existing.school_id = @SchoolId
@@ -401,6 +409,7 @@ public sealed class FinanceService : IFinanceService
             AddInt(command, "@FeeStructureId", feeStructureId);
             AddInt(command, "@RecordedBy", recordedBy);
             AddString(command, "@Grade", grade, 100);
+            AddString(command, "@LearnerType", NormalizeLearnerType(learnerType), 20);
 
             var learnerIds = new List<int>();
             using (var reader = await command.ExecuteReaderAsync(cancellationToken))
@@ -584,6 +593,27 @@ public sealed class FinanceService : IFinanceService
         AcademicYear = reader.GetInt32(4),
         Category = reader.GetString(5),
         Description = reader.GetString(6),
-        Amount = reader.GetDecimal(7)
+        LearnerType = reader.IsDBNull(7) ? "FullDay" : NormalizeLearnerType(reader.GetString(7)),
+        Amount = reader.GetDecimal(8)
     };
+
+    private static string NormalizeLearnerType(string? learnerType)
+    {
+        if (string.IsNullOrWhiteSpace(learnerType))
+        {
+            return "FullDay";
+        }
+
+        if (string.Equals(learnerType, "FullDay", StringComparison.OrdinalIgnoreCase))
+        {
+            return "FullDay";
+        }
+
+        if (string.Equals(learnerType, "HalfDay", StringComparison.OrdinalIgnoreCase))
+        {
+            return "HalfDay";
+        }
+
+        throw new ArgumentException("LearnerType must be FullDay or HalfDay.", nameof(learnerType));
+    }
 }

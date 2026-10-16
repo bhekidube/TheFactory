@@ -41,6 +41,7 @@ export class FinanceDashboardComponent implements OnInit {
 
   paymentForm = this.emptyTransactionForm();
   feeForm = this.emptyFeeForm();
+  readonly learnerTypeOptions = ['FullDay', 'HalfDay'];
   selectedFeeStructureId = 0;
   selectedFeeStructure: FeeStructureDto | null = null;
 
@@ -395,6 +396,7 @@ export class FinanceDashboardComponent implements OnInit {
       && !!this.feeForm.term.trim()
       && !!this.feeForm.category.trim()
       && !!this.feeForm.description.trim()
+      && !!this.feeForm.learnerType.trim()
       && Number.isInteger(Number(this.feeForm.academicYear))
       && Number(this.feeForm.amount) > 0;
   }
@@ -435,6 +437,7 @@ export class FinanceDashboardComponent implements OnInit {
       academicYear: new Date().getFullYear(),
       category: 'Tuition',
       description: '',
+      learnerType: 'FullDay',
       amount: 0
     };
   }

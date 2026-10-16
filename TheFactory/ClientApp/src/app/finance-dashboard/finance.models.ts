@@ -23,6 +23,7 @@ export interface FeeStructureDto {
   academicYear: number;
   category: string;
   description: string;
+  learnerType: string;
   amount: number;
 }
 
@@ -32,6 +33,7 @@ export interface FeeStructureUpsertRequest {
   academicYear: number;
   category: string;
   description: string;
+  learnerType: string;
   amount: number;
 }
 

@@ -275,15 +275,23 @@ public sealed class FinanceController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.Grade)
             || string.IsNullOrWhiteSpace(request.Term)
             || string.IsNullOrWhiteSpace(request.Category)
-            || string.IsNullOrWhiteSpace(request.Description))
+            || string.IsNullOrWhiteSpace(request.Description)
+            || string.IsNullOrWhiteSpace(request.LearnerType))
         {
-            return "Grade, term, category, and description are required.";
+            return "Grade, term, category, description, and learner type are required.";
         }
 
         if (request.Grade.Length > 100 || request.Term.Length > 40
-            || request.Category.Length > 80 || request.Description.Length > 240)
+            || request.Category.Length > 80 || request.Description.Length > 240
+            || request.LearnerType.Length > 20)
         {
             return "Fee structure text fields exceed their maximum lengths.";
+        }
+
+        if (!string.Equals(request.LearnerType, "FullDay", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(request.LearnerType, "HalfDay", StringComparison.OrdinalIgnoreCase))
+        {
+            return "LearnerType must be FullDay or HalfDay.";
         }
 
         if (request.AcademicYear is < 2000 or > 2100 || request.Amount <= 0 || request.Amount > 9999999999999999.99m)

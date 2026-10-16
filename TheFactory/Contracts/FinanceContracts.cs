@@ -28,6 +28,7 @@ public sealed class FeeStructureDto
     public int AcademicYear { get; set; }
     public string Category { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    public string LearnerType { get; set; } = "FullDay";
     public decimal Amount { get; set; }
 }
 
@@ -38,6 +39,7 @@ public sealed class FeeStructureUpsertRequest
     public int AcademicYear { get; set; }
     public string Category { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    public string LearnerType { get; set; } = "FullDay";
     public decimal Amount { get; set; }
 }
 
