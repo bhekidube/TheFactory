@@ -74,6 +74,12 @@
       [routerLinkActive]="['is-active']">
       Full Learner Admin
     </a>
+    <a
+      class="school-nav-link"
+      [routerLink]="['/learning/schools', schoolId, 'documents']"
+      [routerLinkActive]="['is-active']">
+      Documents
+    </a>
   </nav>
 
   <div class="state-card" *ngIf="loading">Loading school context...</div>

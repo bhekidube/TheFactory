@@ -18,6 +18,7 @@ import { WorkManagementComponent } from './work-management/work-management.compo
 import { WorkDetailComponent } from './work-detail/work-detail.component';
 import { StaffManagementComponent } from './staff-management/staff-management.component';
 import { FinanceDashboardComponent } from './finance-dashboard/finance-dashboard.component';
+import { DocumentsComponent } from './documents/documents.component';
 import { LearningAccessGuard } from './guards/learning-access.guard';
 
 const routes: Routes = [
@@ -39,7 +40,8 @@ const routes: Routes = [
       { path: 'curriculum', component: CurriculumViewComponent },
       { path: 'work', component: WorkManagementComponent },
       { path: 'staff', component: StaffManagementComponent },
-      { path: 'finance', component: FinanceDashboardComponent }
+      { path: 'finance', component: FinanceDashboardComponent },
+      { path: 'documents', component: DocumentsComponent }
     ]
   },
   { path: 'admin-screen', component: AdminScreenComponent },

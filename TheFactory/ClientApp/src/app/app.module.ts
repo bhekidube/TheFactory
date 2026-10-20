@@ -49,6 +49,7 @@ import { WorkManagementComponent } from './work-management/work-management.compo
 import { WorkDetailComponent } from './work-detail/work-detail.component';
 import { StaffManagementComponent } from './staff-management/staff-management.component';
 import { FinanceDashboardComponent } from './finance-dashboard/finance-dashboard.component';
+import { DocumentsComponent } from './documents/documents.component';
 import { TableSortPipe } from './table-sorting';
 
 @NgModule({
@@ -83,6 +84,7 @@ import { TableSortPipe } from './table-sorting';
     WorkDetailComponent,
     StaffManagementComponent,
     FinanceDashboardComponent,
+    DocumentsComponent,
     TableSortPipe
   ],
   imports: [

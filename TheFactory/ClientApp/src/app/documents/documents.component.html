@@ -1,0 +1,70 @@
+<section class="documents-page" aria-labelledby="documents-heading">
+  <header class="documents-header">
+    <div>
+      <p class="eyebrow">School administration</p>
+      <h2 id="documents-heading">Documents</h2>
+      <p>Upload a document and capture a signature for your records.</p>
+    </div>
+  </header>
+
+  <form class="documents-card" (ngSubmit)="saveAndUpload()" #documentsForm="ngForm">
+    <div class="form-field">
+      <label for="document-title">Document title</label>
+      <input
+        id="document-title"
+        name="title"
+        type="text"
+        [(ngModel)]="title"
+        placeholder="e.g. Learner consent form"
+        maxlength="160"
+        required>
+    </div>
+
+    <div class="form-field">
+      <label for="document-file">Choose a document</label>
+      <input
+        id="document-file"
+        name="documentFile"
+        type="file"
+        accept=".pdf,.doc,.docx,image/*"
+        (change)="onFileSelected($event)"
+        required>
+      <span class="field-hint">PDF, Word (.doc or .docx), or an image file.</span>
+      <span class="selected-file" *ngIf="selectedFile">{{ selectedFile.name }}</span>
+    </div>
+
+    <section class="signature-section" aria-labelledby="signature-heading">
+      <div class="signature-heading">
+        <div>
+          <h3 id="signature-heading">Signature</h3>
+          <p>Sign using your finger, stylus, or mouse.</p>
+        </div>
+        <button class="secondary-button" type="button" (click)="clearSignature()">Clear Signature</button>
+      </div>
+
+      <div class="signature-frame">
+        <canvas
+          #signatureCanvas
+          aria-label="Draw your signature here"
+          (pointerdown)="onPointerDown($event)"
+          (pointermove)="onPointerMove($event)"
+          (pointerup)="onPointerUp($event)"
+          (pointercancel)="onPointerUp($event)"
+          (lostpointercapture)="onPointerUp($event)">
+          Your browser does not support canvas signature input.
+        </canvas>
+        <span class="signature-placeholder" *ngIf="!signatureDrawn">Sign here</span>
+      </div>
+    </section>
+
+    <p class="documents-status" *ngIf="statusMessage" [class.error]="statusType === 'error'" [class.success]="statusType === 'success'" role="status">
+      {{ statusMessage }}
+    </p>
+
+    <div class="documents-actions">
+      <button class="primary-button" type="submit" [disabled]="!documentsForm.form.valid || !selectedFile">
+        Save &amp; Upload
+      </button>
+    </div>
+  </form>
+</section>
