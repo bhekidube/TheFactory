@@ -11,6 +11,7 @@ import {
   ViewChild
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 interface SignaturePoint {
   x: number;
@@ -29,6 +30,9 @@ export class DocumentsComponent implements AfterViewInit, OnDestroy {
 
   title = '';
   selectedFile: File | null = null;
+  imagePreviewUrl: string | null = null;
+  pdfPreviewUrl: SafeResourceUrl | null = null;
+  isPdfPreview = false;
   statusMessage = '';
   statusType: 'error' | 'success' = 'success';
 
@@ -37,8 +41,12 @@ export class DocumentsComponent implements AfterViewInit, OnDestroy {
   private context: CanvasRenderingContext2D | null = null;
   private activeTouchId: number | null = null;
   private resizeObserver: ResizeObserver | null = null;
+  private filePreviewObjectUrl: string | null = null;
 
-  constructor(@Inject(PLATFORM_ID) private readonly platformId: object) {}
+  constructor(
+    @Inject(PLATFORM_ID) private readonly platformId: object,
+    private readonly sanitizer: DomSanitizer
+  ) {}
 
   get signatureDrawn(): boolean {
     return this.strokes.length > 0;
@@ -64,12 +72,14 @@ export class DocumentsComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.resizeObserver?.disconnect();
+    this.clearFilePreview();
   }
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
     this.statusMessage = '';
+    this.clearFilePreview();
 
     if (!file) {
       this.selectedFile = null;
@@ -84,6 +94,14 @@ export class DocumentsComponent implements AfterViewInit, OnDestroy {
     }
 
     this.selectedFile = file;
+    if (isPlatformBrowser(this.platformId) && this.isPdfFile(file)) {
+      this.filePreviewObjectUrl = URL.createObjectURL(file);
+      this.isPdfPreview = true;
+      this.pdfPreviewUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.filePreviewObjectUrl);
+    } else if (isPlatformBrowser(this.platformId) && this.isImageFile(file)) {
+      this.filePreviewObjectUrl = URL.createObjectURL(file);
+      this.imagePreviewUrl = this.filePreviewObjectUrl;
+    }
   }
 
   onPointerDown(event: PointerEvent): void {
@@ -289,6 +307,27 @@ export class DocumentsComponent implements AfterViewInit, OnDestroy {
     return documentExtensions.includes(extension ?? '')
       || imageExtensions.includes(extension ?? '')
       || file.type.startsWith('image/');
+  }
+
+  private isPdfFile(file: File): boolean {
+    return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+  }
+
+  private isImageFile(file: File): boolean {
+    const imageExtensions = ['bmp', 'gif', 'heic', 'heif', 'jpeg', 'jpg', 'png', 'svg', 'tif', 'tiff', 'webp'];
+    const extension = file.name.split('.').pop()?.toLowerCase();
+    return file.type.startsWith('image/') || imageExtensions.includes(extension ?? '');
+  }
+
+  private clearFilePreview(): void {
+    if (this.filePreviewObjectUrl && isPlatformBrowser(this.platformId)) {
+      URL.revokeObjectURL(this.filePreviewObjectUrl);
+    }
+
+    this.filePreviewObjectUrl = null;
+    this.imagePreviewUrl = null;
+    this.pdfPreviewUrl = null;
+    this.isPdfPreview = false;
   }
 
   private setStatus(message: string, type: 'error' | 'success'): void {
