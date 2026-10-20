@@ -5,6 +5,7 @@ import {
   EventEmitter,
   HostListener,
   Inject,
+  OnDestroy,
   Output,
   PLATFORM_ID,
   ViewChild
@@ -21,8 +22,9 @@ interface SignaturePoint {
   templateUrl: './documents.component.html',
   styleUrls: ['./documents.component.css']
 })
-export class DocumentsComponent implements AfterViewInit {
+export class DocumentsComponent implements AfterViewInit, OnDestroy {
   @ViewChild('signatureCanvas') private signatureCanvas!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('signatureFrame') private signatureFrame!: ElementRef<HTMLDivElement>;
   @Output() readonly uploadReady = new EventEmitter<FormData>();
 
   title = '';
@@ -33,6 +35,8 @@ export class DocumentsComponent implements AfterViewInit {
   private readonly strokes: SignaturePoint[][] = [];
   private currentStroke: SignaturePoint[] | null = null;
   private context: CanvasRenderingContext2D | null = null;
+  private activeTouchId: number | null = null;
+  private resizeObserver: ResizeObserver | null = null;
 
   constructor(@Inject(PLATFORM_ID) private readonly platformId: object) {}
 
@@ -52,6 +56,14 @@ export class DocumentsComponent implements AfterViewInit {
     }
 
     this.resizeCanvas();
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver(() => this.resizeCanvas());
+      this.resizeObserver.observe(this.signatureFrame.nativeElement);
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.resizeObserver?.disconnect();
   }
 
   onFileSelected(event: Event): void {
@@ -75,16 +87,13 @@ export class DocumentsComponent implements AfterViewInit {
   }
 
   onPointerDown(event: PointerEvent): void {
-    if (!this.context) {
+    if (!this.context || this.currentStroke || event.pointerType === 'touch') {
       return;
     }
 
     event.preventDefault();
-    const point = this.getPoint(event);
-    this.currentStroke = [point];
-    this.strokes.push(this.currentStroke);
+    this.startStroke(event.clientX, event.clientY);
     this.signatureCanvas.nativeElement.setPointerCapture(event.pointerId);
-    this.redrawSignature();
   }
 
   onPointerMove(event: PointerEvent): void {
@@ -93,13 +102,49 @@ export class DocumentsComponent implements AfterViewInit {
     }
 
     event.preventDefault();
-    this.currentStroke.push(this.getPoint(event));
-    this.redrawSignature();
+    this.appendPoint(event.clientX, event.clientY);
   }
 
   onPointerUp(event: PointerEvent): void {
     if (this.currentStroke) {
       event.preventDefault();
+      this.currentStroke = null;
+    }
+  }
+
+  onTouchStart(event: TouchEvent): void {
+    event.preventDefault();
+    if (!this.context || this.currentStroke || event.changedTouches.length === 0) {
+      return;
+    }
+
+    const touch = event.changedTouches[0];
+    this.activeTouchId = touch.identifier;
+    this.startStroke(touch.clientX, touch.clientY);
+  }
+
+  onTouchMove(event: TouchEvent): void {
+    event.preventDefault();
+    if (this.activeTouchId === null || !this.currentStroke) {
+      return;
+    }
+
+    const touch = Array.from(event.touches).find(item => item.identifier === this.activeTouchId);
+    if (touch) {
+      this.appendPoint(touch.clientX, touch.clientY);
+    }
+  }
+
+  onTouchEnd(event: TouchEvent): void {
+    event.preventDefault();
+    if (this.activeTouchId === null) {
+      return;
+    }
+
+    const touchEnded = Array.from(event.changedTouches)
+      .some(touch => touch.identifier === this.activeTouchId);
+    if (touchEnded) {
+      this.activeTouchId = null;
       this.currentStroke = null;
     }
   }
@@ -149,6 +194,13 @@ export class DocumentsComponent implements AfterViewInit {
     }
   }
 
+  @HostListener('window:orientationchange')
+  onOrientationChange(): void {
+    if (isPlatformBrowser(this.platformId) && this.context) {
+      window.requestAnimationFrame(() => this.resizeCanvas());
+    }
+  }
+
   private resizeCanvas(): void {
     const canvas = this.signatureCanvas.nativeElement;
     const bounds = canvas.getBoundingClientRect();
@@ -163,12 +215,27 @@ export class DocumentsComponent implements AfterViewInit {
     this.redrawSignature();
   }
 
-  private getPoint(event: PointerEvent): SignaturePoint {
+  private startStroke(clientX: number, clientY: number): void {
+    this.currentStroke = [this.getPoint(clientX, clientY)];
+    this.strokes.push(this.currentStroke);
+    this.redrawSignature();
+  }
+
+  private appendPoint(clientX: number, clientY: number): void {
+    if (!this.currentStroke) {
+      return;
+    }
+
+    this.currentStroke.push(this.getPoint(clientX, clientY));
+    this.redrawSignature();
+  }
+
+  private getPoint(clientX: number, clientY: number): SignaturePoint {
     const canvas = this.signatureCanvas.nativeElement;
     const bounds = canvas.getBoundingClientRect();
     return {
-      x: (event.clientX - bounds.left) / bounds.width,
-      y: (event.clientY - bounds.top) / bounds.height
+      x: (clientX - bounds.left) / bounds.width,
+      y: (clientY - bounds.top) / bounds.height
     };
   }
 

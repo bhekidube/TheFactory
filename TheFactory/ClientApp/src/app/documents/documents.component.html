@@ -42,7 +42,13 @@
         <button class="secondary-button" type="button" (click)="clearSignature()">Clear Signature</button>
       </div>
 
-      <div class="signature-frame">
+      <div
+        #signatureFrame
+        class="signature-frame"
+        (touchstart)="onTouchStart($event)"
+        (touchmove)="onTouchMove($event)"
+        (touchend)="onTouchEnd($event)"
+        (touchcancel)="onTouchEnd($event)">
         <canvas
           #signatureCanvas
           aria-label="Draw your signature here"
