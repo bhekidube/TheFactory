@@ -3,7 +3,7 @@
 <!--  <rect width="800" height="150" fill="#0D4DBE"/> -->
   
   <!-- WiFi DIRECTLY BEHIND the o -->
-  <g transform="translate(411.5, 42)">
+  <g transform="translate(409.5, 42)">
     <path d="M -55 -13.75 Q 0 -68.75 55 -13.75" fill="none" stroke="#ffffff" stroke-width="12" />
     <path d="M -20 -5 Q 0 -20 20 -5" fill="none" stroke="#ffffff" stroke-width="12" />
   </g>
