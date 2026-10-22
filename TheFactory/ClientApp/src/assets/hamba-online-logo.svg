@@ -4,7 +4,7 @@
   
   <!-- WiFi DIRECTLY BEHIND the o -->
   <g transform="translate(412.5, 72)">
-  <path d="M -82 -18.75 Q 0 -117.50 82 -18.75" fill="none" stroke="#ffffff" stroke-width="12" />
+  <path d="M -82 -20.75 Q 0 -119.50 82 -20.75" fill="none" stroke="#ffffff" stroke-width="12" />
     <path d="M -50 -13.75 Q 0 -68.75 50 -13.75" fill="none" stroke="#ffffff" stroke-width="12" />
     <path d="M -20 -5 Q 0 -20 20 -5" fill="none" stroke="#ffffff" stroke-width="12" />
   </g>
