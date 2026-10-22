@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="170" viewBox="0 0 800 150" xmlns="http://www.w3.org/2000/svg">
+<!--  <rect width="800" height="150" fill="#0D4DBE"/> -->
+  
+  <!-- WiFi DIRECTLY BEHIND the o -->
+  <g transform="translate(339, 48)">
+    <path d="M -55 -13.75 Q 0 -68.75 55 -13.75" fill="none" stroke="#c2f6ff" stroke-width="12" />
+    <path d="M -20 -5 Q 0 -25 20 -5" fill="none" stroke="#c2f6ff" stroke-width="12" />
+  </g>
+  
+  <text x="20" y="105" font-family="Agrandir" font-size="100" font-weight="900">
+    <tspan fill="#c1ff72">hamba</tspan><tspan fill="#ff751f">online</tspan>
+  </text>
+</svg>
