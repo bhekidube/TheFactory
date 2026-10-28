@@ -1,15 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="800" height="170" viewBox="0 0 800 150" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-<!--  <rect width="800" height="150" fill="#0D4DBE"/> -->
-  
-  <!-- WiFi DIRECTLY BEHIND the o -->
-  <g transform="translate(412.5, 72)">
-  <path d="M -70 -28.75 Q 0 -105.50 70 -28.75" fill="none" stroke="#ffffff" stroke-width="12" />
-    <path d="M -50 -13.75 Q 0 -68.75 50 -13.75" fill="none" stroke="#ffffff" stroke-width="12" />
-    <path d="M -28 -3.75 Q 0 -32 28 -3.75" fill="none" stroke="#ffffff" stroke-width="12" />
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="250" viewBox="0 0 1000 250">
+  <rect width="1000" height="250" fill="#004aad"/>
+  <g stroke="#8ABDE0" stroke-width="14" stroke-linecap="round" fill="none">
+    <path d="M 340 50 Q 410 -15 480 50"/>
+    <path d="M 360 75 Q 410 20 460 75"/>
+    <path d="M 380 100 Q 410 60 440 100"/>
   </g>
-  
-  <text x="20" y="145" font-family="Agrandir" font-size="120" font-weight="900">
-    <tspan fill="#c1ff72">hamba</tspan><tspan fill="#c2f6ff">online</tspan>
+  <text x="30" y="165" font-family="Agrandir, Inter, sans-serif" font-weight="800" font-size="110" letter-spacing="-2">
+    <tspan fill="#B5DB43">hamba</tspan><tspan fill="#FF7F1E">o</tspan><tspan fill="#B5DB43">nline</tspan>
   </text>
 </svg>
