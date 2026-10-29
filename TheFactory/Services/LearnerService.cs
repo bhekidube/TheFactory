@@ -1732,6 +1732,160 @@ public sealed class LearnerService : ILearnerService
         return detail;
     }
 
+    public async Task<LearnerDocumentDto?> CreateLearnerDocumentAsync(
+        int learnerId,
+        string documentName,
+        string documentType,
+        string filePath,
+        CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        var tenantId = await ResolveTenantIdAsync(connection, cancellationToken);
+        if (!tenantId.HasValue)
+        {
+            return null;
+        }
+
+        using var command = new SqlCommand(
+            @"INSERT INTO institution.LearnerDocuments (LearnerId, DocumentName, DocumentType, Filepath)
+              OUTPUT INSERTED.DocumentId, INSERTED.LearnerId, INSERTED.DocumentName, INSERTED.DocumentType, INSERTED.UploadedAt
+              SELECT Id, @DocumentName, @DocumentType, @Filepath
+              FROM institution.Learner
+              WHERE Id = @LearnerId
+                AND TenantId = @TenantId
+                AND IsArchived = 0;",
+            connection);
+        command.Parameters.Add("@LearnerId", SqlDbType.Int).Value = learnerId;
+        command.Parameters.Add("@TenantId", SqlDbType.Int).Value = tenantId.Value;
+        command.Parameters.Add("@DocumentName", SqlDbType.NVarChar, 255).Value = documentName;
+        command.Parameters.Add("@DocumentType", SqlDbType.NVarChar, 100).Value = documentType;
+        command.Parameters.Add("@Filepath", SqlDbType.NVarChar, 500).Value = filePath;
+
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        return new LearnerDocumentDto
+        {
+            DocumentId = reader.GetInt32(0),
+            LearnerId = reader.GetInt32(1),
+            DocumentName = reader.GetString(2),
+            DocumentType = reader.GetString(3),
+            UploadedAt = reader.GetDateTime(4)
+        };
+    }
+
+    public async Task<IReadOnlyCollection<LearnerDocumentDto>?> GetLearnerDocumentsAsync(
+        int learnerId,
+        CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        var tenantId = await ResolveTenantIdAsync(connection, cancellationToken);
+        if (!tenantId.HasValue)
+        {
+            return null;
+        }
+
+        using var command = new SqlCommand(
+            @"SELECT d.DocumentId, d.LearnerId, d.DocumentName, d.DocumentType, d.UploadedAt
+              FROM institution.Learner AS l
+              LEFT JOIN institution.LearnerDocuments AS d ON d.LearnerId = l.Id
+              WHERE l.Id = @LearnerId
+                AND l.TenantId = @TenantId
+                AND l.IsArchived = 0
+              ORDER BY d.UploadedAt DESC;",
+            connection);
+        command.Parameters.Add("@LearnerId", SqlDbType.Int).Value = learnerId;
+        command.Parameters.Add("@TenantId", SqlDbType.Int).Value = tenantId.Value;
+
+        var documents = new List<LearnerDocumentDto>();
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        do
+        {
+            if (reader.IsDBNull(0))
+            {
+                continue;
+            }
+
+            documents.Add(new LearnerDocumentDto
+            {
+                DocumentId = reader.GetInt32(0),
+                LearnerId = reader.GetInt32(1),
+                DocumentName = reader.GetString(2),
+                DocumentType = reader.GetString(3),
+                UploadedAt = reader.GetDateTime(4)
+            });
+        } while (await reader.ReadAsync(cancellationToken));
+
+        return documents;
+    }
+
+    public async Task<string?> GetLearnerDocumentFilePathAsync(
+        int learnerId,
+        int documentId,
+        CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        var tenantId = await ResolveTenantIdAsync(connection, cancellationToken);
+        if (!tenantId.HasValue)
+        {
+            return null;
+        }
+
+        using var command = new SqlCommand(
+            @"SELECT d.Filepath
+              FROM institution.LearnerDocuments AS d
+              INNER JOIN institution.Learner AS l ON l.Id = d.LearnerId
+              WHERE d.DocumentId = @DocumentId
+                AND l.Id = @LearnerId
+                AND l.TenantId = @TenantId
+                AND l.IsArchived = 0;",
+            connection);
+        command.Parameters.Add("@DocumentId", SqlDbType.Int).Value = documentId;
+        command.Parameters.Add("@LearnerId", SqlDbType.Int).Value = learnerId;
+        command.Parameters.Add("@TenantId", SqlDbType.Int).Value = tenantId.Value;
+
+        var filePath = await command.ExecuteScalarAsync(cancellationToken);
+        return filePath is null || filePath == DBNull.Value ? null : Convert.ToString(filePath);
+    }
+
+    public async Task<string?> DeleteLearnerDocumentAsync(
+        int learnerId,
+        int documentId,
+        CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        var tenantId = await ResolveTenantIdAsync(connection, cancellationToken);
+        if (!tenantId.HasValue)
+        {
+            return null;
+        }
+
+        using var command = new SqlCommand(
+            @"DELETE d
+              OUTPUT DELETED.Filepath
+              FROM institution.LearnerDocuments AS d
+              INNER JOIN institution.Learner AS l ON l.Id = d.LearnerId
+              WHERE d.DocumentId = @DocumentId
+                AND l.Id = @LearnerId
+                AND l.TenantId = @TenantId
+                AND l.IsArchived = 0;",
+            connection);
+        command.Parameters.Add("@DocumentId", SqlDbType.Int).Value = documentId;
+        command.Parameters.Add("@LearnerId", SqlDbType.Int).Value = learnerId;
+        command.Parameters.Add("@TenantId", SqlDbType.Int).Value = tenantId.Value;
+
+        var filePath = await command.ExecuteScalarAsync(cancellationToken);
+        return filePath is null || filePath == DBNull.Value ? null : Convert.ToString(filePath);
+    }
+
     public async Task<IReadOnlyCollection<LearnerAcademicRecordDto>> GetLearnerAcademicRecordsAsync(int learnerId, CancellationToken cancellationToken = default)
     {
         using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);

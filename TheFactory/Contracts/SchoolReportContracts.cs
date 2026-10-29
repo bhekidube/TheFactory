@@ -39,6 +39,15 @@ public sealed class StaffDocumentDto
     public DateTime UploadedAt { get; set; }
 }
 
+public sealed class LearnerDocumentDto
+{
+    public int DocumentId { get; set; }
+    public int LearnerId { get; set; }
+    public string DocumentName { get; set; } = string.Empty;
+    public string DocumentType { get; set; } = string.Empty;
+    public DateTime UploadedAt { get; set; }
+}
+
 public sealed class StaffUpsertRequest
 {
     public string NationalId { get; set; } = string.Empty;

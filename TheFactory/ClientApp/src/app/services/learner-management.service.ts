@@ -17,6 +17,7 @@ import {
   UpdateClassRequestDto,
   LearnerLookupDto,
   LearnerDto,
+  LearnerDocumentDto,
   LearnerDetailDto,
   LearnerAcademicRecordDto,
   LearnerReportPreviewDto,
@@ -155,6 +156,31 @@ export class LearnerManagementService {
       formData,
       this.getRequestOptions()
     );
+  }
+
+  getLearnerDocuments(learnerId: number): Observable<LearnerDocumentDto[]> {
+    return this.http.get<LearnerDocumentDto[]>(`${this.baseUrl}/learners/${learnerId}/documents`, this.getRequestOptions());
+  }
+
+  uploadLearnerDocument(learnerId: number, formData: FormData): Observable<LearnerDocumentDto> {
+    return this.http.post<LearnerDocumentDto>(
+      `${this.baseUrl}/learners/${learnerId}/documents`,
+      formData,
+      this.getRequestOptions()
+    );
+  }
+
+  deleteLearnerDocument(learnerId: number, documentId: number): Observable<void> {
+    return this.http.delete<void>(
+      `${this.baseUrl}/learners/${learnerId}/documents/${documentId}`,
+      this.getRequestOptions()
+    );
+  }
+
+  getLearnerDocumentDownloadUrl(learnerId: number, documentId: number): string {
+    const tenantId = localStorage.getItem('selectedTenantId');
+    const tenantQuery = tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : '';
+    return `${this.baseUrl}/learners/${learnerId}/documents/${documentId}/download${tenantQuery}`;
   }
 
   getActiveClassCountForSchool(schoolId: number): Observable<ActiveClassCountDto> {

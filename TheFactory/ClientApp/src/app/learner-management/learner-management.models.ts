@@ -53,6 +53,14 @@ export interface StaffDocumentDto {
   uploadedAt: string;
 }
 
+export interface LearnerDocumentDto {
+  documentId: number;
+  learnerId: number;
+  documentName: string;
+  documentType: string;
+  uploadedAt: string;
+}
+
 export interface StaffUpsertRequest {
   nationalId: string;
   userId?: number | null;

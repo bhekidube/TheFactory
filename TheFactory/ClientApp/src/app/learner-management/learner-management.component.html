@@ -198,6 +198,7 @@
               <div class="actions-row d-flex justify-content-end gap-2">
                 <button type="button" class="link-btn" *ngIf="isReportsRoute" (click)="viewReport(learner)">View Report</button>
                 <button type="button" class="link-btn" *ngIf="!isReportsRoute" (click)="openEditLearner(learner)">Edit</button>
+                <button type="button" class="link-btn" *ngIf="!isReportsRoute" (click)="openLearnerDocuments(learner)">Documents</button>
                 <button
                   type="button"
                   class="danger-link-btn"
@@ -213,6 +214,95 @@
       </table>
     </div>
   </section>
+
+  <div class="overlay" *ngIf="showLearnerDocuments">
+    <div class="panel learner-documents-panel">
+      <h3>Learner Documents</h3>
+      <p *ngIf="selectedLearnerForDocuments">
+        {{ selectedLearnerForDocuments.firstName }} {{ selectedLearnerForDocuments.surname }}
+      </p>
+
+      <div class="learner-document-list">
+        <h4>Uploaded Documents</h4>
+        <div *ngIf="loadingLearnerDocuments" class="state-card">Loading documents...</div>
+        <div *ngIf="!loadingLearnerDocuments && learnerDocuments.length === 0" class="state-card">
+          No documents have been uploaded for this learner.
+        </div>
+        <div class="table-wrap" *ngIf="!loadingLearnerDocuments && learnerDocuments.length > 0">
+          <table>
+            <thead>
+              <tr>
+                <th>Document</th>
+                <th>Type</th>
+                <th>Uploaded</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let document of learnerDocuments">
+                <td>{{ document.documentName }}</td>
+                <td>{{ document.documentType }}</td>
+                <td>{{ document.uploadedAt | date:'mediumDate' }}</td>
+                <td class="text-end">
+                  <a
+                    class="link-btn"
+                    [href]="getLearnerDocumentDownloadUrl(document.documentId)"
+                    target="_blank"
+                    rel="noopener noreferrer">View</a>
+                  <button
+                    type="button"
+                    class="danger-link-btn"
+                    [disabled]="deletingLearnerDocumentId !== null"
+                    (click)="deleteLearnerDocument(document)">
+                    {{ deletingLearnerDocumentId === document.documentId ? 'Deleting...' : 'Delete' }}
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <form (ngSubmit)="uploadLearnerDocument()" novalidate>
+        <h4>Upload Document</h4>
+        <label>
+          Document Name
+          <input type="text" name="learnerDocumentName" [(ngModel)]="learnerDocumentName" maxlength="255" required />
+        </label>
+        <label>
+          Document Type
+          <select name="learnerDocumentType" [(ngModel)]="learnerDocumentType" required>
+            <option value="Contract">Contract</option>
+            <option value="Certification">Certification</option>
+            <option value="Identification">Identification</option>
+            <option value="Other">Other</option>
+          </select>
+        </label>
+        <label>
+          File
+          <input
+            type="file"
+            name="learnerDocumentFile"
+            accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+            (change)="onLearnerDocumentFileSelected($event)"
+            required />
+          <span class="field-error">PDF, PNG, JPEG, DOC, or DOCX; maximum 10 MB.</span>
+        </label>
+        <div class="message error" *ngIf="learnerDocumentErrorMessage">{{ learnerDocumentErrorMessage }}</div>
+        <div class="message success" *ngIf="learnerDocumentSuccessMessage">{{ learnerDocumentSuccessMessage }}</div>
+        <div class="panel-actions">
+          <button type="submit" class="primary-btn" [disabled]="uploadingLearnerDocument">
+            {{ uploadingLearnerDocument ? 'Uploading...' : 'Upload Document' }}
+          </button>
+          <button
+            type="button"
+            class="secondary-btn"
+            [disabled]="uploadingLearnerDocument || deletingLearnerDocumentId !== null"
+            (click)="closeLearnerDocuments()">Close</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <div class="message error" *ngIf="errorMessage">{{ errorMessage }}</div>
   <div class="message success" *ngIf="successMessage">{{ successMessage }}</div>

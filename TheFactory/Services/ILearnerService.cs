@@ -33,6 +33,10 @@ public interface ILearnerService
     Task<WorkDto?> UpdateWorkItemAsync(int workId, WorkUpsertRequestDto request, CancellationToken cancellationToken = default);
     Task<bool> ArchiveWorkItemAsync(int workId, CancellationToken cancellationToken = default);
     Task<LearnerDto?> GetLearnerByIdAsync(int learnerId, CancellationToken cancellationToken = default);
+    Task<LearnerDocumentDto?> CreateLearnerDocumentAsync(int learnerId, string documentName, string documentType, string filePath, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<LearnerDocumentDto>?> GetLearnerDocumentsAsync(int learnerId, CancellationToken cancellationToken = default);
+    Task<string?> GetLearnerDocumentFilePathAsync(int learnerId, int documentId, CancellationToken cancellationToken = default);
+    Task<string?> DeleteLearnerDocumentAsync(int learnerId, int documentId, CancellationToken cancellationToken = default);
     Task<LearnerDto> CreateLearnerAsync(LearnerDto learner, CancellationToken cancellationToken = default);
     Task<LearnerDto?> UpdateLearnerAsync(int learnerId, LearnerDto learner, CancellationToken cancellationToken = default);
     Task<bool> ArchiveLearnerAsync(int learnerId, CancellationToken cancellationToken = default);

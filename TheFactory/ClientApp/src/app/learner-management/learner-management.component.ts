@@ -10,6 +10,7 @@ import {
   GradeDto,
   LearnerLookupDto,
   LearnerDto,
+  LearnerDocumentDto,
   ParentGuardianDto,
   LearnerReportResponseDto,
   SubjectDto,
@@ -61,10 +62,13 @@ export class LearnerManagementComponent implements OnInit {
   downloadingPdf = false;
 
   selectedLearner: LearnerDto | null = null;
+  selectedLearnerForDocuments: LearnerDto | null = null;
+  learnerDocuments: LearnerDocumentDto[] = [];
   selectedReport: LearnerReportResponseDto | null = null;
   subjects: SubjectDto[] = [];
 
   showLearnerForm = false;
+  showLearnerDocuments = false;
   showReportPanel = false;
   showClassForm = false;
   editingClassId: number | null = null;
@@ -73,6 +77,15 @@ export class LearnerManagementComponent implements OnInit {
   classFormSubmitted = false;
   classNameTouched = false;
   learnerFormSubmitted = false;
+  loadingLearnerDocuments = false;
+  uploadingLearnerDocument = false;
+  deletingLearnerDocumentId: number | null = null;
+  learnerDocumentName = '';
+  learnerDocumentType = 'Contract';
+  learnerDocumentFile: File | null = null;
+  private learnerDocumentFileInput: HTMLInputElement | null = null;
+  learnerDocumentErrorMessage = '';
+  learnerDocumentSuccessMessage = '';
 
   learnerForm: LearnerDto = this.getEmptyLearner();
   parentGuardianForm: ParentGuardianDto = this.getEmptyParentGuardian();
@@ -339,6 +352,127 @@ export class LearnerManagementComponent implements OnInit {
     this.learnerForm = this.getEmptyLearner();
     this.parentGuardianForm = this.getEmptyParentGuardian();
     this.showLearnerForm = true;
+  }
+
+  openLearnerDocuments(learner: LearnerDto): void {
+    this.selectedLearnerForDocuments = learner;
+    this.learnerDocuments = [];
+    this.learnerDocumentName = '';
+    this.learnerDocumentType = 'Contract';
+    this.learnerDocumentFile = null;
+    this.learnerDocumentErrorMessage = '';
+    this.learnerDocumentSuccessMessage = '';
+    this.showLearnerDocuments = true;
+    this.loadLearnerDocuments();
+  }
+
+  closeLearnerDocuments(): void {
+    if (this.uploadingLearnerDocument || this.deletingLearnerDocumentId !== null) {
+      return;
+    }
+
+    this.showLearnerDocuments = false;
+    this.selectedLearnerForDocuments = null;
+    this.learnerDocuments = [];
+    this.learnerDocumentFile = null;
+    if (this.learnerDocumentFileInput) {
+      this.learnerDocumentFileInput.value = '';
+      this.learnerDocumentFileInput = null;
+    }
+    this.learnerDocumentErrorMessage = '';
+  }
+
+  loadLearnerDocuments(): void {
+    const learner = this.selectedLearnerForDocuments;
+    if (!learner) {
+      return;
+    }
+
+    this.loadingLearnerDocuments = true;
+    this.learnerDocumentErrorMessage = '';
+    this.learnerService.getLearnerDocuments(learner.id).subscribe({
+      next: documents => {
+        this.learnerDocuments = documents;
+        this.loadingLearnerDocuments = false;
+      },
+      error: error => {
+        this.loadingLearnerDocuments = false;
+        this.learnerDocumentErrorMessage = this.mapHttpError(error, 'Failed to load learner documents.');
+      }
+    });
+  }
+
+  onLearnerDocumentFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.learnerDocumentFileInput = input;
+    this.learnerDocumentFile = input.files?.[0] ?? null;
+    if (!this.learnerDocumentName && this.learnerDocumentFile) {
+      this.learnerDocumentName = this.learnerDocumentFile.name.replace(/\.[^.]+$/, '');
+    }
+    this.learnerDocumentErrorMessage = '';
+  }
+
+  uploadLearnerDocument(): void {
+    const learner = this.selectedLearnerForDocuments;
+    const documentName = this.learnerDocumentName.trim();
+    if (!learner || !documentName || !this.learnerDocumentFile) {
+      this.learnerDocumentErrorMessage = 'Enter a document name and select a file.';
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('documentName', documentName);
+    formData.append('documentType', this.learnerDocumentType);
+    formData.append('file', this.learnerDocumentFile, this.learnerDocumentFile.name);
+
+    this.uploadingLearnerDocument = true;
+    this.learnerDocumentErrorMessage = '';
+    this.learnerDocumentSuccessMessage = '';
+    this.learnerService.uploadLearnerDocument(learner.id, formData).subscribe({
+      next: () => {
+        this.uploadingLearnerDocument = false;
+        this.learnerDocumentName = '';
+        this.learnerDocumentFile = null;
+        if (this.learnerDocumentFileInput) {
+          this.learnerDocumentFileInput.value = '';
+          this.learnerDocumentFileInput = null;
+        }
+        this.learnerDocumentSuccessMessage = 'Learner document uploaded successfully.';
+        this.loadLearnerDocuments();
+      },
+      error: error => {
+        this.uploadingLearnerDocument = false;
+        this.learnerDocumentErrorMessage = this.mapHttpError(error, 'Failed to upload learner document.');
+      }
+    });
+  }
+
+  deleteLearnerDocument(document: LearnerDocumentDto): void {
+    const learner = this.selectedLearnerForDocuments;
+    if (!learner || !window.confirm(`Delete "${document.documentName}"?`)) {
+      return;
+    }
+
+    this.deletingLearnerDocumentId = document.documentId;
+    this.learnerDocumentErrorMessage = '';
+    this.learnerDocumentSuccessMessage = '';
+    this.learnerService.deleteLearnerDocument(learner.id, document.documentId).subscribe({
+      next: () => {
+        this.deletingLearnerDocumentId = null;
+        this.learnerDocumentSuccessMessage = 'Learner document deleted successfully.';
+        this.loadLearnerDocuments();
+      },
+      error: error => {
+        this.deletingLearnerDocumentId = null;
+        this.learnerDocumentErrorMessage = this.mapHttpError(error, 'Failed to delete learner document.');
+      }
+    });
+  }
+
+  getLearnerDocumentDownloadUrl(documentId: number): string {
+    return this.selectedLearnerForDocuments
+      ? this.learnerService.getLearnerDocumentDownloadUrl(this.selectedLearnerForDocuments.id, documentId)
+      : '';
   }
 
   openAddClass(): void {
