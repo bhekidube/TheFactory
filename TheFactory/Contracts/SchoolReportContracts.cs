@@ -14,6 +14,7 @@ public sealed class LearnerDto
 
 public sealed class StaffDto
 {
+    public int StaffId { get; set; }
     public int? LegacyId { get; set; }
     public string NationalId { get; set; } = string.Empty;
     public int SchoolId { get; set; }
@@ -27,6 +28,15 @@ public sealed class StaffDto
     public string Status { get; set; } = "Active";
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+}
+
+public sealed class StaffDocumentDto
+{
+    public int DocumentId { get; set; }
+    public int StaffId { get; set; }
+    public string DocumentName { get; set; } = string.Empty;
+    public string DocumentType { get; set; } = string.Empty;
+    public DateTime UploadedAt { get; set; }
 }
 
 public sealed class StaffUpsertRequest

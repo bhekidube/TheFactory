@@ -17,9 +17,16 @@ export class StaffManagementComponent implements OnInit, OnDestroy {
   searchTerm = '';
   loading = false;
   saving = false;
+  uploadingDocument = false;
   errorMessage = '';
   successMessage = '';
   showForm = false;
+  showDocumentForm = false;
+  selectedStaffForDocument: StaffDto | null = null;
+  documentName = '';
+  documentType = 'Contract';
+  documentFile: File | null = null;
+  documentErrorMessage = '';
   editingNationalId: string | null = null;
   editingLegacyStaffId: number | null = null;
   formSubmitted = false;
@@ -107,6 +114,66 @@ export class StaffManagementComponent implements OnInit, OnDestroy {
     this.editingNationalId = null;
     this.editingLegacyStaffId = null;
     this.formSubmitted = false;
+  }
+
+  openDocumentUpload(member: StaffDto): void {
+    this.clearMessages();
+    this.selectedStaffForDocument = member;
+    this.documentName = '';
+    this.documentType = 'Contract';
+    this.documentFile = null;
+    this.documentErrorMessage = '';
+    this.showDocumentForm = true;
+  }
+
+  closeDocumentUpload(): void {
+    if (this.uploadingDocument) {
+      return;
+    }
+
+    this.showDocumentForm = false;
+    this.selectedStaffForDocument = null;
+    this.documentFile = null;
+    this.documentErrorMessage = '';
+  }
+
+  onDocumentFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.documentFile = input.files?.[0] ?? null;
+    if (!this.documentName && this.documentFile) {
+      this.documentName = this.documentFile.name.replace(/\.[^.]+$/, '');
+    }
+    this.documentErrorMessage = '';
+  }
+
+  uploadStaffDocument(): void {
+    const staff = this.selectedStaffForDocument;
+    const documentName = this.documentName.trim();
+    if (!staff || !documentName || !this.documentFile) {
+      this.documentErrorMessage = 'Enter a document name and select a file.';
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('documentName', documentName);
+    formData.append('documentType', this.documentType);
+    formData.append('file', this.documentFile, this.documentFile.name);
+
+    this.uploadingDocument = true;
+    this.documentErrorMessage = '';
+    this.learnerService.uploadStaffDocument(this.schoolId, staff.staffId, formData).subscribe({
+      next: () => {
+        this.uploadingDocument = false;
+        this.showDocumentForm = false;
+        this.selectedStaffForDocument = null;
+        this.documentFile = null;
+        this.successMessage = 'Staff document uploaded successfully.';
+      },
+      error: error => {
+        this.uploadingDocument = false;
+        this.documentErrorMessage = error?.error?.error || 'Failed to upload staff document.';
+      }
+    });
   }
 
   saveStaff(): void {

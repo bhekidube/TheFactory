@@ -185,6 +185,44 @@ public sealed class StaffService : IStaffService
         return await GetStaffByNationalIdAsync(schoolId, request.NationalId.Trim(), cancellationToken);
     }
 
+    public async Task<StaffDocumentDto?> CreateStaffDocumentAsync(
+        int schoolId,
+        int staffId,
+        string documentName,
+        string documentType,
+        string filePath,
+        CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        using var command = new SqlCommand(
+            @"INSERT INTO institution.StaffDocuments (StaffId, DocumentName, DocumentType, Filepath)
+              OUTPUT INSERTED.DocumentId, INSERTED.StaffId, INSERTED.DocumentName, INSERTED.DocumentType, INSERTED.UploadedAt
+              SELECT Id, @DocumentName, @DocumentType, @Filepath
+              FROM institution.Staff
+              WHERE Id = @StaffId AND SchoolId = @SchoolId;",
+            connection);
+        command.Parameters.Add("@StaffId", SqlDbType.Int).Value = staffId;
+        command.Parameters.Add("@SchoolId", SqlDbType.Int).Value = schoolId;
+        command.Parameters.Add("@DocumentName", SqlDbType.NVarChar, 255).Value = documentName;
+        command.Parameters.Add("@DocumentType", SqlDbType.NVarChar, 100).Value = documentType;
+        command.Parameters.Add("@Filepath", SqlDbType.NVarChar, 500).Value = filePath;
+
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        return new StaffDocumentDto
+        {
+            DocumentId = reader.GetInt32(0),
+            StaffId = reader.GetInt32(1),
+            DocumentName = reader.GetString(2),
+            DocumentType = reader.GetString(3),
+            UploadedAt = reader.GetDateTime(4)
+        };
+    }
+
     public async Task<bool> ArchiveStaffAsync(int schoolId, string nationalId, CancellationToken cancellationToken = default)
     {
         using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
@@ -215,6 +253,7 @@ public sealed class StaffService : IStaffService
     {
         return new StaffDto
         {
+            StaffId = reader.GetInt32(0),
             LegacyId = reader.IsDBNull(1) ? reader.GetInt32(0) : null,
             NationalId = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
             SchoolId = reader.GetInt32(2),

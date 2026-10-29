@@ -12,6 +12,7 @@ import {
   CreateLearnerRequestDto,
   GradeDto,
   StaffDto,
+  StaffDocumentDto,
   StaffUpsertRequest,
   UpdateClassRequestDto,
   LearnerLookupDto,
@@ -146,6 +147,14 @@ export class LearnerManagementService {
 
   archiveLegacyStaff(schoolId: number, legacyId: number): Observable<void> {
     return this.http.patch<void>(`${this.baseUrl}/schools/${schoolId}/staff/legacy/${legacyId}/archive`, {}, this.getRequestOptions());
+  }
+
+  uploadStaffDocument(schoolId: number, staffId: number, formData: FormData): Observable<StaffDocumentDto> {
+    return this.http.post<StaffDocumentDto>(
+      `${this.baseUrl}/schools/${schoolId}/staff/${staffId}/documents`,
+      formData,
+      this.getRequestOptions()
+    );
   }
 
   getActiveClassCountForSchool(schoolId: number): Observable<ActiveClassCountDto> {

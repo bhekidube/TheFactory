@@ -14,6 +14,13 @@ public interface IStaffService
     Task<StaffDto> CreateStaffAsync(int schoolId, StaffUpsertRequest request, CancellationToken cancellationToken = default);
     Task<StaffDto?> UpdateStaffAsync(int schoolId, string nationalId, StaffUpsertRequest request, CancellationToken cancellationToken = default);
     Task<StaffDto?> UpdateLegacyStaffAsync(int schoolId, int legacyId, StaffUpsertRequest request, CancellationToken cancellationToken = default);
+    Task<StaffDocumentDto?> CreateStaffDocumentAsync(
+        int schoolId,
+        int staffId,
+        string documentName,
+        string documentType,
+        string filePath,
+        CancellationToken cancellationToken = default);
     Task<bool> ArchiveStaffAsync(int schoolId, string nationalId, CancellationToken cancellationToken = default);
     Task<bool> ArchiveLegacyStaffAsync(int schoolId, int legacyId, CancellationToken cancellationToken = default);
 }

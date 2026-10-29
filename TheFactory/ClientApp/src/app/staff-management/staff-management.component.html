@@ -70,6 +70,7 @@
           <td class="actions-col text-end">
             <div class="actions-row">
               <button type="button" class="link-btn" (click)="openEditStaff(member)" [disabled]="!member.nationalId && member.legacyId == null">Edit</button>
+              <button type="button" class="link-btn" (click)="openDocumentUpload(member)">Documents</button>
               <button type="button" class="danger-link-btn" (click)="archiveStaff(member)" [disabled]="!member.nationalId && member.legacyId == null">Archive</button>
             </div>
           </td>
@@ -145,6 +146,47 @@
         <div class="panel-actions">
           <button type="submit" class="primary-btn" [disabled]="saving">{{ saving ? 'Saving...' : 'Save Staff' }}</button>
           <button type="button" class="secondary-btn" [disabled]="saving" (click)="closeForm()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="overlay" *ngIf="showDocumentForm">
+    <div class="panel">
+      <h3>Upload Staff Document</h3>
+      <p *ngIf="selectedStaffForDocument">
+        {{ selectedStaffForDocument.firstName }} {{ selectedStaffForDocument.surname }}
+      </p>
+      <form (ngSubmit)="uploadStaffDocument()" novalidate>
+        <label>
+          Document Name
+          <input type="text" name="documentName" [(ngModel)]="documentName" maxlength="255" required />
+        </label>
+        <label>
+          Document Type
+          <select name="documentType" [(ngModel)]="documentType" required>
+            <option value="Contract">Contract</option>
+            <option value="Certification">Certification</option>
+            <option value="Identification">Identification</option>
+            <option value="Other">Other</option>
+          </select>
+        </label>
+        <label>
+          File
+          <input
+            type="file"
+            name="documentFile"
+            accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+            (change)="onDocumentFileSelected($event)"
+            required />
+          <span class="field-error">PDF, PNG, JPEG, DOC, or DOCX; maximum 10 MB.</span>
+        </label>
+        <div class="message error" *ngIf="documentErrorMessage">{{ documentErrorMessage }}</div>
+        <div class="panel-actions">
+          <button type="submit" class="primary-btn" [disabled]="uploadingDocument">
+            {{ uploadingDocument ? 'Uploading...' : 'Upload Document' }}
+          </button>
+          <button type="button" class="secondary-btn" [disabled]="uploadingDocument" (click)="closeDocumentUpload()">Cancel</button>
         </div>
       </form>
     </div>

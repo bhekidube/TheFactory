@@ -29,6 +29,7 @@ export interface LearnerDto {
 }
 
 export interface StaffDto {
+  staffId: number;
   legacyId?: number | null;
   nationalId: string;
   schoolId: number;
@@ -42,6 +43,14 @@ export interface StaffDto {
   status: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface StaffDocumentDto {
+  documentId: number;
+  staffId: number;
+  documentName: string;
+  documentType: string;
+  uploadedAt: string;
 }
 
 export interface StaffUpsertRequest {

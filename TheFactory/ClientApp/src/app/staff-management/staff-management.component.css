@@ -235,7 +235,8 @@ th {
   font-weight: 700;
 }
 
-.panel input {
+.panel input,
+.panel select {
   min-height: 2.5rem;
   padding: 0.55rem 0.7rem;
   border: 1px solid #b0bec5;
