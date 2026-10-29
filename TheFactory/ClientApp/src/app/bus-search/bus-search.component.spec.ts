@@ -59,14 +59,16 @@ describe('BusSearchComponent', () => {
     expect(fixture.nativeElement.querySelector('.account-card-role')?.textContent).toContain('OperatorAdmin');
   });
 
-  it('shows the promotional image card in the right sidebar', () => {
-    const promoCard = fixture.nativeElement.querySelector('.account-sidebar.promo-sidebar-card');
-    const promoImage = promoCard?.querySelector('.promo-card-img') as HTMLImageElement;
+  it('shows the cross-border marquee in two columns in the right sidebar', () => {
+    const marquee = fixture.nativeElement.querySelector('.account-sidebar.transit-marquee-card');
 
-    expect(promoCard).not.toBeNull();
-    expect(promoCard.classList).toContain('account-card');
-    expect(promoImage.getAttribute('src')).toBe('assets/hamba-insta-reel.jpeg');
-    expect(promoImage.alt).toBe('HambaOnline Instagram Reel featuring a traveler at a bus terminal');
+    expect(marquee).not.toBeNull();
+    expect(marquee.classList).toContain('account-card');
+    expect(marquee.querySelectorAll('.transit-marquee-column').length).toBe(2);
+    expect(marquee.querySelector('.transit-marquee-track-up')).not.toBeNull();
+    expect(marquee.querySelector('.transit-marquee-track-down')).not.toBeNull();
+    expect(marquee.querySelector('.visually-hidden')?.textContent).toContain('Brooklyn Express');
+    expect(marquee.querySelector('.visually-hidden')?.textContent).toContain('Swiss');
   });
 
   it('logs out through AuthService and navigates to the home page', () => {

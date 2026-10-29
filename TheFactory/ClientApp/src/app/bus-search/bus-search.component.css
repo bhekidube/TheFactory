@@ -144,18 +144,137 @@
   box-shadow: 0 14px 38px rgba(10, 38, 82, 0.12);
 }
 
-.account-sidebar.promo-sidebar-card {
+.account-sidebar.transit-marquee-card {
   margin-top: 24px;
-  padding: 16px;
+  padding: 1rem;
   overflow: hidden;
 }
 
-.promo-card-img {
-  width: 100%;
-  height: auto;
-  border-radius: 8px;
-  display: block;
-  object-fit: cover;
+.transit-marquee-heading h2 {
+  margin: 0.35rem 0 0.85rem;
+  color: #153a68;
+  font-size: 1.05rem;
+  line-height: 1.25;
+}
+
+.transit-marquee-viewport {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  height: 15rem;
+  overflow: hidden;
+  border-radius: 12px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 7%, #000 93%, transparent);
+}
+
+.transit-marquee-column {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.transit-marquee-track {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+
+.transit-marquee-track-up {
+  animation: transit-marquee-up 32s linear infinite;
+}
+
+.transit-marquee-track-down {
+  animation: transit-marquee-down 36s linear infinite;
+}
+
+.transit-marquee-group {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  gap: 0.6rem;
+  padding-bottom: 0.6rem;
+}
+
+.transit-highlight-card {
+  display: flex;
+  min-height: 6rem;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.7rem;
+  border: 1px solid #e3ebf6;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #fff, #f7faff);
+  box-shadow: 0 5px 14px rgba(10, 38, 82, 0.08);
+}
+
+.transit-highlight-card-blue {
+  border-color: #d7e5fa;
+  background: linear-gradient(145deg, #f6faff, #eaf2ff);
+}
+
+.transit-highlight-card-gold {
+  border-color: #f0e2c4;
+  background: linear-gradient(145deg, #fffdf8, #fff6e5);
+}
+
+.transit-highlight-badge {
+  max-width: 100%;
+  overflow: hidden;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  background: #eaf2ff;
+  color: #174f91;
+  font-size: 0.59rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.transit-highlight-card-gold .transit-highlight-badge {
+  background: #fff0cc;
+  color: #79500a;
+}
+
+.transit-highlight-route {
+  color: #153a68;
+  font-size: 0.69rem;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.transit-highlight-detail {
+  color: #526984;
+  font-size: 0.62rem;
+  line-height: 1.3;
+}
+
+@keyframes transit-marquee-up {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+@keyframes transit-marquee-down {
+  from {
+    transform: translateY(-50%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .transit-marquee-track-up,
+  .transit-marquee-track-down {
+    animation: none;
+    transform: none;
+  }
 }
 
 .account-card-eyebrow {

@@ -179,8 +179,97 @@
       <p class="account-card-message">You are signed in and ready to search bus schedules.</p>
       <button type="button" class="account-logout-btn" (click)="logout()">Log out</button>
     </section>
-    <section class="account-card account-sidebar promo-sidebar-card" aria-label="Promotion">
-      <img src="assets/hamba-insta-reel.jpeg" alt="HambaOnline Instagram Reel featuring a traveler at a bus terminal" class="promo-card-img">
+    <section class="account-card account-sidebar transit-marquee-card" aria-labelledby="transit-marquee-title">
+      <div class="transit-marquee-heading">
+        <span class="account-card-eyebrow">On the move</span>
+        <h2 id="transit-marquee-title">Cross-border highlights</h2>
+      </div>
+      <div class="transit-marquee-viewport" aria-hidden="true">
+        <div class="transit-marquee-column">
+          <div class="transit-marquee-track transit-marquee-track-up">
+            <div class="transit-marquee-group">
+              <article class="transit-highlight-card">
+                <span class="transit-highlight-badge">Brooklyn Express</span>
+                <span class="transit-highlight-route">Johannesburg <span aria-hidden="true">→</span> Bulawayo</span>
+                <span class="transit-highlight-detail">Cross-border connection</span>
+              </article>
+              <article class="transit-highlight-card transit-highlight-card-blue">
+                <span class="transit-highlight-badge">Swiss</span>
+                <span class="transit-highlight-route">Pretoria <span aria-hidden="true">→</span> Harare</span>
+                <span class="transit-highlight-detail">Daily departures</span>
+              </article>
+              <article class="transit-highlight-card transit-highlight-card-gold">
+                <span class="transit-highlight-badge">Route snapshot</span>
+                <span class="transit-highlight-route">Power House <span aria-hidden="true">→</span> Bulawayo</span>
+                <span class="transit-highlight-detail">Plan your next trip</span>
+              </article>
+            </div>
+            <div class="transit-marquee-group">
+              <article class="transit-highlight-card">
+                <span class="transit-highlight-badge">Brooklyn Express</span>
+                <span class="transit-highlight-route">Johannesburg <span aria-hidden="true">→</span> Bulawayo</span>
+                <span class="transit-highlight-detail">Cross-border connection</span>
+              </article>
+              <article class="transit-highlight-card transit-highlight-card-blue">
+                <span class="transit-highlight-badge">Swiss</span>
+                <span class="transit-highlight-route">Pretoria <span aria-hidden="true">→</span> Harare</span>
+                <span class="transit-highlight-detail">Daily departures</span>
+              </article>
+              <article class="transit-highlight-card transit-highlight-card-gold">
+                <span class="transit-highlight-badge">Route snapshot</span>
+                <span class="transit-highlight-route">Power House <span aria-hidden="true">→</span> Bulawayo</span>
+                <span class="transit-highlight-detail">Plan your next trip</span>
+              </article>
+            </div>
+          </div>
+        </div>
+        <div class="transit-marquee-column">
+          <div class="transit-marquee-track transit-marquee-track-down">
+            <div class="transit-marquee-group">
+              <article class="transit-highlight-card transit-highlight-card-gold">
+                <span class="transit-highlight-badge">Transit moment</span>
+                <span class="transit-highlight-route">Arrive, connect, explore</span>
+                <span class="transit-highlight-detail">Your journey, made simpler</span>
+              </article>
+              <article class="transit-highlight-card">
+                <span class="transit-highlight-badge">Brooklyn Express</span>
+                <span class="transit-highlight-route">Bulawayo <span aria-hidden="true">→</span> Johannesburg</span>
+                <span class="transit-highlight-detail">Reliable return journeys</span>
+              </article>
+              <article class="transit-highlight-card transit-highlight-card-blue">
+                <span class="transit-highlight-badge">Swiss</span>
+                <span class="transit-highlight-route">Harare <span aria-hidden="true">→</span> Pretoria</span>
+                <span class="transit-highlight-detail">Your next connection</span>
+              </article>
+            </div>
+            <div class="transit-marquee-group">
+              <article class="transit-highlight-card transit-highlight-card-gold">
+                <span class="transit-highlight-badge">Transit moment</span>
+                <span class="transit-highlight-route">Arrive, connect, explore</span>
+                <span class="transit-highlight-detail">Your journey, made simpler</span>
+              </article>
+              <article class="transit-highlight-card">
+                <span class="transit-highlight-badge">Brooklyn Express</span>
+                <span class="transit-highlight-route">Bulawayo <span aria-hidden="true">→</span> Johannesburg</span>
+                <span class="transit-highlight-detail">Reliable return journeys</span>
+              </article>
+              <article class="transit-highlight-card transit-highlight-card-blue">
+                <span class="transit-highlight-badge">Swiss</span>
+                <span class="transit-highlight-route">Harare <span aria-hidden="true">→</span> Pretoria</span>
+                <span class="transit-highlight-detail">Your next connection</span>
+              </article>
+            </div>
+          </div>
+        </div>
+      </div>
+      <ul class="visually-hidden">
+        <li>Brooklyn Express: Johannesburg to Bulawayo, cross-border connection.</li>
+        <li>Swiss: Pretoria to Harare, daily departures.</li>
+        <li>Route snapshot: Power House to Bulawayo.</li>
+        <li>Transit moment: arrive, connect, explore.</li>
+        <li>Brooklyn Express: Bulawayo to Johannesburg, reliable return journeys.</li>
+        <li>Swiss: Harare to Pretoria, your next connection.</li>
+      </ul>
     </section>
   </aside>
 </section>
