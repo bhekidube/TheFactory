@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { LearnerManagementService } from '../services/learner-management.service';
-import { StaffDto, StaffUpsertRequest } from '../learner-management/learner-management.models';
+import { StaffDocumentDto, StaffDto, StaffUpsertRequest } from '../learner-management/learner-management.models';
 import { TableSortController } from '../table-sorting';
 
 @Component({
@@ -18,15 +18,20 @@ export class StaffManagementComponent implements OnInit, OnDestroy {
   loading = false;
   saving = false;
   uploadingDocument = false;
+  loadingDocuments = false;
+  deletingDocumentId: number | null = null;
   errorMessage = '';
   successMessage = '';
   showForm = false;
   showDocumentForm = false;
   selectedStaffForDocument: StaffDto | null = null;
+  staffDocuments: StaffDocumentDto[] = [];
   documentName = '';
   documentType = 'Contract';
   documentFile: File | null = null;
   documentErrorMessage = '';
+  documentSuccessMessage = '';
+  private documentFileInput: HTMLInputElement | null = null;
   editingNationalId: string | null = null;
   editingLegacyStaffId: number | null = null;
   formSubmitted = false;
@@ -122,23 +127,53 @@ export class StaffManagementComponent implements OnInit, OnDestroy {
     this.documentName = '';
     this.documentType = 'Contract';
     this.documentFile = null;
+    this.staffDocuments = [];
     this.documentErrorMessage = '';
+    this.documentSuccessMessage = '';
     this.showDocumentForm = true;
+    this.loadStaffDocuments();
   }
 
   closeDocumentUpload(): void {
-    if (this.uploadingDocument) {
+    if (this.uploadingDocument || this.deletingDocumentId !== null) {
       return;
     }
 
     this.showDocumentForm = false;
     this.selectedStaffForDocument = null;
     this.documentFile = null;
+    if (this.documentFileInput) {
+      this.documentFileInput.value = '';
+      this.documentFileInput = null;
+    }
+    this.staffDocuments = [];
     this.documentErrorMessage = '';
+    this.documentSuccessMessage = '';
+  }
+
+  loadStaffDocuments(): void {
+    const staff = this.selectedStaffForDocument;
+    if (!staff) {
+      return;
+    }
+
+    this.loadingDocuments = true;
+    this.documentErrorMessage = '';
+    this.learnerService.getStaffDocuments(this.schoolId, staff.staffId).subscribe({
+      next: documents => {
+        this.staffDocuments = documents;
+        this.loadingDocuments = false;
+      },
+      error: error => {
+        this.loadingDocuments = false;
+        this.documentErrorMessage = error?.error?.error || 'Failed to load staff documents.';
+      }
+    });
   }
 
   onDocumentFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
+    this.documentFileInput = input;
     this.documentFile = input.files?.[0] ?? null;
     if (!this.documentName && this.documentFile) {
       this.documentName = this.documentFile.name.replace(/\.[^.]+$/, '');
@@ -161,19 +196,56 @@ export class StaffManagementComponent implements OnInit, OnDestroy {
 
     this.uploadingDocument = true;
     this.documentErrorMessage = '';
+    this.documentSuccessMessage = '';
     this.learnerService.uploadStaffDocument(this.schoolId, staff.staffId, formData).subscribe({
       next: () => {
         this.uploadingDocument = false;
-        this.showDocumentForm = false;
-        this.selectedStaffForDocument = null;
+        this.documentName = '';
         this.documentFile = null;
-        this.successMessage = 'Staff document uploaded successfully.';
+        if (this.documentFileInput) {
+          this.documentFileInput.value = '';
+          this.documentFileInput = null;
+        }
+        this.documentSuccessMessage = 'Staff document uploaded successfully.';
+        this.loadStaffDocuments();
       },
       error: error => {
         this.uploadingDocument = false;
         this.documentErrorMessage = error?.error?.error || 'Failed to upload staff document.';
       }
     });
+  }
+
+  deleteStaffDocument(document: StaffDocumentDto): void {
+    const staff = this.selectedStaffForDocument;
+    if (!staff || !window.confirm(`Delete "${document.documentName}"?`)) {
+      return;
+    }
+
+    this.deletingDocumentId = document.documentId;
+    this.documentErrorMessage = '';
+    this.documentSuccessMessage = '';
+    this.learnerService.deleteStaffDocument(this.schoolId, staff.staffId, document.documentId).subscribe({
+      next: () => {
+        this.deletingDocumentId = null;
+        this.documentSuccessMessage = 'Staff document deleted successfully.';
+        this.loadStaffDocuments();
+      },
+      error: error => {
+        this.deletingDocumentId = null;
+        this.documentErrorMessage = error?.error?.error || 'Failed to delete staff document.';
+      }
+    });
+  }
+
+  getStaffDocumentDownloadUrl(documentId: number): string {
+    return this.selectedStaffForDocument
+      ? this.learnerService.getStaffDocumentDownloadUrl(
+        this.schoolId,
+        this.selectedStaffForDocument.staffId,
+        documentId
+      )
+      : '';
   }
 
   saveStaff(): void {

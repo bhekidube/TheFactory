@@ -152,12 +152,55 @@
   </div>
 
   <div class="overlay" *ngIf="showDocumentForm">
-    <div class="panel">
-      <h3>Upload Staff Document</h3>
+    <div class="panel documents-panel">
+      <h3>Staff Documents</h3>
       <p *ngIf="selectedStaffForDocument">
         {{ selectedStaffForDocument.firstName }} {{ selectedStaffForDocument.surname }}
       </p>
+
+      <section class="staff-document-list" aria-labelledby="staff-documents-list-heading">
+        <h4 id="staff-documents-list-heading">Uploaded Documents</h4>
+        <div *ngIf="loadingDocuments" class="state-card">Loading documents...</div>
+        <div *ngIf="!loadingDocuments && staffDocuments.length === 0" class="state-card">
+          No documents have been uploaded for this staff member.
+        </div>
+        <div class="table-wrap" *ngIf="!loadingDocuments && staffDocuments.length > 0">
+          <table>
+            <thead>
+              <tr>
+                <th>Document Name</th>
+                <th>Document Type</th>
+                <th>Upload Date</th>
+                <th class="actions-col text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let document of staffDocuments">
+                <td>{{ document.documentName }}</td>
+                <td>{{ document.documentType }}</td>
+                <td>{{ document.uploadedAt | date:'mediumDate' }}</td>
+                <td class="actions-col text-end">
+                  <a
+                    class="link-btn"
+                    [href]="getStaffDocumentDownloadUrl(document.documentId)"
+                    target="_blank"
+                    rel="noopener noreferrer">View / Download</a>
+                  <button
+                    type="button"
+                    class="danger-link-btn"
+                    [disabled]="deletingDocumentId !== null"
+                    (click)="deleteStaffDocument(document)">
+                    {{ deletingDocumentId === document.documentId ? 'Deleting...' : 'Delete' }}
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <form (ngSubmit)="uploadStaffDocument()" novalidate>
+        <h4>Upload Document</h4>
         <label>
           Document Name
           <input type="text" name="documentName" [(ngModel)]="documentName" maxlength="255" required />
@@ -182,11 +225,16 @@
           <span class="field-error">PDF, PNG, JPEG, DOC, or DOCX; maximum 10 MB.</span>
         </label>
         <div class="message error" *ngIf="documentErrorMessage">{{ documentErrorMessage }}</div>
+        <div class="message success" *ngIf="documentSuccessMessage">{{ documentSuccessMessage }}</div>
         <div class="panel-actions">
           <button type="submit" class="primary-btn" [disabled]="uploadingDocument">
             {{ uploadingDocument ? 'Uploading...' : 'Upload Document' }}
           </button>
-          <button type="button" class="secondary-btn" [disabled]="uploadingDocument" (click)="closeDocumentUpload()">Cancel</button>
+          <button
+            type="button"
+            class="secondary-btn"
+            [disabled]="uploadingDocument || deletingDocumentId !== null"
+            (click)="closeDocumentUpload()">Close</button>
         </div>
       </form>
     </div>

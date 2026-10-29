@@ -158,6 +158,24 @@ export class LearnerManagementService {
     );
   }
 
+  getStaffDocuments(schoolId: number, staffId: number): Observable<StaffDocumentDto[]> {
+    return this.http.get<StaffDocumentDto[]>(
+      `${this.baseUrl}/schools/${schoolId}/staff/${staffId}/documents`,
+      this.getRequestOptions()
+    );
+  }
+
+  deleteStaffDocument(schoolId: number, staffId: number, documentId: number): Observable<void> {
+    return this.http.delete<void>(
+      `${this.baseUrl}/schools/${schoolId}/staff/${staffId}/documents/${documentId}`,
+      this.getRequestOptions()
+    );
+  }
+
+  getStaffDocumentDownloadUrl(schoolId: number, staffId: number, documentId: number): string {
+    return `${this.baseUrl}/schools/${schoolId}/staff/${staffId}/documents/${documentId}/download`;
+  }
+
   getLearnerDocuments(learnerId: number): Observable<LearnerDocumentDto[]> {
     return this.http.get<LearnerDocumentDto[]>(`${this.baseUrl}/learners/${learnerId}/documents`, this.getRequestOptions());
   }

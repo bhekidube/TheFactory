@@ -257,6 +257,131 @@ public sealed class StaffController : ControllerBase
         }
     }
 
+    [HttpGet("{staffId:int}/documents")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<StaffDocumentDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<IReadOnlyCollection<StaffDocumentDto>>> GetStaffDocuments(
+        int schoolId,
+        int staffId,
+        CancellationToken cancellationToken)
+    {
+        if (schoolId <= 0 || staffId <= 0)
+        {
+            return BadRequest(new { error = "A valid school and staff id are required." });
+        }
+
+        var documents = await _staffService.GetStaffDocumentsAsync(schoolId, staffId, cancellationToken);
+        return documents is null ? NotFound() : Ok(documents);
+    }
+
+    [HttpGet("{staffId:int}/documents/{documentId:int}/download")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DownloadStaffDocument(
+        int schoolId,
+        int staffId,
+        int documentId,
+        CancellationToken cancellationToken)
+    {
+        if (schoolId <= 0 || staffId <= 0 || documentId <= 0)
+        {
+            return BadRequest(new { error = "Valid school, staff, and document ids are required." });
+        }
+
+        var relativeFilePath = await _staffService.GetStaffDocumentFilePathAsync(
+            schoolId,
+            staffId,
+            documentId,
+            cancellationToken);
+        if (relativeFilePath is null || !TryGetStoredFilePath(relativeFilePath, out var storedFilePath)
+            || !System.IO.File.Exists(storedFilePath))
+        {
+            return NotFound();
+        }
+
+        var contentType = Path.GetExtension(storedFilePath).ToLowerInvariant() switch
+        {
+            ".pdf" => "application/pdf",
+            ".png" => "image/png",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".doc" => "application/msword",
+            ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            _ => null
+        };
+        if (contentType is null)
+        {
+            _logger.LogError("Staff document {DocumentId} has an unsupported stored file type.", documentId);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+
+        return PhysicalFile(storedFilePath, contentType, enableRangeProcessing: true);
+    }
+
+    [HttpDelete("{staffId:int}/documents/{documentId:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteStaffDocument(
+        int schoolId,
+        int staffId,
+        int documentId,
+        CancellationToken cancellationToken)
+    {
+        if (schoolId <= 0 || staffId <= 0 || documentId <= 0)
+        {
+            return BadRequest(new { error = "Valid school, staff, and document ids are required." });
+        }
+
+        var relativeFilePath = await _staffService.DeleteStaffDocumentAsync(
+            schoolId,
+            staffId,
+            documentId,
+            cancellationToken);
+        if (relativeFilePath is null)
+        {
+            return NotFound();
+        }
+
+        if (!TryGetStoredFilePath(relativeFilePath, out var storedFilePath))
+        {
+            _logger.LogError("Staff document {DocumentId} has an invalid stored file path.", documentId);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+
+        try
+        {
+            if (System.IO.File.Exists(storedFilePath))
+            {
+                System.IO.File.Delete(storedFilePath);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _logger.LogError(ex, "Failed to delete stored file for staff document {DocumentId}.", documentId);
+            throw;
+        }
+
+        return NoContent();
+    }
+
+    private bool TryGetStoredFilePath(string relativePath, out string storedFilePath)
+    {
+        var storageRoot = Path.GetFullPath(Path.Combine(_environment.ContentRootPath, "App_Data", "staff-documents"));
+        var candidate = Path.GetFullPath(Path.Combine(_environment.ContentRootPath, relativePath));
+        var storagePrefix = storageRoot.EndsWith(Path.DirectorySeparatorChar)
+            ? storageRoot
+            : storageRoot + Path.DirectorySeparatorChar;
+        var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+        if (!candidate.StartsWith(storagePrefix, comparison))
+        {
+            storedFilePath = string.Empty;
+            return false;
+        }
+
+        storedFilePath = candidate;
+        return true;
+    }
+
     private static async Task<bool> HasValidFileSignatureAsync(
         string filePath,
         string extension,

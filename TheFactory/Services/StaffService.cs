@@ -223,6 +223,96 @@ public sealed class StaffService : IStaffService
         };
     }
 
+    public async Task<IReadOnlyCollection<StaffDocumentDto>?> GetStaffDocumentsAsync(
+        int schoolId,
+        int staffId,
+        CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        using var command = new SqlCommand(
+            @"SELECT d.DocumentId, d.StaffId, d.DocumentName, d.DocumentType, d.UploadedAt
+              FROM institution.Staff AS s
+              LEFT JOIN institution.StaffDocuments AS d ON d.StaffId = s.Id
+              WHERE s.Id = @StaffId AND s.SchoolId = @SchoolId
+              ORDER BY d.UploadedAt DESC;",
+            connection);
+        command.Parameters.Add("@StaffId", SqlDbType.Int).Value = staffId;
+        command.Parameters.Add("@SchoolId", SqlDbType.Int).Value = schoolId;
+
+        var documents = new List<StaffDocumentDto>();
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        do
+        {
+            if (reader.IsDBNull(0))
+            {
+                continue;
+            }
+
+            documents.Add(new StaffDocumentDto
+            {
+                DocumentId = reader.GetInt32(0),
+                StaffId = reader.GetInt32(1),
+                DocumentName = reader.GetString(2),
+                DocumentType = reader.GetString(3),
+                UploadedAt = reader.GetDateTime(4)
+            });
+        } while (await reader.ReadAsync(cancellationToken));
+
+        return documents;
+    }
+
+    public async Task<string?> GetStaffDocumentFilePathAsync(
+        int schoolId,
+        int staffId,
+        int documentId,
+        CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        using var command = new SqlCommand(
+            @"SELECT d.Filepath
+              FROM institution.StaffDocuments AS d
+              INNER JOIN institution.Staff AS s ON s.Id = d.StaffId
+              WHERE s.SchoolId = @SchoolId
+                AND s.Id = @StaffId
+                AND d.DocumentId = @DocumentId;",
+            connection);
+        command.Parameters.Add("@SchoolId", SqlDbType.Int).Value = schoolId;
+        command.Parameters.Add("@StaffId", SqlDbType.Int).Value = staffId;
+        command.Parameters.Add("@DocumentId", SqlDbType.Int).Value = documentId;
+
+        var filePath = await command.ExecuteScalarAsync(cancellationToken);
+        return filePath is null || filePath == DBNull.Value ? null : Convert.ToString(filePath);
+    }
+
+    public async Task<string?> DeleteStaffDocumentAsync(
+        int schoolId,
+        int staffId,
+        int documentId,
+        CancellationToken cancellationToken = default)
+    {
+        using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);
+        using var command = new SqlCommand(
+            @"DELETE d
+              OUTPUT DELETED.Filepath
+              FROM institution.StaffDocuments AS d
+              INNER JOIN institution.Staff AS s ON s.Id = d.StaffId
+              WHERE s.SchoolId = @SchoolId
+                AND s.Id = @StaffId
+                AND d.DocumentId = @DocumentId;",
+            connection);
+        command.Parameters.Add("@SchoolId", SqlDbType.Int).Value = schoolId;
+        command.Parameters.Add("@StaffId", SqlDbType.Int).Value = staffId;
+        command.Parameters.Add("@DocumentId", SqlDbType.Int).Value = documentId;
+
+        var filePath = await command.ExecuteScalarAsync(cancellationToken);
+        return filePath is null || filePath == DBNull.Value ? null : Convert.ToString(filePath);
+    }
+
     public async Task<bool> ArchiveStaffAsync(int schoolId, string nationalId, CancellationToken cancellationToken = default)
     {
         using var connection = await _sqlConnectionService.GetSqlConnectionAsync(cancellationToken);

@@ -21,6 +21,20 @@ public interface IStaffService
         string documentType,
         string filePath,
         CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<StaffDocumentDto>?> GetStaffDocumentsAsync(
+        int schoolId,
+        int staffId,
+        CancellationToken cancellationToken = default);
+    Task<string?> GetStaffDocumentFilePathAsync(
+        int schoolId,
+        int staffId,
+        int documentId,
+        CancellationToken cancellationToken = default);
+    Task<string?> DeleteStaffDocumentAsync(
+        int schoolId,
+        int staffId,
+        int documentId,
+        CancellationToken cancellationToken = default);
     Task<bool> ArchiveStaffAsync(int schoolId, string nationalId, CancellationToken cancellationToken = default);
     Task<bool> ArchiveLegacyStaffAsync(int schoolId, int legacyId, CancellationToken cancellationToken = default);
 }
