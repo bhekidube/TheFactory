@@ -3,7 +3,6 @@ import { AfterViewInit, Component, ElementRef, Inject, OnInit, PLATFORM_ID, View
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
-import { AddressDto } from '../learner-management/learner-management.models';
 import { AuthService, UserLoginResponse } from '../services/auth.service';
 
 @Component({
@@ -28,7 +27,6 @@ export class AuthComponent implements OnInit, AfterViewInit {
     cellPhoneNo: string;
     alternateCellPhoneNo: string;
     password: string;
-    address: AddressDto;
     operatorId: number | null;
   } = {
     userRoleId: 3, // Default role->OperatorAdmin
@@ -37,15 +35,6 @@ export class AuthComponent implements OnInit, AfterViewInit {
     cellPhoneNo: '',
     alternateCellPhoneNo: '',
     password: '',
-    address: {
-      addressId: null,
-      addressLine1: '',
-      addressLine2: '',
-      city: '',
-      provinceState: '',
-      postalCode: '',
-      country: ''
-    },
     operatorId: null // <-- Add this line
   };
 

@@ -44,4 +44,20 @@ describe('AuthComponent', () => {
     expect(buttonContainer).not.toBeNull();
     expect(initializeGoogleSignInSpy).toHaveBeenCalledWith(buttonContainer, jasmine.any(Function));
   });
+
+  it('omits address fields from the registration form and model', () => {
+    component.showRegister = true;
+    fixture.detectChanges();
+
+    const registrationForm = fixture.nativeElement.querySelectorAll('form')[1];
+
+    expect(registrationForm.textContent).not.toContain('Address');
+    expect(registrationForm.querySelector('[name="registerAddressLine1"]')).toBeNull();
+    expect(registrationForm.querySelector('[name="registerAddressLine2"]')).toBeNull();
+    expect(registrationForm.querySelector('[name="registerCity"]')).toBeNull();
+    expect(registrationForm.querySelector('[name="registerProvinceState"]')).toBeNull();
+    expect(registrationForm.querySelector('[name="registerPostalCode"]')).toBeNull();
+    expect(registrationForm.querySelector('[name="registerCountry"]')).toBeNull();
+    expect('address' in component.registerModel).toBeFalse();
+  });
 });
