@@ -18,6 +18,13 @@ export class AuthComponent implements OnInit, AfterViewInit {
   loginPasswordVisible = false;
   registerPasswordVisible = false;
   loginSubmitted = false;
+  showGoogleProfileCompletion = false;
+  googleProfilePhone = '';
+  googleProfileSubmitted = false;
+  googleProfileSaving = false;
+  googleProfileError: string | null = null;
+  private pendingGoogleCredential: string | null = null;
+  private pendingGoogleLoginResponse: UserLoginResponse | null = null;
   readonly emailPattern = '^[^\\s@]+@[^\\s@]+(?:\\.[^\\s@]+)+$';
   readonly phonePattern = '^\\+[1-9]\\d{1,14}$';
 
@@ -95,6 +102,58 @@ export class AuthComponent implements OnInit, AfterViewInit {
     this.registerPasswordVisible = !this.registerPasswordVisible;
   }
 
+  isPhoneNumberValid(phoneNumber: string | null | undefined): boolean {
+    return typeof phoneNumber === 'string' && new RegExp(this.phonePattern).test(phoneNumber);
+  }
+
+  completeGoogleProfile(): void {
+    this.googleProfileSubmitted = true;
+    this.googleProfileError = null;
+
+    if (!this.isPhoneNumberValid(this.googleProfilePhone)) {
+      return;
+    }
+    const credential = this.pendingGoogleCredential;
+    const loginResponse = this.pendingGoogleLoginResponse;
+    if (!credential || !loginResponse) {
+      this.googleProfileError = 'Your Google sign-in expired. Please sign in again.';
+      return;
+    }
+
+    this.googleProfileSaving = true;
+    this.authService.completeGoogleProfile(credential, this.googleProfilePhone).subscribe({
+      next: (profile) => {
+        const response = {
+          ...loginResponse,
+          cellPhoneNo: profile.cellPhoneNo
+        };
+        this.googleProfileSaving = false;
+        this.pendingGoogleCredential = null;
+        this.pendingGoogleLoginResponse = null;
+        this.showGoogleProfileCompletion = false;
+        this.completeLogin(response, true);
+      },
+      error: (err) => {
+        this.googleProfileSaving = false;
+        const validationErrors = err.error?.errors as Record<string, string[] | string> | undefined;
+        let validationMessage: string | undefined;
+        if (validationErrors) {
+          for (const key of Object.keys(validationErrors)) {
+            const value = validationErrors[key];
+            validationMessage = Array.isArray(value) ? value[0] : value;
+            if (validationMessage) {
+              break;
+            }
+          }
+        }
+        this.googleProfileError = err.error?.error
+          || err.error?.title
+          || validationMessage
+          || 'Could not save your cellphone number. Please try again.';
+      }
+    });
+  }
+
   isLoginEmailValid(): boolean {
     const email = this.loginModel.email.trim();
     return email.length > 0
@@ -143,11 +202,24 @@ export class AuthComponent implements OnInit, AfterViewInit {
     if (this.googleSignInPending) {
       return;
     }
+    this.authService.logout();
     this.googleSignInPending = true;
     this.error = null;
 
     this.authService.loginWithGoogle(credential).subscribe({
-      next: (response) => this.completeLogin(response, true),
+      next: (response) => {
+        if (this.isPhoneNumberValid(response.cellPhoneNo)) {
+          this.completeLogin(response, true);
+          return;
+        }
+
+        this.pendingGoogleCredential = credential;
+        this.pendingGoogleLoginResponse = response;
+        this.googleProfilePhone = '+27';
+        this.googleProfileSubmitted = false;
+        this.googleProfileError = null;
+        this.showGoogleProfileCompletion = true;
+      },
       error: (err) => {
         this.error = err.error?.error || 'Google sign-in failed. Please try again.';
         this.googleSignInPending = false;
@@ -160,9 +232,17 @@ export class AuthComponent implements OnInit, AfterViewInit {
 
   private completeLogin(response: UserLoginResponse, returnHome = false): void {
     this.error = null;
+    if (returnHome && !this.isPhoneNumberValid(response.cellPhoneNo)) {
+      this.googleProfileError = 'A valid international cellphone number is required to continue.';
+      this.showGoogleProfileCompletion = true;
+      return;
+    }
     localStorage.setItem('userName', response.userName);
     localStorage.setItem('userRole', response.userRole);
     localStorage.setItem('userId', response.userId?.toString() || '');
+    if (returnHome) {
+      localStorage.setItem('cellPhoneNo', response.cellPhoneNo!);
+    }
     if (returnHome) {
       this.router.navigate(['/']);
     } else if (response.userRole === 'OperatorAdmin') {

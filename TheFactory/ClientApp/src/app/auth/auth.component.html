@@ -61,6 +61,34 @@
     </button>
   </div>
 
+  <section *ngIf="showGoogleProfileCompletion" class="google-profile-completion" aria-labelledby="google-profile-title">
+    <h2 id="google-profile-title">Complete your profile</h2>
+    <p>Add a valid international cellphone number to continue to HambaOnline.</p>
+    <form #googleProfileForm="ngForm" (ngSubmit)="completeGoogleProfile()" novalidate>
+      <label for="googleProfilePhone">Cellphone number</label>
+      <input
+        id="googleProfilePhone"
+        type="tel"
+        [(ngModel)]="googleProfilePhone"
+        name="googleProfilePhone"
+        placeholder="+27..."
+        autocomplete="tel"
+        [pattern]="phonePattern"
+        required
+        #googleProfilePhoneControl="ngModel" />
+      <div *ngIf="googleProfilePhoneControl.errors?.['required'] && (googleProfilePhoneControl.touched || googleProfileSubmitted)" class="error">
+        Cellphone number is required.
+      </div>
+      <div *ngIf="googleProfilePhoneControl.errors?.['pattern'] && (googleProfilePhoneControl.touched || googleProfileSubmitted)" class="error">
+        Enter a valid international number, such as +27821234567.
+      </div>
+      <div *ngIf="googleProfileError" class="error" role="alert">{{ googleProfileError }}</div>
+      <button type="submit" class="subscribe-btn" [disabled]="googleProfileSaving">
+        {{ googleProfileSaving ? 'Saving...' : 'Save cellphone number' }}
+      </button>
+    </form>
+  </section>
+
   <div *ngIf="showRegister">
     <h2>Join Hamba</h2>
     <form #registerForm="ngForm" (ngSubmit)="register()" novalidate>

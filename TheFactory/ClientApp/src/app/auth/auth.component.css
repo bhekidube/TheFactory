@@ -24,6 +24,27 @@
 	gap: 0.75rem;
 }
 
+.google-profile-completion {
+	padding: 1rem;
+	border: 1px solid #dce7f6;
+	border-radius: 12px;
+	background: #f7faff;
+}
+
+.google-profile-completion h2 {
+	margin-bottom: 0.4rem;
+}
+
+.google-profile-completion p {
+	margin: 0 0 0.75rem;
+	color: #44566c;
+	line-height: 1.45;
+}
+
+.google-profile-completion .subscribe-btn {
+	max-width: none;
+}
+
 .auth-container label {
 	font-size: 0.9rem;
 	font-weight: 700;

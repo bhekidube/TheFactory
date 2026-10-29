@@ -32,6 +32,16 @@ public sealed record GoogleLoginModel
     public required string Credential { get; init; }
 }
 
+public sealed class GoogleProfileCompletionModel
+{
+    [Required]
+    public required string Credential { get; set; }
+
+    [Required]
+    [RegularExpression(@"^\+[1-9]\d{1,14}$")]
+    public required string CellPhoneNo { get; set; }
+}
+
 public class ChangeUserRoleModel
 {
     public string Email { get; set; }
@@ -44,11 +54,16 @@ public class UserController : ControllerBase
 {
     private readonly SqlConnectionService _sqlService;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<UserController> _logger;
 
-    public UserController(SqlConnectionService sqlService, IConfiguration configuration)
+    public UserController(
+        SqlConnectionService sqlService,
+        IConfiguration configuration,
+        ILogger<UserController> logger)
     {
         _sqlService = sqlService;
         _configuration = configuration;
+        _logger = logger;
     }
 
     [HttpPost("Register")]
@@ -249,7 +264,7 @@ public class UserController : ControllerBase
         {
             using (var conn = await _sqlService.GetSqlConnectionAsync())
             using (var command = new SqlCommand(@"
-                SELECT u.UserId, u.Name, ur.Name AS UserRole, OU.OperatorId,
+                SELECT u.UserId, u.Name, ur.Name AS UserRole, OU.OperatorId, u.CellPhoneNo,
                        u.AddressId, a.AddressLine1, a.AddressLine2, a.City, a.ProvinceState, a.PostalCode, a.Country
                 FROM [User] u
                     INNER JOIN OperatorUser OU ON OU.UserId = u.UserId
@@ -258,7 +273,7 @@ public class UserController : ControllerBase
                     LEFT JOIN institution.Addresses a ON a.AddressId = u.AddressId
                 WHERE u.Email = @Email
                 UNION
-                SELECT u.UserId, u.Name, ur.Name AS UserRole, 0,
+                SELECT u.UserId, u.Name, ur.Name AS UserRole, 0, u.CellPhoneNo,
                        u.AddressId, a.AddressLine1, a.AddressLine2, a.City, a.ProvinceState, a.PostalCode, a.Country
                 FROM [User] u
                     INNER JOIN SystemUserRole SUR ON SUR.UserId = u.UserId
@@ -273,6 +288,7 @@ public class UserController : ControllerBase
                 string userName;
                 string userRole;
                 int operatorId;
+                string? cellPhoneNo;
                 AddressDto address;
                 using (var reader = await command.ExecuteReaderAsync(HttpContext.RequestAborted))
                 {
@@ -289,7 +305,8 @@ public class UserController : ControllerBase
                     userName = reader.GetString(1);
                     userRole = reader.GetString(2);
                     operatorId = reader.GetInt32(3);
-                    address = AddressPersistence.ReadAddress(reader, 4);
+                    cellPhoneNo = reader.IsDBNull(4) ? null : reader.GetString(4);
+                    address = AddressPersistence.ReadAddress(reader, 5);
                 }
 
                 using (var updateCmd = new SqlCommand(
@@ -300,12 +317,66 @@ public class UserController : ControllerBase
                     await updateCmd.ExecuteNonQueryAsync(HttpContext.RequestAborted);
                 }
 
-                return Ok(new { message = "Login successful.", userName, userRole, userId, operatorId, address });
+                return Ok(new { message = "Login successful.", userName, userRole, userId, operatorId, cellPhoneNo, address });
             }
         }
         catch (SqlException)
         {
             return StatusCode(500, new { error = "A database error occurred while signing in." });
+        }
+    }
+
+    [HttpPost("CompleteGoogleProfile")]
+    public async Task<IActionResult> CompleteGoogleProfile([FromBody] GoogleProfileCompletionModel model)
+    {
+        var clientId = _configuration["Google:ClientId"];
+        if (string.IsNullOrWhiteSpace(clientId))
+        {
+            return StatusCode(
+                StatusCodes.Status503ServiceUnavailable,
+                new { error = "Google sign-in is not configured on the server." });
+        }
+
+        GoogleJsonWebSignature.Payload googleUser;
+        try
+        {
+            googleUser = await GoogleJsonWebSignature.ValidateAsync(
+                model.Credential,
+                new GoogleJsonWebSignature.ValidationSettings
+                {
+                    Audience = new[] { clientId }
+                });
+        }
+        catch (InvalidJwtException)
+        {
+            return Unauthorized(new { error = "The Google credential is invalid or expired." });
+        }
+
+        if (googleUser.EmailVerified != true || string.IsNullOrWhiteSpace(googleUser.Email))
+        {
+            return Unauthorized(new { error = "A verified Google email address is required." });
+        }
+
+        try
+        {
+            using var conn = await _sqlService.GetSqlConnectionAsync();
+            using var command = new SqlCommand(
+                "UPDATE [User] SET CellPhoneNo = @CellPhoneNo WHERE Email = @Email",
+                conn);
+            command.Parameters.Add("@CellPhoneNo", SqlDbType.NVarChar, 30).Value = model.CellPhoneNo;
+            command.Parameters.Add("@Email", SqlDbType.NVarChar, 100).Value = googleUser.Email;
+
+            if (await command.ExecuteNonQueryAsync(HttpContext.RequestAborted) == 0)
+            {
+                return NotFound(new { error = "No HambaOnline account is linked to this Google email address." });
+            }
+
+            return Ok(new { cellPhoneNo = model.CellPhoneNo });
+        }
+        catch (SqlException ex)
+        {
+            _logger.LogError(ex, "Database error while completing a Google-authenticated user profile.");
+            return StatusCode(500, new { error = "A database error occurred while saving your cellphone number." });
         }
     }
 

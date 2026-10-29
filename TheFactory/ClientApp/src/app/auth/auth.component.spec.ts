@@ -1,7 +1,9 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { FormsModule } from '@angular/forms';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
+import { of } from 'rxjs';
+import { environment } from '../../environments/environment';
 import { AuthService } from '../services/auth.service';
 
 import { AuthComponent } from './auth.component';
@@ -10,9 +12,16 @@ describe('AuthComponent', () => {
   let component: AuthComponent;
   let fixture: ComponentFixture<AuthComponent>;
   let initializeGoogleSignInSpy: jasmine.Spy;
+  let loginWithGoogleSpy: jasmine.Spy;
+  let completeGoogleProfileSpy: jasmine.Spy;
+  let httpTestingController: HttpTestingController;
 
   beforeEach(async () => {
     initializeGoogleSignInSpy = jasmine.createSpy('initializeGoogleSignIn').and.returnValue(Promise.resolve());
+    loginWithGoogleSpy = jasmine.createSpy('loginWithGoogle');
+    completeGoogleProfileSpy = jasmine.createSpy('completeGoogleProfile').and.returnValue(of({
+      cellPhoneNo: '+263771234567'
+    }));
 
     await TestBed.configureTestingModule({
       declarations: [ AuthComponent ],
@@ -21,7 +30,9 @@ describe('AuthComponent', () => {
         provide: AuthService,
         useValue: {
           initializeGoogleSignIn: initializeGoogleSignInSpy,
-          loginWithGoogle: () => { throw new Error('Unexpected Google login in component test.'); }
+          loginWithGoogle: loginWithGoogleSpy,
+          completeGoogleProfile: completeGoogleProfileSpy,
+          logout: () => undefined
         }
       }]
     })
@@ -32,6 +43,13 @@ describe('AuthComponent', () => {
     fixture = TestBed.createComponent(AuthComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+    httpTestingController = TestBed.inject(HttpTestingController);
+    httpTestingController.expectOne(`${environment.apiBaseUrl}/api/LookUp/GetAllOperators`).flush([]);
+  });
+
+  afterEach(() => {
+    httpTestingController.verify();
+    localStorage.clear();
   });
 
   it('should create', () => {
@@ -59,6 +77,37 @@ describe('AuthComponent', () => {
     expect(registrationForm.querySelector('[name="registerPostalCode"]')).toBeNull();
     expect(registrationForm.querySelector('[name="registerCountry"]')).toBeNull();
     expect('address' in component.registerModel).toBeFalse();
+  });
+
+  it('requires and saves an international cellphone before completing Google sign-in', () => {
+    loginWithGoogleSpy.and.returnValue(of({
+      userName: 'Bheki',
+      userRole: 'OperatorAdmin',
+      userId: 42,
+      cellPhoneNo: null
+    }));
+    const googleCallback = initializeGoogleSignInSpy.calls.mostRecent().args[1] as (credential: string) => void;
+
+    googleCallback('google-credential');
+    fixture.detectChanges();
+
+    expect(component.showGoogleProfileCompletion).toBeTrue();
+    expect(localStorage.getItem('userId')).toBeNull();
+
+    const phoneInput = fixture.nativeElement.querySelector('#googleProfilePhone') as HTMLInputElement;
+    phoneInput.value = '+263771234567';
+    phoneInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    const form = fixture.nativeElement.querySelector('.google-profile-completion form') as HTMLFormElement;
+    form.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+
+    expect(completeGoogleProfileSpy).toHaveBeenCalledWith('google-credential', '+263771234567');
+
+    expect(component.showGoogleProfileCompletion).toBeFalse();
+    expect(localStorage.getItem('cellPhoneNo')).toBe('+263771234567');
+    expect(localStorage.getItem('userId')).toBe('42');
   });
 
   it('defaults both registration phone fields to +27 and validates international formats', () => {

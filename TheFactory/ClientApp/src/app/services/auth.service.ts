@@ -1,6 +1,6 @@
 import { Inject, Injectable, PLATFORM_ID } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, catchError, throwError } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
 import { environment } from '../../environments/environment';
 
@@ -46,6 +46,7 @@ export interface UserLoginResponse {
   userRole: string;
   userId: number;
   operatorId?: number;
+  cellPhoneNo?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -97,6 +98,22 @@ export class AuthService {
     );
   }
 
+  completeGoogleProfile(credential: string, cellPhoneNo: string): Observable<{ cellPhoneNo: string }> {
+    return this.http.post<{ cellPhoneNo: string }>(
+      `${environment.apiBaseUrl}/api/User/CompleteGoogleProfile`,
+      { credential, cellPhoneNo }
+    ).pipe(
+      catchError((error: HttpErrorResponse) => {
+        console.error('Google profile completion request failed.', {
+          status: error.status,
+          response: error.error,
+          message: error.message
+        });
+        return throwError(() => error);
+      })
+    );
+  }
+
   logout(): void {
     if (!isPlatformBrowser(this.platformId)) {
       return;
@@ -106,6 +123,7 @@ export class AuthService {
     localStorage.removeItem('userName');
     localStorage.removeItem('userRole');
     localStorage.removeItem('userId');
+    localStorage.removeItem('cellPhoneNo');
     localStorage.removeItem('operatorAdminSummary');
   }
 
