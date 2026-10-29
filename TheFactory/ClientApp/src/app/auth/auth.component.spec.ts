@@ -60,4 +60,30 @@ describe('AuthComponent', () => {
     expect(registrationForm.querySelector('[name="registerCountry"]')).toBeNull();
     expect('address' in component.registerModel).toBeFalse();
   });
+
+  it('defaults both registration phone fields to +27 and validates international formats', () => {
+    component.showRegister = true;
+    fixture.detectChanges();
+
+    const primaryPhone = fixture.nativeElement.querySelector('[name="registerCellPhoneNo"]') as HTMLInputElement;
+    const alternatePhone = fixture.nativeElement.querySelector('[name="registerAlternateCellPhoneNo"]') as HTMLInputElement;
+
+    expect(primaryPhone.type).toBe('tel');
+    expect(primaryPhone.placeholder).toBe('+27...');
+    expect(primaryPhone.value).toBe('+27');
+    expect(alternatePhone.type).toBe('tel');
+    expect(alternatePhone.placeholder).toBe('+27...');
+    expect(alternatePhone.value).toBe('+27');
+
+    primaryPhone.value = '27821234567';
+    primaryPhone.dispatchEvent(new Event('input'));
+    primaryPhone.dispatchEvent(new Event('blur'));
+    alternatePhone.value = '';
+    alternatePhone.dispatchEvent(new Event('input'));
+    alternatePhone.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Enter a valid international number');
+    expect(fixture.nativeElement.textContent).toContain('Alternate cell phone number is required.');
+  });
 });

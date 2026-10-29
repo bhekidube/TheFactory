@@ -19,6 +19,7 @@ export class AuthComponent implements OnInit, AfterViewInit {
   registerPasswordVisible = false;
   loginSubmitted = false;
   readonly emailPattern = '^[^\\s@]+@[^\\s@]+(?:\\.[^\\s@]+)+$';
+  readonly phonePattern = '^\\+[1-9]\\d{1,14}$';
 
   registerModel: {
     userRoleId: number;
@@ -32,8 +33,8 @@ export class AuthComponent implements OnInit, AfterViewInit {
     userRoleId: 3, // Default role->OperatorAdmin
     name: '',
     email: '',
-    cellPhoneNo: '',
-    alternateCellPhoneNo: '',
+    cellPhoneNo: '+27',
+    alternateCellPhoneNo: '+27',
     password: '',
     operatorId: null // <-- Add this line
   };

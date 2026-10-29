@@ -68,8 +68,36 @@
       <div *ngIf="registerName.invalid && registerName.touched" class="error">Name is required.</div>
       <input type="email" [(ngModel)]="registerModel.email" name="registerEmail" placeholder="Email" required #registerEmail="ngModel" />
       <div *ngIf="registerEmail.invalid && registerEmail.touched" class="error">Valid email is required.</div>
-      <input type="text" [(ngModel)]="registerModel.cellPhoneNo" name="registerCellPhoneNo" placeholder="Cell Phone" />
-      <input type="text" [(ngModel)]="registerModel.alternateCellPhoneNo" name="registerAlternateCellPhoneNo" placeholder="Alternate Cell Phone" />
+      <input
+        type="tel"
+        [(ngModel)]="registerModel.cellPhoneNo"
+        name="registerCellPhoneNo"
+        placeholder="+27..."
+        autocomplete="tel"
+        [pattern]="phonePattern"
+        required
+        #registerCellPhoneNo="ngModel" />
+      <div *ngIf="registerCellPhoneNo.errors?.['required'] && registerCellPhoneNo.touched" class="error">
+        Cell phone number is required.
+      </div>
+      <div *ngIf="registerCellPhoneNo.errors?.['pattern'] && registerCellPhoneNo.touched" class="error">
+        Enter a valid international number starting with + and a country code (e.g. +27821234567).
+      </div>
+      <input
+        type="tel"
+        [(ngModel)]="registerModel.alternateCellPhoneNo"
+        name="registerAlternateCellPhoneNo"
+        placeholder="+27..."
+        autocomplete="tel"
+        [pattern]="phonePattern"
+        required
+        #registerAlternateCellPhoneNo="ngModel" />
+      <div *ngIf="registerAlternateCellPhoneNo.errors?.['required'] && registerAlternateCellPhoneNo.touched" class="error">
+        Alternate cell phone number is required.
+      </div>
+      <div *ngIf="registerAlternateCellPhoneNo.errors?.['pattern'] && registerAlternateCellPhoneNo.touched" class="error">
+        Enter a valid international number starting with + and a country code (e.g. +27821234567).
+      </div>
 
       <!-- Operator Dropdown -->
       <select [(ngModel)]="registerModel.operatorId" name="registerOperatorId" required #registerOperatorId="ngModel">
