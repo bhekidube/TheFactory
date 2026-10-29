@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="250" viewBox="0 0 1000 250">
   <rect width="1000" height="250" fill="#004aad"/>
-  <g stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" fill="none">
+  <g stroke="#B5DB43" stroke-width="14" stroke-linecap="round" fill="none">
     <path d="M 340 50 Q 410 -15 480 50"/>
     <path d="M 360 75 Q 410 20 460 75"/>
     <path d="M 380 100 Q 410 60 440 100"/>
   </g>
   <text x="30" y="185" font-family="Agrandir, Inter, sans-serif" font-weight="800" font-size="110" letter-spacing="-2">
-    <tspan fill="#B5DB43">hamba</tspan><tspan fill="#FF7F1E">o</tspan><tspan fill="#B5DB43">nline</tspan>
+    <tspan fill="#FFFFFF">hamba</tspan><tspan fill="#FF6F59">o</tspan><tspan fill="#FFFFFF">nline</tspan>
   </text>
 </svg>
