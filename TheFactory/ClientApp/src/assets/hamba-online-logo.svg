@@ -5,7 +5,7 @@
     <path d="M 360 75 Q 410 20 460 75"/>
     <path d="M 380 100 Q 410 60 440 100"/>
   </g>
-  <text x="30" y="165" font-family="Agrandir, Inter, sans-serif" font-weight="800" font-size="110" letter-spacing="-2">
+  <text x="30" y="185" font-family="Agrandir, Inter, sans-serif" font-weight="800" font-size="110" letter-spacing="-2">
     <tspan fill="#B5DB43">hamba</tspan><tspan fill="#FF7F1E">o</tspan><tspan fill="#B5DB43">nline</tspan>
   </text>
 </svg>
