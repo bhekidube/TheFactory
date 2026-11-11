@@ -91,6 +91,10 @@ export class BusSearchComponent implements OnInit {
   departureDateTimeDraft = '';
   savingDepartureTripId: number | null = null;
   departureEditError: string | null = null;
+  editingPriceTripId: number | null = null;
+  priceDraft: number | string | null = '';
+  savingPriceTripId: number | null = null;
+  priceEditError: string | null = null;
 
   constructor(
     private http: HttpClient,
@@ -368,6 +372,74 @@ export class BusSearchComponent implements OnInit {
     const pad = (part: number) => String(part).padStart(2, '0');
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
       `T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
+
+  startPriceEdit(row: any): void {
+    if (!this.isSystemAdmin || !row?.tripId) {
+      return;
+    }
+
+    this.editingPriceTripId = row.tripId;
+    this.priceDraft = Number(row.price);
+    this.priceEditError = null;
+  }
+
+  cancelPriceEdit(): void {
+    if (this.savingPriceTripId === this.editingPriceTripId) {
+      return;
+    }
+
+    this.editingPriceTripId = null;
+    this.priceDraft = '';
+    this.priceEditError = null;
+  }
+
+  savePrice(row: any): void {
+    if (!this.isSystemAdmin || this.editingPriceTripId !== row?.tripId ||
+        this.priceDraft === '' || this.priceDraft === null || this.savingPriceTripId !== null) {
+      return;
+    }
+
+    const price = Number(this.priceDraft);
+    if (!Number.isFinite(price) || price < 0) {
+      this.priceEditError = 'Enter a valid non-negative price.';
+      return;
+    }
+
+    const updatedBy = Number(localStorage.getItem('userId'));
+    if (!Number.isInteger(updatedBy) || updatedBy <= 0) {
+      this.priceEditError = 'Your session is missing a valid user ID. Please sign in again.';
+      return;
+    }
+
+    this.savingPriceTripId = row.tripId;
+    this.priceEditError = null;
+    this.http.put<{ rowsAffected: number }>(`${environment.apiBaseUrl}/api/BusTrips/UpdateRouteTrip`, {
+      tripId: row.tripId,
+      departureDateTime: row.departureDateTime,
+      arrivalDateTime: row.arrivalDateTime,
+      price,
+      notes: row.notes,
+      active: row.active,
+      updatedBy
+    }).subscribe({
+      next: result => {
+        if (result.rowsAffected === 0) {
+          this.priceEditError = 'This trip could not be found. Refresh the schedule and try again.';
+          this.savingPriceTripId = null;
+          return;
+        }
+
+        row.price = price;
+        this.editingPriceTripId = null;
+        this.priceDraft = '';
+        this.savingPriceTripId = null;
+      },
+      error: () => {
+        this.priceEditError = 'Failed to update the ticket price. Please try again.';
+        this.savingPriceTripId = null;
+      }
+    });
   }
 
   onSelectSeat(row: any): void {

@@ -195,6 +195,68 @@ describe('BusSearchComponent', () => {
     expect(fixture.nativeElement.querySelector('.departure-edit-input')).toBeNull();
   });
 
+  it('allows SystemAdmin users to save a price inline with Enter', () => {
+    localStorage.setItem('userName', 'Bheki');
+    localStorage.setItem('userRole', 'SystemAdmin');
+    localStorage.setItem('userId', '42');
+    component.searchResults = [{
+      tripId: 7,
+      operatorName: 'Revival',
+      departureDateTime: '2026-11-12T10:30:00',
+      arrivalDateTime: '2026-11-12T18:00:00',
+      price: 700,
+      notes: '',
+      active: true
+    }];
+    fixture.detectChanges();
+
+    const editButton = fixture.nativeElement.querySelector('.price-edit-trigger') as HTMLButtonElement;
+    expect(editButton).not.toBeNull();
+    editButton.click();
+    fixture.detectChanges();
+
+    const input = fixture.nativeElement.querySelector('.price-edit-input') as HTMLInputElement;
+    expect(input).not.toBeNull();
+    expect(input.value).toBe('700');
+    expect(fixture.nativeElement.querySelector('.trip-action-btn')).not.toBeNull();
+
+    input.value = '725.5';
+    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+
+    const http = TestBed.inject(HttpTestingController);
+    const request = http.expectOne(req => req.url.endsWith('/api/BusTrips/UpdateRouteTrip'));
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual(jasmine.objectContaining({
+      tripId: 7,
+      departureDateTime: '2026-11-12T10:30:00',
+      price: 725.5,
+      updatedBy: 42
+    }));
+    request.flush({ rowsAffected: 1 });
+    expect(component.searchResults[0].price).toBe(725.5);
+    expect(component.editingPriceTripId).toBeNull();
+  });
+
+  it('renders prices as plain text for users without the SystemAdmin role', () => {
+    localStorage.setItem('userName', 'Bheki');
+    localStorage.setItem('userRole', 'Admin');
+    localStorage.setItem('userId', '42');
+    component.searchResults = [{
+      tripId: 7,
+      operatorName: 'Revival',
+      departureDateTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      price: 700
+    }];
+
+    fixture.detectChanges();
+
+    const priceCell = fixture.nativeElement.querySelector('tbody td.col-price') as HTMLElement;
+    expect(priceCell.textContent).toContain('R 700.00');
+    expect(priceCell.querySelector('.price-edit-trigger')).toBeNull();
+    expect(priceCell.querySelector('.price-edit-input')).toBeNull();
+  });
+
   it('offers guests a sign-in action instead of Select Seat', () => {
     component.searchResults = [{
       operatorName: 'Bravo Coach',

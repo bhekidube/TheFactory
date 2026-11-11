@@ -699,6 +699,46 @@
   white-space: nowrap;
 }
 
+.price-edit-trigger {
+  display: inline-block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+.price-edit-trigger:hover,
+.price-edit-trigger:focus-visible {
+  color: #174f91;
+  text-decoration: underline;
+}
+
+.price-edit-trigger:focus-visible {
+  outline: 2px solid #0d68cb;
+  outline-offset: 2px;
+}
+
+.price-edit-input {
+  width: 6.5rem;
+  max-width: 100%;
+  padding: 0.3rem;
+  border: 1px solid #b8c9df;
+  border-radius: 6px;
+  color: #1b2f4b;
+  font: inherit;
+  text-align: right;
+}
+
+.price-edit-actions {
+  display: inline-flex;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  margin-left: 0.25rem;
+}
+
 .screenshot-table .col-action {
   width: 26%;
   text-align: right;
