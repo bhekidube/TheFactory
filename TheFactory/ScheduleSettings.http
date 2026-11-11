@@ -1,0 +1,17 @@
+@baseUrl = https://localhost:7243
+@systemAdminUserId = 1
+
+### Get globally shared timetable column preferences
+GET {{baseUrl}}/api/ScheduleSettings/columns
+
+### Update globally shared timetable column preferences (SystemAdmin user ID required)
+PUT {{baseUrl}}/api/ScheduleSettings/columns
+X-User-Id: {{systemAdminUserId}}
+Content-Type: application/json
+
+{
+  "bus": true,
+  "departure": true,
+  "price": false,
+  "action": true
+}

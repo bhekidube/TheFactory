@@ -119,7 +119,11 @@
   <div class="results-column">
     <!-- Search Results -->
     <div *ngIf="searchResults && searchResults.length" class="search-results screenshot-table-container">
-      <fieldset *ngIf="isSystemAdmin" class="schedule-column-controls">
+      <fieldset
+        *ngIf="isSystemAdmin"
+        class="schedule-column-controls"
+        [disabled]="!columnVisibilityLoaded || isSavingColumnVisibility"
+        [attr.aria-busy]="isSavingColumnVisibility">
         <legend>Schedule columns</legend>
         <label>
           <input
@@ -154,7 +158,13 @@
           Action
         </label>
       </fieldset>
-      <table class="screenshot-table">
+      <p *ngIf="!columnVisibilityLoaded" class="schedule-column-status" role="status">
+        Loading timetable layout...
+      </p>
+      <p *ngIf="columnVisibilityError" class="schedule-column-error" role="alert">
+        {{ columnVisibilityError }}
+      </p>
+      <table *ngIf="columnVisibilityLoaded" class="screenshot-table">
         <thead>
           <tr>
             <th *ngIf="isColumnVisible('bus')" scope="col" class="col-bus sortable-header" [style.width.%]="getColumnWidth('bus')" [attr.aria-sort]="tableSort.getAriaSort('operatorName')">

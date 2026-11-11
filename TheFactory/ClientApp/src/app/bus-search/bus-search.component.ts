@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { animate, state, style, transition, trigger } from '@angular/animations';
@@ -32,7 +32,7 @@ type ScheduleColumnVisibility = Record<ScheduleColumn, boolean>;
   ]
 })
 export class BusSearchComponent implements OnInit {
-  private readonly columnVisibilityStorageKey = 'hambaOnline.scheduleColumnVisibility';
+  private readonly columnVisibilityApiUrl = `${environment.apiBaseUrl}/api/ScheduleSettings/columns`;
   private readonly columnWidths: Record<ScheduleColumn, number> = {
     bus: 38,
     departure: 18,
@@ -46,6 +46,9 @@ export class BusSearchComponent implements OnInit {
     price: true,
     action: true
   };
+  columnVisibilityLoaded = false;
+  isSavingColumnVisibility = false;
+  columnVisibilityError: string | null = null;
   showZimraForm = false;
   showForm = true;
   hasSearched = false;
@@ -193,7 +196,7 @@ export class BusSearchComponent implements OnInit {
   }
 
   isColumnVisible(column: ScheduleColumn): boolean {
-    return !this.isSystemAdmin || this.columnVisibility[column];
+    return this.columnVisibility[column];
   }
 
   isOnlyVisibleColumn(column: ScheduleColumn): boolean {
@@ -217,46 +220,65 @@ export class BusSearchComponent implements OnInit {
   }
 
   setColumnVisibility(column: ScheduleColumn, visible: boolean): void {
-    if (!this.isSystemAdmin || (!visible && this.isOnlyVisibleColumn(column))) {
+    if (!this.isSystemAdmin || !this.columnVisibilityLoaded || this.isSavingColumnVisibility ||
+        (!visible && this.isOnlyVisibleColumn(column))) {
       return;
     }
 
-    this.columnVisibility = { ...this.columnVisibility, [column]: visible };
-    if (typeof sessionStorage !== 'undefined') {
-      sessionStorage.setItem(this.columnVisibilityStorageKey, JSON.stringify(this.columnVisibility));
+    const previousVisibility = this.columnVisibility;
+    const nextVisibility = { ...previousVisibility, [column]: visible };
+    if (!Object.values(nextVisibility).some(Boolean)) {
+      return;
     }
+
+    this.columnVisibility = nextVisibility;
+    this.isSavingColumnVisibility = true;
+    this.columnVisibilityError = null;
+
+    const headers = new HttpHeaders({
+      'X-User-Id': typeof localStorage === 'undefined' ? '' : localStorage.getItem('userId') || ''
+    });
+    this.http.put<ScheduleColumnVisibility>(this.columnVisibilityApiUrl, nextVisibility, { headers }).subscribe({
+      next: savedVisibility => {
+        this.columnVisibility = this.normalizeColumnVisibility(savedVisibility);
+        this.isSavingColumnVisibility = false;
+      },
+      error: () => {
+        this.columnVisibility = previousVisibility;
+        this.isSavingColumnVisibility = false;
+        this.columnVisibilityError = 'Could not save the shared timetable layout. Please try again.';
+      }
+    });
   }
 
   loadColumnVisibilityPreferences(): void {
-    if (typeof sessionStorage === 'undefined') {
-      return;
-    }
-
-    const storedPreferences = sessionStorage.getItem(this.columnVisibilityStorageKey);
-    if (!storedPreferences) {
-      return;
-    }
-
-    try {
-      const preferences: unknown = JSON.parse(storedPreferences);
-      if (!preferences || typeof preferences !== 'object') {
-        return;
+    this.http.get<ScheduleColumnVisibility>(this.columnVisibilityApiUrl).subscribe({
+      next: preferences => {
+        this.columnVisibility = this.normalizeColumnVisibility(preferences);
+        this.columnVisibilityLoaded = true;
+        this.columnVisibilityError = null;
+      },
+      error: () => {
+        this.columnVisibilityLoaded = true;
+        this.columnVisibilityError = 'Could not load the shared timetable layout. Showing all columns.';
       }
+    });
+  }
 
-      const candidate = preferences as Partial<ScheduleColumnVisibility>;
-      this.columnVisibility = {
-        bus: typeof candidate.bus === 'boolean' ? candidate.bus : true,
-        departure: typeof candidate.departure === 'boolean' ? candidate.departure : true,
-        price: typeof candidate.price === 'boolean' ? candidate.price : true,
-        action: typeof candidate.action === 'boolean' ? candidate.action : true
-      };
+  private normalizeColumnVisibility(
+    preferences: Partial<ScheduleColumnVisibility> | null | undefined
+  ): ScheduleColumnVisibility {
+    const candidate = preferences && typeof preferences === 'object' ? preferences : {};
+    const normalized: ScheduleColumnVisibility = {
+      bus: typeof candidate.bus === 'boolean' ? candidate.bus : true,
+      departure: typeof candidate.departure === 'boolean' ? candidate.departure : true,
+      price: typeof candidate.price === 'boolean' ? candidate.price : true,
+      action: typeof candidate.action === 'boolean' ? candidate.action : true
+    };
 
-      if (!Object.values(this.columnVisibility).some(Boolean)) {
-        this.columnVisibility = { bus: true, departure: true, price: true, action: true };
-      }
-    } catch {
-      sessionStorage.removeItem(this.columnVisibilityStorageKey);
-    }
+    return Object.values(normalized).some(Boolean)
+      ? normalized
+      : { bus: true, departure: true, price: true, action: true };
   }
 
   updateMessage() {

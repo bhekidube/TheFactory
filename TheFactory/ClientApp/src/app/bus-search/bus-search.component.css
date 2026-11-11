@@ -626,6 +626,16 @@
   cursor: not-allowed;
 }
 
+.schedule-column-status,
+.schedule-column-error {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+}
+
+.schedule-column-error {
+  color: #b42318;
+}
+
 .screenshot-table {
   width: 100%;
   min-width: 0;
