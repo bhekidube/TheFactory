@@ -34,6 +34,7 @@ describe('BusSearchComponent', () => {
     localStorage.removeItem('userName');
     localStorage.removeItem('userRole');
     localStorage.removeItem('userId');
+    sessionStorage.removeItem('hambaOnline.scheduleColumnVisibility');
   });
 
   it('should create', () => {
@@ -136,6 +137,62 @@ describe('BusSearchComponent', () => {
     const busCell = fixture.nativeElement.querySelector('tbody td.col-bus') as HTMLElement;
     expect(busCell.textContent).toContain('Revival');
     expect(busCell.querySelector('a')).toBeNull();
+  });
+
+  it('allows SystemAdmin users to hide and show schedule columns and persists the selection for the session', () => {
+    localStorage.setItem('userName', 'Bheki');
+    localStorage.setItem('userRole', 'SystemAdmin');
+    localStorage.setItem('userId', '42');
+    component.searchResults = [{
+      tripId: 7,
+      operatorName: 'Revival',
+      departureDateTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      price: 700
+    }];
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.schedule-column-controls')).not.toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('thead th').length).toBe(4);
+    expect(fixture.nativeElement.querySelectorAll('tbody tr:first-child td').length).toBe(4);
+
+    const priceCheckbox = Array.from(
+      fixture.nativeElement.querySelectorAll('.schedule-column-controls label')
+    ).find((label: Element) => label.textContent?.trim() === 'Price')
+      ?.querySelector('input') as HTMLInputElement;
+    priceCheckbox.click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('thead .col-price')).toBeNull();
+    expect(fixture.nativeElement.querySelector('tbody td.col-price')).toBeNull();
+    expect(JSON.parse(sessionStorage.getItem('hambaOnline.scheduleColumnVisibility') || '{}').price).toBeFalse();
+
+    component.loadColumnVisibilityPreferences();
+    expect(component.columnVisibility.price).toBeFalse();
+  });
+
+  it('keeps every schedule column visible and hides column controls for non-SystemAdmin users', () => {
+    sessionStorage.setItem('hambaOnline.scheduleColumnVisibility', JSON.stringify({
+      bus: true,
+      departure: true,
+      price: false,
+      action: true
+    }));
+    component.loadColumnVisibilityPreferences();
+    localStorage.setItem('userName', 'Bheki');
+    localStorage.setItem('userRole', 'Admin');
+    localStorage.setItem('userId', '42');
+    component.searchResults = [{
+      tripId: 7,
+      operatorName: 'Revival',
+      departureDateTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      price: 700
+    }];
+
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.schedule-column-controls')).toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('thead th').length).toBe(4);
+    expect(fixture.nativeElement.querySelectorAll('tbody tr:first-child td').length).toBe(4);
   });
 
   it('allows SystemAdmin users to edit and save a departure time inline', () => {

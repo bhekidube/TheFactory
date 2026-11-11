@@ -583,6 +583,49 @@
   overflow-x: auto;
 }
 
+.schedule-column-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.9rem;
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.7rem 0.65rem;
+  border: 1px solid #dce7f6;
+  border-radius: 9px;
+  background: #f8fbff;
+}
+
+.schedule-column-controls legend {
+  float: none;
+  width: auto;
+  margin: 0;
+  padding: 0 0.25rem;
+  color: #17417a;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.schedule-column-controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  color: #1b2f4b;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.schedule-column-controls input[type='checkbox'] {
+  width: auto;
+  margin: 0;
+  accent-color: #0d68cb;
+  cursor: pointer;
+}
+
+.schedule-column-controls input[type='checkbox']:disabled {
+  cursor: not-allowed;
+}
+
 .screenshot-table {
   width: 100%;
   min-width: 0;

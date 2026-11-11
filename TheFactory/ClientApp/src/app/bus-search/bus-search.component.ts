@@ -6,6 +6,9 @@ import { environment } from '../../environments/environment';
 import { AuthService } from '../services/auth.service';
 import { TableSortController } from '../table-sorting';
 
+type ScheduleColumn = 'bus' | 'departure' | 'price' | 'action';
+type ScheduleColumnVisibility = Record<ScheduleColumn, boolean>;
+
 @Component({
   selector: 'app-bus-search',
   templateUrl: './bus-search.component.html',
@@ -29,7 +32,20 @@ import { TableSortController } from '../table-sorting';
   ]
 })
 export class BusSearchComponent implements OnInit {
+  private readonly columnVisibilityStorageKey = 'hambaOnline.scheduleColumnVisibility';
+  private readonly columnWidths: Record<ScheduleColumn, number> = {
+    bus: 38,
+    departure: 18,
+    price: 18,
+    action: 26
+  };
   readonly tableSort = new TableSortController();
+  columnVisibility: ScheduleColumnVisibility = {
+    bus: true,
+    departure: true,
+    price: true,
+    action: true
+  };
   showZimraForm = false;
   showForm = true;
   hasSearched = false;
@@ -144,6 +160,7 @@ export class BusSearchComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.loadColumnVisibilityPreferences();
     setInterval(() => this.updateMessage(), 10000);
 
     const now = new Date();
@@ -173,6 +190,73 @@ export class BusSearchComponent implements OnInit {
       // Only search after defaults are set
       this.onSearch();
     });
+  }
+
+  isColumnVisible(column: ScheduleColumn): boolean {
+    return !this.isSystemAdmin || this.columnVisibility[column];
+  }
+
+  isOnlyVisibleColumn(column: ScheduleColumn): boolean {
+    return this.columnVisibility[column] &&
+      Object.values(this.columnVisibility).filter(Boolean).length === 1;
+  }
+
+  getColumnWidth(column: ScheduleColumn): number {
+    const visibleWidth = Object.entries(this.columnWidths)
+      .filter(([key]) => this.isColumnVisible(key as ScheduleColumn))
+      .reduce((total, [, width]) => total + width, 0);
+
+    return (this.columnWidths[column] / visibleWidth) * 100;
+  }
+
+  onColumnVisibilityChange(column: ScheduleColumn, event: Event): void {
+    const target = event.target;
+    if (target instanceof HTMLInputElement) {
+      this.setColumnVisibility(column, target.checked);
+    }
+  }
+
+  setColumnVisibility(column: ScheduleColumn, visible: boolean): void {
+    if (!this.isSystemAdmin || (!visible && this.isOnlyVisibleColumn(column))) {
+      return;
+    }
+
+    this.columnVisibility = { ...this.columnVisibility, [column]: visible };
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem(this.columnVisibilityStorageKey, JSON.stringify(this.columnVisibility));
+    }
+  }
+
+  loadColumnVisibilityPreferences(): void {
+    if (typeof sessionStorage === 'undefined') {
+      return;
+    }
+
+    const storedPreferences = sessionStorage.getItem(this.columnVisibilityStorageKey);
+    if (!storedPreferences) {
+      return;
+    }
+
+    try {
+      const preferences: unknown = JSON.parse(storedPreferences);
+      if (!preferences || typeof preferences !== 'object') {
+        return;
+      }
+
+      const candidate = preferences as Partial<ScheduleColumnVisibility>;
+      this.columnVisibility = {
+        bus: typeof candidate.bus === 'boolean' ? candidate.bus : true,
+        departure: typeof candidate.departure === 'boolean' ? candidate.departure : true,
+        price: typeof candidate.price === 'boolean' ? candidate.price : true,
+        action: typeof candidate.action === 'boolean' ? candidate.action : true
+      };
+
+      if (!Object.values(this.columnVisibility).some(Boolean)) {
+        this.columnVisibility = { bus: true, departure: true, price: true, action: true };
+      }
+    } catch {
+      sessionStorage.removeItem(this.columnVisibilityStorageKey);
+    }
   }
 
   updateMessage() {
