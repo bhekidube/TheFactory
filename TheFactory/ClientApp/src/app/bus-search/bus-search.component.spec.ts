@@ -102,6 +102,42 @@ describe('BusSearchComponent', () => {
     expect(button.textContent).toContain('Select Seat');
   });
 
+  it('links bus names to operator admin pages for SystemAdmin users', () => {
+    localStorage.setItem('userName', 'Bheki');
+    localStorage.setItem('userRole', 'SystemAdmin');
+    localStorage.setItem('userId', '42');
+    component.searchResults = [{
+      operatorName: 'Brooklyn Express',
+      departureDateTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      price: 120
+    }];
+
+    fixture.detectChanges();
+
+    const link = fixture.nativeElement.querySelector('tbody td.col-bus .bus-admin-link') as HTMLAnchorElement;
+    expect(link).not.toBeNull();
+    expect(link.textContent).toContain('Brooklyn Express');
+    expect(link.getAttribute('href')).toBe('/operator-admin/Brooklyn%20Express');
+    expect(fixture.nativeElement.querySelector('.trip-action-btn')).not.toBeNull();
+  });
+
+  it('renders bus names as plain text for users without the SystemAdmin role', () => {
+    localStorage.setItem('userName', 'Bheki');
+    localStorage.setItem('userRole', 'OperatorAdmin');
+    localStorage.setItem('userId', '42');
+    component.searchResults = [{
+      operatorName: 'Revival',
+      departureDateTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      price: 120
+    }];
+
+    fixture.detectChanges();
+
+    const busCell = fixture.nativeElement.querySelector('tbody td.col-bus') as HTMLElement;
+    expect(busCell.textContent).toContain('Revival');
+    expect(busCell.querySelector('a')).toBeNull();
+  });
+
   it('offers guests a sign-in action instead of Select Seat', () => {
     component.searchResults = [{
       operatorName: 'Bravo Coach',

@@ -136,7 +136,13 @@
         </thead>
         <tbody>
           <tr *ngFor="let row of searchResults | tableSort: tableSort.sortColumn:tableSort.sortDirection; let i = index" [class.alt-row]="i % 2 === 1">
-            <td class="col-bus" data-label="Bus">{{ row.operatorName }}</td>
+            <td class="col-bus" data-label="Bus">
+              <a
+                *ngIf="isSystemAdmin; else busNameText"
+                class="bus-admin-link"
+                [routerLink]="['/operator-admin', row.operatorName]">{{ row.operatorName }}</a>
+              <ng-template #busNameText>{{ row.operatorName }}</ng-template>
+            </td>
             <td class="col-departure" data-label="Departure">{{ row.departureDateTime | date:'EEE, d MMM' }}<br>{{ row.departureDateTime | date:'HH:mm' }}</td>
             <td class="col-price" data-label="Price">{{ getPriceDisplay(row) }}</td>
             <td class="col-action" data-label="Action">

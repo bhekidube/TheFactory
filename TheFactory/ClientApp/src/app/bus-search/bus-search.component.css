@@ -602,6 +602,23 @@
   word-break: break-word;
 }
 
+.bus-admin-link {
+  color: #174f91;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.bus-admin-link:hover,
+.bus-admin-link:focus-visible {
+  color: #0d68cb;
+  text-decoration: underline;
+}
+
+.bus-admin-link:focus-visible {
+  outline: 2px solid #0d68cb;
+  outline-offset: 2px;
+}
+
 .screenshot-table .col-departure {
   width: 18%;
   text-align: center;

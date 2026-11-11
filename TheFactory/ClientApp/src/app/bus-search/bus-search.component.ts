@@ -73,6 +73,10 @@ export class BusSearchComponent implements OnInit {
     return this.isLoggedIn ? localStorage.getItem('userRole') || '' : '';
   }
 
+  get isSystemAdmin(): boolean {
+    return this.isLoggedIn && this.signedInUserRole.trim() === 'SystemAdmin';
+  }
+
   // Existing fields...
   fromInput: string = '';
   toInput: string = '';
