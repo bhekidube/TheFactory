@@ -101,7 +101,7 @@ export class AdminScreenComponent implements OnInit {
   }
 
   isAdminRole(role: UserRole): boolean {
-    return role === 'SystemAdmin' || role === 'Admin';
+    return role === 'SystemAdmin';
   }
 
   logout(): void {

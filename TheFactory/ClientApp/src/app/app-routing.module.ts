@@ -20,6 +20,7 @@ import { StaffManagementComponent } from './staff-management/staff-management.co
 import { FinanceDashboardComponent } from './finance-dashboard/finance-dashboard.component';
 import { DocumentsComponent } from './documents/documents.component';
 import { LearningAccessGuard } from './guards/learning-access.guard';
+import { SystemAdminAccessGuard } from './guards/system-admin-access.guard';
 
 const routes: Routes = [
   { path: '', component: BusSearchComponent, pathMatch: 'full' },
@@ -44,7 +45,7 @@ const routes: Routes = [
       { path: 'documents', component: DocumentsComponent }
     ]
   },
-  { path: 'admin-screen', component: AdminScreenComponent },
+  { path: 'admin-screen', component: AdminScreenComponent, canActivate: [SystemAdminAccessGuard] },
   { path: 'school/admin/learners', component: LearnerManagementComponent },
   { path: 'school/admin/learners/:id', component: LearnerDetailComponent },
   { path: 'school/admin/classes/:id', component: ClassDetailComponent },

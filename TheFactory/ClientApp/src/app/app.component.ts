@@ -30,6 +30,15 @@ export class AppComponent {
     return !!userId && this.allowedLearningRoles.has(userRole);
   }
 
+  get canAccessAdminScreen(): boolean {
+    if (typeof localStorage === 'undefined') {
+      return false;
+    }
+
+    return !!(localStorage.getItem('userId') || '').trim() &&
+      (localStorage.getItem('userRole') || '').trim() === 'SystemAdmin';
+  }
+
   get signedInUserName(): string {
     if (typeof localStorage === 'undefined') {
       return '';
