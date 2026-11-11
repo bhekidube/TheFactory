@@ -275,6 +275,10 @@ describe('BusSearchComponent', () => {
     const input = fixture.nativeElement.querySelector('.price-edit-input') as HTMLInputElement;
     expect(input).not.toBeNull();
     expect(input.value).toBe('700');
+    const priceEditForm = fixture.nativeElement.querySelector('.price-edit-form') as HTMLElement;
+    expect(priceEditForm).not.toBeNull();
+    expect(priceEditForm.querySelector('.price-edit-input')).toBe(input);
+    expect(priceEditForm.querySelector('.price-edit-actions')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.trip-action-btn')).not.toBeNull();
 
     input.value = '725.5';

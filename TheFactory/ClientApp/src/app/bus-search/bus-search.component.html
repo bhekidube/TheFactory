@@ -218,29 +218,31 @@
             </td>
             <td *ngIf="isColumnVisible('price')" class="col-price" data-label="Price" [style.width.%]="getColumnWidth('price')">
               <ng-container *ngIf="isSystemAdmin && editingPriceTripId === row.tripId; else priceDisplay">
-                <input
-                  class="price-edit-input"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  aria-label="Ticket price"
-                  [ngModel]="priceDraft"
-                  (ngModelChange)="priceDraft = $event"
-                  [ngModelOptions]="{ standalone: true }"
-                  (keydown.enter)="savePrice(row)" />
-                <span class="price-edit-actions">
-                  <button
-                    type="button"
-                    class="departure-edit-button"
-                    [disabled]="savingPriceTripId === row.tripId || priceDraft === '' || priceDraft === null"
-                    (click)="savePrice(row)">Save</button>
-                  <button
-                    type="button"
-                    class="departure-edit-button departure-edit-cancel"
-                    [disabled]="savingPriceTripId === row.tripId"
-                    (click)="cancelPriceEdit()">Cancel</button>
-                </span>
-                <small *ngIf="priceEditError" class="departure-edit-error" role="alert">{{ priceEditError }}</small>
+                <div class="price-edit-form">
+                  <input
+                    class="price-edit-input"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    aria-label="Ticket price"
+                    [ngModel]="priceDraft"
+                    (ngModelChange)="priceDraft = $event"
+                    [ngModelOptions]="{ standalone: true }"
+                    (keydown.enter)="savePrice(row)" />
+                  <span class="price-edit-actions">
+                    <button
+                      type="button"
+                      class="departure-edit-button"
+                      [disabled]="savingPriceTripId === row.tripId || priceDraft === '' || priceDraft === null"
+                      (click)="savePrice(row)">Save</button>
+                    <button
+                      type="button"
+                      class="departure-edit-button departure-edit-cancel"
+                      [disabled]="savingPriceTripId === row.tripId"
+                      (click)="cancelPriceEdit()">Cancel</button>
+                  </span>
+                  <small *ngIf="priceEditError" class="departure-edit-error" role="alert">{{ priceEditError }}</small>
+                </div>
               </ng-container>
               <ng-template #priceDisplay>
                 <button
