@@ -25,11 +25,11 @@
       Learning
     </a>
     <a
-      ngIf="canAccessLearning"
+      *ngIf="canAccessLearning"
       class="hamba-nav-link"
       [routerLink]="['/admin-screen']"
       [routerLinkActive]="['is-active']">
-      Admin Screen - Fix this
+      Admin Screen
     </a>
     <span *ngIf="signedInUserName" class="signed-in-status" role="status">
       Logged in as <strong>{{ signedInUserName }}</strong>
