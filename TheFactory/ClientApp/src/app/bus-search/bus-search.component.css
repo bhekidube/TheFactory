@@ -622,7 +622,75 @@
 .screenshot-table .col-departure {
   width: 18%;
   text-align: center;
-  white-space: nowrap;
+  white-space: normal;
+}
+
+.departure-edit-trigger {
+  display: inline-block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+.departure-edit-trigger:hover,
+.departure-edit-trigger:focus-visible {
+  color: #174f91;
+  text-decoration: underline;
+}
+
+.departure-edit-trigger:focus-visible {
+  outline: 2px solid #0d68cb;
+  outline-offset: 2px;
+}
+
+.departure-edit-input {
+  width: 100%;
+  min-width: 0;
+  padding: 0.3rem;
+  border: 1px solid #b8c9df;
+  border-radius: 6px;
+  color: #1b2f4b;
+  font: inherit;
+}
+
+.departure-edit-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+
+.departure-edit-button {
+  padding: 0.2rem 0.5rem;
+  border: 1px solid #0d68cb;
+  border-radius: 5px;
+  background: #0d68cb;
+  color: #fff;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.departure-edit-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.departure-edit-button.departure-edit-cancel {
+  border-color: #b8c4d8;
+  background: #fff;
+  color: #1b2f4b;
+}
+
+.departure-edit-error {
+  display: block;
+  margin-top: 0.3rem;
+  color: #b42318;
+  white-space: normal;
 }
 
 .screenshot-table .col-price {

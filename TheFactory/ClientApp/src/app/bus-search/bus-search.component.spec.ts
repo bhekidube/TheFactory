@@ -2,7 +2,7 @@
 
 import { FormsModule } from '@angular/forms';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { Router } from '@angular/router';
@@ -136,6 +136,63 @@ describe('BusSearchComponent', () => {
     const busCell = fixture.nativeElement.querySelector('tbody td.col-bus') as HTMLElement;
     expect(busCell.textContent).toContain('Revival');
     expect(busCell.querySelector('a')).toBeNull();
+  });
+
+  it('allows SystemAdmin users to edit and save a departure time inline', () => {
+    localStorage.setItem('userName', 'Bheki');
+    localStorage.setItem('userRole', 'SystemAdmin');
+    localStorage.setItem('userId', '42');
+    component.searchResults = [{
+      tripId: 7,
+      operatorName: 'Revival',
+      departureDateTime: '2026-11-12T10:30:00',
+      arrivalDateTime: '2026-11-12T18:00:00',
+      price: 120,
+      notes: '',
+      active: true
+    }];
+    fixture.detectChanges();
+
+    const editButton = fixture.nativeElement.querySelector('.departure-edit-trigger') as HTMLButtonElement;
+    expect(editButton).not.toBeNull();
+    editButton.click();
+    fixture.detectChanges();
+
+    const input = fixture.nativeElement.querySelector('.departure-edit-input') as HTMLInputElement;
+    expect(input).not.toBeNull();
+    expect(input.value).toBe('2026-11-12T10:30');
+    expect(fixture.nativeElement.querySelector('.trip-action-btn')).not.toBeNull();
+
+    component.departureDateTimeDraft = '2026-11-12T11:15';
+    component.saveDepartureDateTime(component.searchResults[0]);
+
+    const http = TestBed.inject(HttpTestingController);
+    const request = http.expectOne(req => req.url.endsWith('/api/BusTrips/UpdateRouteTrip'));
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual(jasmine.objectContaining({
+      tripId: 7,
+      departureDateTime: '2026-11-12T11:15',
+      updatedBy: 42
+    }));
+    request.flush({ rowsAffected: 1 });
+    expect(component.searchResults[0].departureDateTime).toBe(new Date('2026-11-12T11:15').toISOString());
+    expect(component.editingDepartureTripId).toBeNull();
+  });
+
+  it('does not expose inline departure editing to non-SystemAdmin users', () => {
+    localStorage.setItem('userName', 'Bheki');
+    localStorage.setItem('userRole', 'Admin');
+    localStorage.setItem('userId', '42');
+    component.searchResults = [{
+      tripId: 7,
+      operatorName: 'Revival',
+      departureDateTime: '2026-11-12T10:30:00'
+    }];
+
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.departure-edit-trigger')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.departure-edit-input')).toBeNull();
   });
 
   it('offers guests a sign-in action instead of Select Seat', () => {

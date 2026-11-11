@@ -143,7 +143,44 @@
                 [routerLink]="['/operator-admin', row.operatorName]">{{ row.operatorName }}</a>
               <ng-template #busNameText>{{ row.operatorName }}</ng-template>
             </td>
-            <td class="col-departure" data-label="Departure">{{ row.departureDateTime | date:'EEE, d MMM' }}<br>{{ row.departureDateTime | date:'HH:mm' }}</td>
+            <td class="col-departure" data-label="Departure">
+              <ng-container *ngIf="isSystemAdmin && editingDepartureTripId === row.tripId; else departureDisplay">
+                <input
+                  class="departure-edit-input"
+                  type="datetime-local"
+                  aria-label="Departure date and time"
+                  required
+                  [ngModel]="departureDateTimeDraft"
+                  (ngModelChange)="departureDateTimeDraft = $event"
+                  [ngModelOptions]="{ standalone: true }" />
+                <span class="departure-edit-actions">
+                  <button
+                    type="button"
+                    class="departure-edit-button"
+                    [disabled]="savingDepartureTripId === row.tripId || !departureDateTimeDraft"
+                    (click)="saveDepartureDateTime(row)">Save</button>
+                  <button
+                    type="button"
+                    class="departure-edit-button departure-edit-cancel"
+                    [disabled]="savingDepartureTripId === row.tripId"
+                    (click)="cancelDepartureEdit()">Cancel</button>
+                </span>
+                <small *ngIf="departureEditError" class="departure-edit-error" role="alert">{{ departureEditError }}</small>
+              </ng-container>
+              <ng-template #departureDisplay>
+                <button
+                  *ngIf="isSystemAdmin; else departureText"
+                  type="button"
+                  class="departure-edit-trigger"
+                  aria-label="Edit departure date and time"
+                  (click)="startDepartureEdit(row)">
+                  {{ row.departureDateTime | date:'EEE, d MMM' }}<br>{{ row.departureDateTime | date:'HH:mm' }}
+                </button>
+                <ng-template #departureText>
+                  {{ row.departureDateTime | date:'EEE, d MMM' }}<br>{{ row.departureDateTime | date:'HH:mm' }}
+                </ng-template>
+              </ng-template>
+            </td>
             <td class="col-price" data-label="Price">{{ getPriceDisplay(row) }}</td>
             <td class="col-action" data-label="Action">
               <button

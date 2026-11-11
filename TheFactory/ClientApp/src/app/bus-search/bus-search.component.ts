@@ -87,6 +87,10 @@ export class BusSearchComponent implements OnInit {
   toSuggestions: any[] = [];
   toTownInput: string = '';
   searchResults: any[] = [];
+  editingDepartureTripId: number | null = null;
+  departureDateTimeDraft = '';
+  savingDepartureTripId: number | null = null;
+  departureEditError: string | null = null;
 
   constructor(
     private http: HttpClient,
@@ -281,6 +285,89 @@ export class BusSearchComponent implements OnInit {
     }
 
     return '--';
+  }
+
+  startDepartureEdit(row: any): void {
+    if (!this.isSystemAdmin || !row?.tripId) {
+      return;
+    }
+
+    this.editingDepartureTripId = row.tripId;
+    this.departureDateTimeDraft = this.toLocalDateTimeInput(row.departureDateTime);
+    this.departureEditError = null;
+  }
+
+  cancelDepartureEdit(): void {
+    if (this.savingDepartureTripId === this.editingDepartureTripId) {
+      return;
+    }
+
+    this.editingDepartureTripId = null;
+    this.departureDateTimeDraft = '';
+    this.departureEditError = null;
+  }
+
+  saveDepartureDateTime(row: any): void {
+    if (!this.isSystemAdmin || this.editingDepartureTripId !== row?.tripId ||
+        !this.departureDateTimeDraft || this.savingDepartureTripId !== null) {
+      return;
+    }
+
+    const updatedBy = Number(localStorage.getItem('userId'));
+    if (!Number.isInteger(updatedBy) || updatedBy <= 0) {
+      this.departureEditError = 'Your session is missing a valid user ID. Please sign in again.';
+      return;
+    }
+
+    const departureDateTime = new Date(this.departureDateTimeDraft);
+    if (Number.isNaN(departureDateTime.getTime())) {
+      this.departureEditError = 'Enter a valid departure date and time.';
+      return;
+    }
+
+    this.savingDepartureTripId = row.tripId;
+    this.departureEditError = null;
+    this.http.put<{ rowsAffected: number }>(`${environment.apiBaseUrl}/api/BusTrips/UpdateRouteTrip`, {
+      tripId: row.tripId,
+      departureDateTime: this.departureDateTimeDraft,
+      arrivalDateTime: row.arrivalDateTime,
+      price: row.price,
+      notes: row.notes,
+      active: row.active,
+      updatedBy
+    }).subscribe({
+      next: result => {
+        if (result.rowsAffected === 0) {
+          this.departureEditError = 'This trip could not be found. Refresh the schedule and try again.';
+          this.savingDepartureTripId = null;
+          return;
+        }
+
+        row.departureDateTime = departureDateTime.toISOString();
+        this.editingDepartureTripId = null;
+        this.departureDateTimeDraft = '';
+        this.savingDepartureTripId = null;
+      },
+      error: () => {
+        this.departureEditError = 'Failed to update the departure. Please try again.';
+        this.savingDepartureTripId = null;
+      }
+    });
+  }
+
+  private toLocalDateTimeInput(value: string | Date | null | undefined): string {
+    if (!value) {
+      return '';
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+
+    const pad = (part: number) => String(part).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+      `T${pad(date.getHours())}:${pad(date.getMinutes())}`;
   }
 
   onSelectSeat(row: any): void {
