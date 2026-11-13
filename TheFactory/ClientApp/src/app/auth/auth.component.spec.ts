@@ -1,6 +1,7 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { FormsModule } from '@angular/forms';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -54,6 +55,20 @@ describe('AuthComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('redirects credential-authenticated SystemAdmin users to the home page', () => {
+    const router = TestBed.inject(Router);
+    const navigateSpy = spyOn(router, 'navigate').and.resolveTo(true);
+    component.loginModel = { email: 'admin@example.com', password: 'password123' };
+
+    component.login();
+
+    const loginRequest = httpTestingController.expectOne(`${environment.apiBaseUrl}/api/User/Login`);
+    loginRequest.flush({ userName: 'Admin User', userRole: 'SystemAdmin', userId: 7 });
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/']);
+    expect(localStorage.getItem('userRole')).toBe('SystemAdmin');
   });
 
   it('initializes Google sign-in after the button container is mounted', () => {

@@ -248,7 +248,7 @@ export class AuthComponent implements OnInit, AfterViewInit {
     } else if (response.userRole === 'OperatorAdmin') {
       this.viewOperator(response.userName, response.userId?.toString() || '');
     } else if (response.userRole === 'SystemAdmin') {
-      this.router.navigate(['/admin-screen']);
+      this.router.navigate(['/']);
     }
   }
 
