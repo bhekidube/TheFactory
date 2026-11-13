@@ -141,6 +141,7 @@ public sealed class TripAnalyticsController : ControllerBase
                             ScheduledArrivalDateTime = @ScheduledArrivalDateTime,
                             ActualDepartureDateTime = @ActualDepartureDateTime,
                             ActualArrivalDateTime = @ActualArrivalDateTime,
+                            ActualTimesEstimated = 0,
                             PassengerVolume = @PassengerVolume,
                             TotalRevenue = @TotalRevenue,
                             SalesDataComplete = @SalesDataComplete,
@@ -153,12 +154,12 @@ public sealed class TripAnalyticsController : ControllerBase
                         INSERT INTO dbo.TripHistory (
                             TripId, ServiceDate, OperatorId, RouteId,
                             ScheduledDepartureDateTime, ScheduledArrivalDateTime,
-                            ActualDepartureDateTime, ActualArrivalDateTime,
+                            ActualDepartureDateTime, ActualArrivalDateTime, ActualTimesEstimated,
                             PassengerVolume, TotalRevenue, SalesDataComplete, ArchivedBy)
                         VALUES (
                             @TripId, @ServiceDate, @OperatorId, @RouteId,
                             @ScheduledDepartureDateTime, @ScheduledArrivalDateTime,
-                            @ActualDepartureDateTime, @ActualArrivalDateTime,
+                            @ActualDepartureDateTime, @ActualArrivalDateTime, 0,
                             @PassengerVolume, @TotalRevenue, @SalesDataComplete, @ArchivedBy);
                     END;";
 
