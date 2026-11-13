@@ -19,11 +19,7 @@ export class OperatorAdminComponent {
 
   ngOnInit(): void {
     this.operatorName = this.route.snapshot.paramMap.get('operator') || '';
-    const summaryString = localStorage.getItem('operatorAdminSummary');
-    this.summary = summaryString ? JSON.parse(summaryString) : null;
-
-
-
+    this.restoreOperatorSummary();
 
     // Get lookup data for locations
     this.http.get<any[]>(`${environment.apiBaseUrl}/api/Lookup/Locations`)
@@ -75,6 +71,31 @@ export class OperatorAdminComponent {
   userRole: string = localStorage.getItem('userRole') || 'Public';
   isLoggedIn: boolean = !!localStorage.getItem('userName');
 
+  private restoreOperatorSummary(): void {
+    const summaryString = localStorage.getItem('operatorAdminSummary');
+    this.summary = summaryString ? JSON.parse(summaryString) : null;
+    if (this.operatorName && (!this.summary || this.summary.operatorName !== this.operatorName)) {
+      this.refreshOperatorSummary();
+    }
+  }
+
+  refreshOperatorSummary(): void {
+    if (!this.operatorName) {
+      return;
+    }
+
+    this.http.get<any>(`${environment.apiBaseUrl}/api/Admin/OperatorSummary?operatorName=${encodeURIComponent(this.operatorName)}`)
+      .subscribe({
+        next: summary => {
+          this.summary = summary;
+          localStorage.setItem('operatorAdminSummary', JSON.stringify(summary));
+        },
+        error: err => {
+          console.error('Failed to refresh operator summary', err);
+        }
+      });
+  }
+
   selectedRoute: any = null;
 
   viewRoute(route: any): void {
@@ -90,29 +111,21 @@ export class OperatorAdminComponent {
   };
 
   insertRoute(): void {
+    const operatorId = Number(this.summary?.operatorId) || Number(localStorage.getItem('operatorId')) || 0;
+    const createdBy = Number(localStorage.getItem('userId')) || 0;
     const payload = {
-      operatorId: Number(this.summary?.operatorId) || 0,
+      operatorId,
       fromId: Number(this.newRoute.fromLocationId),
       toId: Number(this.newRoute.toLocationId),
-      createdBy: Number(localStorage.getItem('userId')) || 0
+      createdBy
     };
 
     this.http.post<any>(`${environment.apiBaseUrl}/api/BusTrips/InsertRoute`, payload)
       .subscribe({
-        next: res => {
+        next: () => {
           this.createRouteMessage = 'Route created successfully!';
           this.showCreateRouteForm = false;
-          // Refresh the operator summary to update the route list
-          this.http.get<any>(`${environment.apiBaseUrl}/api/Admin/OperatorSummary?operatorName=${encodeURIComponent(this.operatorName)}`)
-            .subscribe({
-              next: summary => {
-                this.summary = summary;
-                localStorage.setItem('operatorAdminSummary', JSON.stringify(summary));
-              },
-              error: err => {
-                this.createRouteMessage = 'Route created, but failed to refresh route list.';
-              }
-            });
+          this.refreshOperatorSummary();
         },
         error: err => {
           this.createRouteMessage = err.error?.error || err.message || 'Failed to create route.';
@@ -208,6 +221,7 @@ export class OperatorAdminComponent {
     const payload = {
       operatorId: Number(this.summary?.operatorId) || 0,
       routeTripId: this.selectedRoute?.tripId || 0,
+      createdBy: Number(localStorage.getItem('userId')) || 0,
       price: this.newTicketPrice,
       currency: this.newTicketCurrency,
       startDate: this.newTicketStartDate,
@@ -215,11 +229,16 @@ export class OperatorAdminComponent {
       active: true
     };
 
+    if (!payload.routeTripId || !payload.operatorId || !payload.createdBy) {
+      alert('Select a trip and ensure you are logged in to the correct operator before adding a ticket price.');
+      return;
+    }
+
     this.http.post<any>(`${environment.apiBaseUrl}/api/BusTrips/InsertRouteTripTicketPrice`, payload)
       .subscribe({
-        next: res => {
+        next: () => {
           alert('Ticket price added successfully!');
-          // Optionally refresh data or clear form
+          this.refreshOperatorSummary();
         },
         error: err => {
           alert(err.error?.error || err.message || 'Failed to add ticket price.');

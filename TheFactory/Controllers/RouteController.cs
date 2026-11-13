@@ -49,6 +49,12 @@ public class RouteController : ControllerBase
     {
         using (var conn = await _sqlService.GetSqlConnectionAsync())
         {
+            var currentOperatorId = await OperatorScopeValidator.ResolveCurrentOperatorIdAsync(conn, dto.CreatedBy);
+            if (!currentOperatorId.HasValue || !OperatorScopeValidator.ValidateOperatorMutationScope(dto.OperatorId, currentOperatorId.Value))
+            {
+                return Forbid();
+            }
+
             var cmd = new SqlCommand(@"
                 INSERT INTO Route (OperatorId, FromId, ToId, Date, DepartureTime, ArrivalTime, Price, CreatedBy, CreatedDate)
                 VALUES (@OperatorId, @FromId, @ToId, @Date, @DepartureTime, @ArrivalTime, @Price, @CreatedBy, GETDATE());
@@ -74,6 +80,18 @@ public class RouteController : ControllerBase
     {
         using (var conn = await _sqlService.GetSqlConnectionAsync())
         {
+            var routeOperatorId = await OperatorScopeValidator.ResolveRouteOperatorIdAsync(conn, id);
+            if (!routeOperatorId.HasValue || !OperatorScopeValidator.ValidateOperatorMutationScope(dto.OperatorId, routeOperatorId.Value))
+            {
+                return Forbid();
+            }
+
+            var currentOperatorId = await OperatorScopeValidator.ResolveCurrentOperatorIdAsync(conn, dto.UpdatedBy);
+            if (!currentOperatorId.HasValue || !OperatorScopeValidator.ValidateOperatorMutationScope(dto.OperatorId, currentOperatorId.Value))
+            {
+                return Forbid();
+            }
+
             var cmd = new SqlCommand(@"
                 UPDATE Route
                 SET OperatorId = @OperatorId,

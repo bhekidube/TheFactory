@@ -190,19 +190,23 @@ export class OperatorRouteTripComponent implements OnInit, OnChanges {
 
   saveTicketPrice(row: any) {
     const model = {
-      operatorRouteTripId: row.tripId,
+      operatorId: Number(this.route?.operatorId ?? localStorage.getItem('operatorId')) || 0,
+      routeTripId: Number(row.tripId),
+      createdBy: Number(localStorage.getItem('userId')) || 0,
       ...this.ticketPriceModels[row.tripId]
     };
+
     this.ticketPriceService.insertTicketPrice(model).subscribe({
       next: () => {
         this.ticketPriceMessages[row.tripId] = 'Ticket price saved!';
+        this.loadTrips();
         setTimeout(() => {
           this.showTicketPriceFormFor[row.tripId] = false;
           this.ticketPriceMessages[row.tripId] = '';
         }, 1500);
       },
       error: err => {
-        this.ticketPriceMessages[row.tripId] = 'Error: ' + (err.error?.message || 'Could not save');
+        this.ticketPriceMessages[row.tripId] = 'Error: ' + (err.error?.message || err.error?.error || 'Could not save');
       }
     });
   }

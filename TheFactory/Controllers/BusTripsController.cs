@@ -90,6 +90,31 @@ public class BusTripsController : ControllerBase
     {
         return await _sqlService.GetSqlConnectionAsync();
     }
+
+    private async Task<IActionResult?> ValidateCurrentOperatorAsync(SqlConnection connection, int userId, int requestedOperatorId, string operationName)
+    {
+        if (userId <= 0)
+        {
+            return new BadRequestObjectResult(new { error = $"{operationName} requires a valid current user context." });
+        }
+
+        var currentOperatorId = await OperatorScopeValidator.ResolveCurrentOperatorIdAsync(connection, userId);
+        if (!currentOperatorId.HasValue)
+        {
+            return new ForbidResult();
+        }
+
+        if (!OperatorScopeValidator.ValidateOperatorMutationScope(requestedOperatorId, currentOperatorId.Value))
+        {
+            return new ObjectResult(new { error = OperatorScopeValidator.GetOperatorScopeErrorMessage(requestedOperatorId, currentOperatorId.Value) })
+            {
+                StatusCode = StatusCodes.Status403Forbidden
+            };
+        }
+
+        return null;
+    }
+
     public static DataTable GetTableFromProcedure(string tableName, SqlConnection connection)
     {
 
@@ -146,16 +171,24 @@ public class BusTripsController : ControllerBase
         try
         {
             using (var conn = await GetSqlConnection())
-            using (var command = new SqlCommand("dbo.InsertRoute", conn))
             {
-                command.CommandType = CommandType.StoredProcedure;
-                command.Parameters.AddWithValue("@OperatorId", model.OperatorId);
-                command.Parameters.AddWithValue("@FromId", model.FromId);
-                command.Parameters.AddWithValue("@ToId", model.ToId);
-                command.Parameters.AddWithValue("@CreatedBy", model.CreatedBy);
+                var validationResult = await ValidateCurrentOperatorAsync(conn, model.CreatedBy, model.OperatorId, "Route creation");
+                if (validationResult != null)
+                {
+                    return validationResult;
+                }
 
-                var result = await command.ExecuteNonQueryAsync();
-                return Ok(new { RowsAffected = result });
+                using (var command = new SqlCommand("dbo.InsertRoute", conn))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.Parameters.AddWithValue("@OperatorId", model.OperatorId);
+                    command.Parameters.AddWithValue("@FromId", model.FromId);
+                    command.Parameters.AddWithValue("@ToId", model.ToId);
+                    command.Parameters.AddWithValue("@CreatedBy", model.CreatedBy);
+
+                    var result = await command.ExecuteNonQueryAsync();
+                    return Ok(new { RowsAffected = result, operatorId = model.OperatorId });
+                }
             }
         }
         catch (SqlException ex)
@@ -176,26 +209,40 @@ public class BusTripsController : ControllerBase
         try
         {
             using (var conn = await GetSqlConnection())
-            using (var command = new SqlCommand(@"
-                INSERT INTO [dbo].[RouteTrip] 
-                    ([RouteId], [DepartureDateTime], [ArrivalDateTime], [Price], [CreatedBy], [CreatedDate], [UpdatedBy], [UpdatedDate], [Notes], [Active])
-                VALUES 
-                    (@RouteId, @DepartureDateTime, @ArrivalDateTime, @Price, @CreatedBy, GETDATE(), @UpdatedBy, @UpdatedDate, @Notes, @Active);
-                SELECT SCOPE_IDENTITY();
-            ", conn))
             {
-                command.Parameters.AddWithValue("@RouteId", model.RouteId);
-                command.Parameters.AddWithValue("@DepartureDateTime", model.DepartureDateTime);
-                command.Parameters.AddWithValue("@ArrivalDateTime", model.ArrivalDateTime);
-                command.Parameters.AddWithValue("@Price", model.Price);
-                command.Parameters.AddWithValue("@CreatedBy", model.CreatedBy);
-                command.Parameters.AddWithValue("@UpdatedBy", (object?)model.UpdatedBy ?? DBNull.Value);
-                command.Parameters.AddWithValue("@UpdatedDate", (object?)model.UpdatedDate ?? DBNull.Value);
-                command.Parameters.AddWithValue("@Notes", (object?)model.Notes ?? DBNull.Value);
-                command.Parameters.AddWithValue("@Active", model.Active);
+                var routeOperatorId = await OperatorScopeValidator.ResolveRouteOperatorIdAsync(conn, model.RouteId);
+                if (!routeOperatorId.HasValue)
+                {
+                    return BadRequest(new { error = "The selected route does not exist." });
+                }
 
-                var insertedId = Convert.ToInt32(await command.ExecuteScalarAsync());
-                return Ok(new { TripId = insertedId });
+                var validationResult = await ValidateCurrentOperatorAsync(conn, model.CreatedBy, routeOperatorId.Value, "Route trip creation");
+                if (validationResult != null)
+                {
+                    return validationResult;
+                }
+
+                using (var command = new SqlCommand(@"
+                    INSERT INTO [dbo].[RouteTrip] 
+                        ([RouteId], [DepartureDateTime], [ArrivalDateTime], [Price], [CreatedBy], [CreatedDate], [UpdatedBy], [UpdatedDate], [Notes], [Active])
+                    VALUES 
+                        (@RouteId, @DepartureDateTime, @ArrivalDateTime, @Price, @CreatedBy, GETDATE(), @UpdatedBy, @UpdatedDate, @Notes, @Active);
+                    SELECT SCOPE_IDENTITY();
+                ", conn))
+                {
+                    command.Parameters.AddWithValue("@RouteId", model.RouteId);
+                    command.Parameters.AddWithValue("@DepartureDateTime", model.DepartureDateTime);
+                    command.Parameters.AddWithValue("@ArrivalDateTime", model.ArrivalDateTime);
+                    command.Parameters.AddWithValue("@Price", model.Price);
+                    command.Parameters.AddWithValue("@CreatedBy", model.CreatedBy);
+                    command.Parameters.AddWithValue("@UpdatedBy", (object?)model.UpdatedBy ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@UpdatedDate", (object?)model.UpdatedDate ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Notes", (object?)model.Notes ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Active", model.Active);
+
+                    var insertedId = Convert.ToInt32(await command.ExecuteScalarAsync());
+                    return Ok(new { TripId = insertedId, operatorId = routeOperatorId.Value });
+                }
             }
         }
         catch (SqlException ex)
@@ -216,29 +263,43 @@ public class BusTripsController : ControllerBase
         try
         {
             using (var conn = await GetSqlConnection())
-            using (var command = new SqlCommand(@"
-                UPDATE [dbo].[RouteTrip]
-                SET
-                    DepartureDateTime = @DepartureDateTime,
-                    ArrivalDateTime = @ArrivalDateTime,
-                    Price = @Price,
-                    Notes = @Notes,
-                    Active = @Active,
-                    UpdatedBy = @UpdatedBy,
-                    UpdatedDate = GETDATE()
-                WHERE TripId = @TripId
-            ", conn))
             {
-                command.Parameters.AddWithValue("@TripId", model.TripId);
-                command.Parameters.AddWithValue("@DepartureDateTime", model.DepartureDateTime);
-                command.Parameters.AddWithValue("@ArrivalDateTime", model.ArrivalDateTime);
-                command.Parameters.AddWithValue("@Price", model.Price);
-                command.Parameters.AddWithValue("@Notes", (object?)model.Notes ?? DBNull.Value);
-                command.Parameters.AddWithValue("@Active", model.Active);
-                command.Parameters.AddWithValue("@UpdatedBy", model.UpdatedBy);
+                var routeTripOperatorId = await OperatorScopeValidator.ResolveRouteTripOperatorIdAsync(conn, model.TripId);
+                if (!routeTripOperatorId.HasValue)
+                {
+                    return BadRequest(new { error = "The selected trip does not exist." });
+                }
 
-                var rowsAffected = await command.ExecuteNonQueryAsync();
-                return Ok(new { RowsAffected = rowsAffected });
+                var validationResult = await ValidateCurrentOperatorAsync(conn, model.UpdatedBy, routeTripOperatorId.Value, "Route trip update");
+                if (validationResult != null)
+                {
+                    return validationResult;
+                }
+
+                using (var command = new SqlCommand(@"
+                    UPDATE [dbo].[RouteTrip]
+                    SET
+                        DepartureDateTime = @DepartureDateTime,
+                        ArrivalDateTime = @ArrivalDateTime,
+                        Price = @Price,
+                        Notes = @Notes,
+                        Active = @Active,
+                        UpdatedBy = @UpdatedBy,
+                        UpdatedDate = GETDATE()
+                    WHERE TripId = @TripId
+                ", conn))
+                {
+                    command.Parameters.AddWithValue("@TripId", model.TripId);
+                    command.Parameters.AddWithValue("@DepartureDateTime", model.DepartureDateTime);
+                    command.Parameters.AddWithValue("@ArrivalDateTime", model.ArrivalDateTime);
+                    command.Parameters.AddWithValue("@Price", model.Price);
+                    command.Parameters.AddWithValue("@Notes", (object?)model.Notes ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Active", model.Active);
+                    command.Parameters.AddWithValue("@UpdatedBy", model.UpdatedBy);
+
+                    var rowsAffected = await command.ExecuteNonQueryAsync();
+                    return Ok(new { RowsAffected = rowsAffected, operatorId = routeTripOperatorId.Value });
+                }
             }
         }
         catch (SqlException ex)
@@ -503,40 +564,59 @@ public class BusTripsController : ControllerBase
         try
         {
             using (var conn = await GetSqlConnection())
-            using (var command = new SqlCommand(@"
-                INSERT INTO [dbo].[RouteTripTicketPrice] (
-                    OperatorId,
-                    RouteTripId,
-                    Price,
-                    Currency,
-                    StartDate,
-                    EndDate,
-                    EffectiveDate,
-                    Active
-                )
-                VALUES (
-                    @OperatorId,
-                    @RouteTripId,
-                    @Price,
-                    @Currency,
-                    @StartDate,
-                    @EndDate,
-                    SYSUTCDATETIME(),
-                    @Active
-                );
-                SELECT SCOPE_IDENTITY();
-            ", conn))
             {
-                command.Parameters.AddWithValue("@OperatorId", model.OperatorId);
-                command.Parameters.AddWithValue("@RouteTripId", model.RouteTripId);
-                command.Parameters.AddWithValue("@Price", model.Price);
-                command.Parameters.AddWithValue("@Currency", model.Currency);
-                command.Parameters.AddWithValue("@StartDate", model.StartDate);
-                command.Parameters.AddWithValue("@EndDate", (object?)model.EndDate ?? DBNull.Value);
-                command.Parameters.AddWithValue("@Active", model.Active);
+                var routeTripOperatorId = await OperatorScopeValidator.ResolveRouteTripOperatorIdAsync(conn, model.RouteTripId);
+                if (!routeTripOperatorId.HasValue)
+                {
+                    return BadRequest(new { error = "The selected trip does not exist." });
+                }
 
-                var insertedId = Convert.ToInt32(await command.ExecuteScalarAsync());
-                return Ok(new { RouteTripTicketPriceId = insertedId });
+                var validationResult = await ValidateCurrentOperatorAsync(conn, model.CreatedBy, model.OperatorId, "Ticket price creation");
+                if (validationResult != null)
+                {
+                    return validationResult;
+                }
+
+                if (routeTripOperatorId.Value != model.OperatorId)
+                {
+                    return Forbid();
+                }
+
+                using (var command = new SqlCommand(@"
+                    INSERT INTO [dbo].[RouteTripTicketPrice] (
+                        OperatorId,
+                        RouteTripId,
+                        Price,
+                        Currency,
+                        StartDate,
+                        EndDate,
+                        EffectiveDate,
+                        Active
+                    )
+                    VALUES (
+                        @OperatorId,
+                        @RouteTripId,
+                        @Price,
+                        @Currency,
+                        @StartDate,
+                        @EndDate,
+                        SYSUTCDATETIME(),
+                        @Active
+                    );
+                    SELECT SCOPE_IDENTITY();
+                ", conn))
+                {
+                    command.Parameters.AddWithValue("@OperatorId", model.OperatorId);
+                    command.Parameters.AddWithValue("@RouteTripId", model.RouteTripId);
+                    command.Parameters.AddWithValue("@Price", model.Price);
+                    command.Parameters.AddWithValue("@Currency", model.Currency);
+                    command.Parameters.AddWithValue("@StartDate", model.StartDate);
+                    command.Parameters.AddWithValue("@EndDate", (object?)model.EndDate ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Active", model.Active);
+
+                    var insertedId = Convert.ToInt32(await command.ExecuteScalarAsync());
+                    return Ok(new { RouteTripTicketPriceId = insertedId, operatorId = model.OperatorId });
+                }
             }
         }
         catch (SqlException ex)
@@ -602,6 +682,7 @@ public class RouteTripTicketPriceInsertModel
 {
     public int OperatorId { get; set; }
     public int RouteTripId { get; set; }
+    public int CreatedBy { get; set; }
     public decimal Price { get; set; }
     public string Currency { get; set; } = "ZAR";
     public DateTime StartDate { get; set; }
