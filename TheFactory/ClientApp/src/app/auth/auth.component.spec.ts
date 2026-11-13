@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthService } from '../services/auth.service';
 
@@ -75,14 +75,65 @@ describe('AuthComponent', () => {
     const buttonContainer = fixture.nativeElement.querySelector('#google-signin-button');
 
     expect(buttonContainer).not.toBeNull();
-    expect(initializeGoogleSignInSpy).toHaveBeenCalledWith(buttonContainer, jasmine.any(Function));
+    expect(initializeGoogleSignInSpy).toHaveBeenCalledWith(buttonContainer, jasmine.any(Function), 'signin_with');
+  });
+
+  it('places Google sign-up above the registration form and provisions a Customer account', () => {
+    const router = TestBed.inject(Router);
+    const navigateSpy = spyOn(router, 'navigate').and.resolveTo(true);
+    component.toggleRegister();
+    component.operators = [{ operatorId: 9, name: 'Regional' }];
+    loginWithGoogleSpy.and.returnValues(
+      throwError(() => ({
+        status: 409,
+        error: { code: 'GoogleRegistrationRequired', error: 'Create a Customer account.' }
+      })),
+      of({
+        userName: 'New Customer',
+        userRole: 'Customer',
+        userId: 27,
+        operatorId: 9,
+        cellPhoneNo: '+263771234567'
+      })
+    );
+    fixture.detectChanges();
+
+    const googleButton = fixture.nativeElement.querySelector('.social-login') as HTMLElement;
+    const divider = fixture.nativeElement.querySelector('.auth-divider') as HTMLElement;
+    const registrationForm = fixture.nativeElement.querySelector('#register-form') as HTMLFormElement;
+    expect(googleButton).not.toBeNull();
+    expect(divider.textContent).toContain('OR');
+    expect(googleButton.compareDocumentPosition(registrationForm) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('#loginEmail')).toBeNull();
+
+    const googleCallback = initializeGoogleSignInSpy.calls.mostRecent().args[1] as (credential: string) => void;
+    googleCallback('new-google-credential');
+    fixture.detectChanges();
+
+    expect(component.showGoogleRegistrationCompletion).toBeTrue();
+    component.googleRegistrationOperatorId = 9;
+    component.googleRegistrationCellPhoneNo = '+263771234567';
+    component.googleRegistrationAlternateCellPhoneNo = '+263772345678';
+    component.completeGoogleRegistration();
+
+    expect(loginWithGoogleSpy).toHaveBeenCalledTimes(2);
+    expect(loginWithGoogleSpy.calls.mostRecent().args).toEqual([
+      'new-google-credential',
+      {
+        operatorId: 9,
+        cellPhoneNo: '+263771234567',
+        alternateCellPhoneNo: '+263772345678'
+      }
+    ]);
+    expect(localStorage.getItem('userRole')).toBe('Customer');
+    expect(navigateSpy).toHaveBeenCalledWith(['/']);
   });
 
   it('omits address fields from the registration form and model', () => {
     component.showRegister = true;
     fixture.detectChanges();
 
-    const registrationForm = fixture.nativeElement.querySelectorAll('form')[1];
+    const registrationForm = fixture.nativeElement.querySelector('#register-form') as HTMLFormElement;
 
     expect(registrationForm.textContent).not.toContain('Address');
     expect(registrationForm.querySelector('[name="registerAddressLine1"]')).toBeNull();

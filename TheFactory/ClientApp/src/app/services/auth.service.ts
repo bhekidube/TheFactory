@@ -17,7 +17,7 @@ interface GoogleIdentityServices {
   }): void;
   renderButton(
     parent: HTMLElement,
-    options: { theme: 'outline'; size: 'large'; width: number }
+    options: { theme: 'outline'; size: 'large'; width: number; text: 'signin_with' | 'signup_with' }
   ): void;
 }
 
@@ -49,10 +49,18 @@ export interface UserLoginResponse {
   cellPhoneNo?: string | null;
 }
 
+export interface GoogleRegistrationDetails {
+  operatorId: number;
+  cellPhoneNo: string;
+  alternateCellPhoneNo: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly baseUrl = `${environment.apiBaseUrl}/api/auth`;
   private googleScriptPromise?: Promise<GoogleIdentityServices>;
+  private googleInitialized = false;
+  private googleCredentialHandler?: (credential: string) => void;
 
   constructor(
     private readonly http: HttpClient,
@@ -61,7 +69,8 @@ export class AuthService {
 
   initializeGoogleSignIn(
     buttonContainer: HTMLElement,
-    onCredential: (credential: string) => void
+    onCredential: (credential: string) => void,
+    buttonText: 'signin_with' | 'signup_with' = 'signin_with'
   ): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) {
       return Promise.resolve();
@@ -71,30 +80,39 @@ export class AuthService {
       return Promise.reject(new Error('Google sign-in is not configured for this environment.'));
     }
 
+    this.googleCredentialHandler = onCredential;
     return this.loadGoogleIdentityServices().then((google) => {
-      google.initialize({
-        client_id: environment.googleClientId,
-        callback: (response) => {
-          if (!response.credential) {
-            throw new Error('Google did not return an identity credential.');
-          }
-          onCredential(response.credential);
-        },
-        ux_mode: 'popup',
-        auto_select: false
-      });
+      if (!this.googleInitialized) {
+        google.initialize({
+          client_id: environment.googleClientId,
+          callback: (response) => {
+            if (!response.credential) {
+              throw new Error('Google did not return an identity credential.');
+            }
+            this.googleCredentialHandler?.(response.credential);
+          },
+          ux_mode: 'popup',
+          auto_select: false
+        });
+        this.googleInitialized = true;
+      }
+      buttonContainer.replaceChildren();
       google.renderButton(buttonContainer, {
         theme: 'outline',
         size: 'large',
-        width: Math.max(200, Math.floor(buttonContainer.getBoundingClientRect().width))
+        width: Math.max(200, Math.floor(buttonContainer.getBoundingClientRect().width)),
+        text: buttonText
       });
     });
   }
 
-  loginWithGoogle(credential: string): Observable<UserLoginResponse> {
+  loginWithGoogle(
+    credential: string,
+    registration?: GoogleRegistrationDetails
+  ): Observable<UserLoginResponse> {
     return this.http.post<UserLoginResponse>(
       `${environment.apiBaseUrl}/api/User/GoogleLogin`,
-      { credential }
+      { credential, ...registration }
     );
   }
 

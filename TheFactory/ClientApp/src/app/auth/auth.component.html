@@ -1,13 +1,13 @@
 <div class="auth-container">
-  <h2>Log into Hambaonline</h2>
+  <h2>{{ showRegister ? 'Join Hamba' : 'Log into Hambaonline' }}</h2>
 
-  <section class="social-login" aria-label="Social sign-in options">
-    <div #googleSignInButton id="google-signin-button" aria-label="Continue with Google"></div>
+  <section class="social-login" [attr.aria-label]="showRegister ? 'Google sign-up option' : 'Social sign-in options'">
+    <div #googleSignInButton id="google-signin-button" [attr.aria-label]="showRegister ? 'Sign up with Google' : 'Continue with Google'"></div>
   </section>
 
   <div class="auth-divider" role="separator"><span>OR</span></div>
 
-  <form #loginForm="ngForm" (ngSubmit)="login()" novalidate>
+  <form *ngIf="!showRegister" #loginForm="ngForm" (ngSubmit)="login()" novalidate>
     <label for="loginEmail">Email</label>
     <input
       id="loginEmail"
@@ -52,10 +52,10 @@
     <button type="submit" class="login-btn" [disabled]="loginForm.invalid || !isLoginEmailValid()">Log in</button>
   </form>
 
-  <button type="button" class="guest-btn" (click)="continueAsGuest()" aria-label="Continue as guest">Continue as Guest</button>
+  <button *ngIf="!showRegister" type="button" class="guest-btn" (click)="continueAsGuest()" aria-label="Continue as guest">Continue as Guest</button>
 
   <div class="auth-actions">
-    <a class="forgot-password" (click)="forgotPassword()">Forgot password?</a>
+    <a *ngIf="!showRegister" class="forgot-password" (click)="forgotPassword()">Forgot password?</a>
     <button type="button" (click)="toggleRegister()" [ngClass]="showRegister ? 'close-btn' : 'subscribe-btn'">
       {{ showRegister ? 'Don\'t create account' : 'Create new account' }}
     </button>
@@ -89,9 +89,56 @@
     </form>
   </section>
 
-  <div *ngIf="showRegister">
-    <h2>Join Hamba</h2>
-    <form #registerForm="ngForm" (ngSubmit)="register()" novalidate>
+  <section *ngIf="showGoogleRegistrationCompletion" class="google-profile-completion google-registration-completion" aria-labelledby="google-registration-title">
+    <h2 id="google-registration-title">Finish your Google sign-up</h2>
+    <p>Your account will use the Customer role. Choose an operator and add both phone numbers to continue.</p>
+    <form #googleRegistrationForm="ngForm" (ngSubmit)="completeGoogleRegistration()" novalidate>
+      <label for="googleRegistrationOperator">Operator</label>
+      <select
+        id="googleRegistrationOperator"
+        [(ngModel)]="googleRegistrationOperatorId"
+        name="googleRegistrationOperator"
+        required
+        #googleRegistrationOperator="ngModel">
+        <option [ngValue]="null" disabled>Select Operator</option>
+        <option *ngFor="let operator of operators" [ngValue]="operator.operatorId">{{ operator.name }}</option>
+      </select>
+      <div *ngIf="googleRegistrationOperator.invalid && googleRegistrationSubmitted" class="error">Operator is required.</div>
+
+      <label for="googleRegistrationCellPhone">Cell phone number</label>
+      <input
+        id="googleRegistrationCellPhone"
+        type="tel"
+        [(ngModel)]="googleRegistrationCellPhoneNo"
+        name="googleRegistrationCellPhone"
+        placeholder="+27..."
+        autocomplete="tel"
+        [pattern]="phonePattern"
+        required
+        #googleRegistrationCellPhone="ngModel" />
+      <div *ngIf="googleRegistrationCellPhone.invalid && googleRegistrationSubmitted" class="error">Enter a valid international cell phone number.</div>
+
+      <label for="googleRegistrationAlternateCellPhone">Alternate cell phone number</label>
+      <input
+        id="googleRegistrationAlternateCellPhone"
+        type="tel"
+        [(ngModel)]="googleRegistrationAlternateCellPhoneNo"
+        name="googleRegistrationAlternateCellPhone"
+        placeholder="+27..."
+        autocomplete="tel"
+        [pattern]="phonePattern"
+        required
+        #googleRegistrationAlternateCellPhone="ngModel" />
+      <div *ngIf="googleRegistrationAlternateCellPhone.invalid && googleRegistrationSubmitted" class="error">Enter a valid alternate international phone number.</div>
+      <div *ngIf="googleRegistrationError" class="error" role="alert">{{ googleRegistrationError }}</div>
+      <button type="submit" class="subscribe-btn" [disabled]="googleRegistrationSaving">
+        {{ googleRegistrationSaving ? 'Creating account...' : 'Create Customer account' }}
+      </button>
+    </form>
+  </section>
+
+  <div *ngIf="showRegister && !showGoogleRegistrationCompletion">
+    <form id="register-form" #registerForm="ngForm" (ngSubmit)="register()" novalidate>
       <input type="text" [(ngModel)]="registerModel.name" name="registerName" placeholder="Name" required #registerName="ngModel" />
       <div *ngIf="registerName.invalid && registerName.touched" class="error">Name is required.</div>
       <input type="email" [(ngModel)]="registerModel.email" name="registerEmail" placeholder="Email" required #registerEmail="ngModel" />

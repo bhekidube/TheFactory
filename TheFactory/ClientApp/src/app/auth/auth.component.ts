@@ -19,10 +19,17 @@ export class AuthComponent implements OnInit, AfterViewInit {
   registerPasswordVisible = false;
   loginSubmitted = false;
   showGoogleProfileCompletion = false;
+  showGoogleRegistrationCompletion = false;
   googleProfilePhone = '';
   googleProfileSubmitted = false;
   googleProfileSaving = false;
   googleProfileError: string | null = null;
+  googleRegistrationOperatorId: number | null = null;
+  googleRegistrationCellPhoneNo = '+27';
+  googleRegistrationAlternateCellPhoneNo = '+27';
+  googleRegistrationSubmitted = false;
+  googleRegistrationSaving = false;
+  googleRegistrationError: string | null = null;
   private pendingGoogleCredential: string | null = null;
   private pendingGoogleLoginResponse: UserLoginResponse | null = null;
   readonly emailPattern = '^[^\\s@]+@[^\\s@]+(?:\\.[^\\s@]+)+$';
@@ -68,15 +75,23 @@ export class AuthComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     if (isPlatformBrowser(this.platformId)) {
-      const button = this.googleSignInButton?.nativeElement;
-      if (button) {
-        this.authService.initializeGoogleSignIn(button, (credential) => {
-          this.loginWithGoogleCredential(credential);
-        }).catch((error: Error) => {
-          this.error = error.message;
-        });
-      }
+      this.initializeGoogleButton();
     }
+  }
+
+  private initializeGoogleButton(): void {
+    const button = this.googleSignInButton?.nativeElement;
+    if (!button) {
+      return;
+    }
+
+    this.authService.initializeGoogleSignIn(
+      button,
+      credential => this.loginWithGoogleCredential(credential),
+      this.showRegister ? 'signup_with' : 'signin_with'
+    ).catch((error: Error) => {
+      this.error = error.message;
+    });
   }
 
   fetchOperators(): void {
@@ -92,6 +107,11 @@ export class AuthComponent implements OnInit, AfterViewInit {
 
   toggleRegister() {
     this.showRegister = !this.showRegister;
+    this.showGoogleRegistrationCompletion = false;
+    this.googleRegistrationError = null;
+    if (isPlatformBrowser(this.platformId)) {
+      this.initializeGoogleButton();
+    }
   }
 
   toggleLoginPassword(): void {
@@ -221,11 +241,58 @@ export class AuthComponent implements OnInit, AfterViewInit {
         this.showGoogleProfileCompletion = true;
       },
       error: (err) => {
-        this.error = err.error?.error || 'Google sign-in failed. Please try again.';
+        if (this.showRegister && err.status === 409 && err.error?.code === 'GoogleRegistrationRequired') {
+          this.pendingGoogleCredential = credential;
+          this.googleRegistrationOperatorId = null;
+          this.googleRegistrationCellPhoneNo = '+27';
+          this.googleRegistrationAlternateCellPhoneNo = '+27';
+          this.googleRegistrationSubmitted = false;
+          this.googleRegistrationError = null;
+          this.showGoogleRegistrationCompletion = true;
+        } else {
+          this.error = err.error?.error || 'Google sign-in failed. Please try again.';
+        }
         this.googleSignInPending = false;
       },
       complete: () => {
         this.googleSignInPending = false;
+      }
+    });
+  }
+
+  completeGoogleRegistration(): void {
+    this.googleRegistrationSubmitted = true;
+    this.googleRegistrationError = null;
+
+    const credential = this.pendingGoogleCredential;
+    if (!credential) {
+      this.googleRegistrationError = 'Your Google sign-up expired. Please start again.';
+      return;
+    }
+
+    const operatorId = Number(this.googleRegistrationOperatorId);
+    if (!Number.isInteger(operatorId) || operatorId <= 0 ||
+        !this.isPhoneNumberValid(this.googleRegistrationCellPhoneNo) ||
+        !this.isPhoneNumberValid(this.googleRegistrationAlternateCellPhoneNo)) {
+      this.googleRegistrationError = 'Select an operator and enter valid primary and alternate international phone numbers.';
+      return;
+    }
+
+    this.googleRegistrationSaving = true;
+    this.authService.loginWithGoogle(credential, {
+      operatorId,
+      cellPhoneNo: this.googleRegistrationCellPhoneNo,
+      alternateCellPhoneNo: this.googleRegistrationAlternateCellPhoneNo
+    }).subscribe({
+      next: response => {
+        this.googleRegistrationSaving = false;
+        this.pendingGoogleCredential = null;
+        this.showGoogleRegistrationCompletion = false;
+        this.completeLogin(response, true);
+      },
+      error: err => {
+        this.googleRegistrationSaving = false;
+        this.googleRegistrationError = err.error?.error || 'Google sign-up failed. Please try again.';
       }
     });
   }
