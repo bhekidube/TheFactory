@@ -145,7 +145,7 @@ describe('AuthComponent', () => {
     expect('address' in component.registerModel).toBeFalse();
   });
 
-  it('requires and saves an international cellphone before completing Google sign-in', () => {
+  it('requires and saves an international cellphone before completing Google sign-in', async () => {
     loginWithGoogleSpy.and.returnValue(of({
       userName: 'Bheki',
       userRole: 'OperatorAdmin',
@@ -156,6 +156,8 @@ describe('AuthComponent', () => {
 
     googleCallback('google-credential');
     fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
 
     expect(component.showGoogleProfileCompletion).toBeTrue();
     expect(localStorage.getItem('userId')).toBeNull();
@@ -164,9 +166,13 @@ describe('AuthComponent', () => {
     phoneInput.value = '+263771234567';
     phoneInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
 
     const form = fixture.nativeElement.querySelector('.google-profile-completion form') as HTMLFormElement;
     form.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
 
     expect(completeGoogleProfileSpy).toHaveBeenCalledWith('google-credential', '+263771234567');
@@ -176,8 +182,10 @@ describe('AuthComponent', () => {
     expect(localStorage.getItem('userId')).toBe('42');
   });
 
-  it('defaults both registration phone fields to +27 and validates international formats', () => {
+  it('defaults both registration phone fields to +27 and validates international formats', async () => {
     component.showRegister = true;
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
 
     const primaryPhone = fixture.nativeElement.querySelector('[name="registerCellPhoneNo"]') as HTMLInputElement;
@@ -196,6 +204,8 @@ describe('AuthComponent', () => {
     alternatePhone.value = '';
     alternatePhone.dispatchEvent(new Event('input'));
     alternatePhone.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Enter a valid international number');

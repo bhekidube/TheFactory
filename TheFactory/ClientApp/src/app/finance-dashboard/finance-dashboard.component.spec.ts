@@ -136,6 +136,7 @@ describe('FinanceDashboardComponent', () => {
       term: 'Term 1',
       academicYear: 2026,
       category: 'Books',
+      learnerType: 'All',
       description: 'Workbook pack',
       amount: 45
     };
