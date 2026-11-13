@@ -454,6 +454,7 @@ export class BusSearchComponent implements OnInit {
         }
 
         row.departureDateTime = departureDateTime.toISOString();
+        this.onSearch(false);
         this.editingDepartureTripId = null;
         this.departureDateTimeDraft = '';
         this.savingDepartureTripId = null;
@@ -537,6 +538,7 @@ export class BusSearchComponent implements OnInit {
         }
 
         row.price = price;
+        this.onSearch(false);
         this.editingPriceTripId = null;
         this.priceDraft = '';
         this.savingPriceTripId = null;

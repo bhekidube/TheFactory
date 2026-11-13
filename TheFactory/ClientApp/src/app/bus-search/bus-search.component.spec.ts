@@ -236,6 +236,10 @@ describe('BusSearchComponent', () => {
     localStorage.setItem('userName', 'Bheki');
     localStorage.setItem('userRole', 'SystemAdmin');
     localStorage.setItem('userId', '42');
+    component.selectedFrom = { locationID: 1, location: 'Johannesburg' };
+    component.selectedTo = { locationID: 4, location: 'Bulawayo' };
+    component.dateInput = '2026-11-12';
+    spyOn(component, 'onSearch');
     component.searchResults = [{
       tripId: 7,
       operatorName: 'Revival',
@@ -271,6 +275,7 @@ describe('BusSearchComponent', () => {
     request.flush({ rowsAffected: 1 });
     expect(component.searchResults[0].departureDateTime).toBe(new Date('2026-11-12T11:15').toISOString());
     expect(component.editingDepartureTripId).toBeNull();
+    expect(component.onSearch).toHaveBeenCalledWith(false);
   });
 
   it('does not expose inline departure editing to non-SystemAdmin users', () => {
