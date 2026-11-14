@@ -76,7 +76,19 @@
 
 .social-login {
 	display: flex;
+	align-items: center;
 	justify-content: center;
+	width: 100%;
+	min-height: 44px;
+}
+
+#google-signin-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 240px;
+	width: 240px;
+	min-height: 44px;
 }
 
 .guest-btn,

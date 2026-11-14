@@ -1,5 +1,5 @@
 <div class="auth-container">
-  <h2>{{ showRegister ? 'Join Hamba' : 'Log into Hambaonline' }}</h2>
+  <h2>{{ showGoogleRegistrationCompletion ? 'Complete Your Registration' : showRegister ? 'Join Hamba' : 'Log into Hambaonline' }}</h2>
 
   <section class="social-login" [attr.aria-label]="showRegister ? 'Google sign-up option' : 'Social sign-in options'">
     <div #googleSignInButton id="google-signin-button" [attr.aria-label]="showRegister ? 'Sign up with Google' : 'Continue with Google'"></div>
@@ -93,6 +93,18 @@
     <h2 id="google-registration-title">Finish your Google sign-up</h2>
     <p>Your account will use the Customer role. Choose an operator and add both phone numbers to continue.</p>
     <form #googleRegistrationForm="ngForm" (ngSubmit)="completeGoogleRegistration()" novalidate>
+      <img
+        *ngIf="googleRegistrationPictureUrl"
+        class="google-registration-picture"
+        [src]="googleRegistrationPictureUrl"
+        alt="Google profile" />
+      <label for="googleRegistrationFirstName">First name</label>
+      <input id="googleRegistrationFirstName" [value]="googleRegistrationFirstName" readonly />
+      <label for="googleRegistrationLastName">Last name</label>
+      <input id="googleRegistrationLastName" [value]="googleRegistrationLastName" readonly />
+      <label for="googleRegistrationEmail">Email</label>
+      <input id="googleRegistrationEmail" type="email" [value]="googleRegistrationEmail" readonly />
+
       <label for="googleRegistrationOperator">Operator</label>
       <select
         id="googleRegistrationOperator"

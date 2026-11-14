@@ -45,9 +45,20 @@ export interface UserLoginResponse {
   userName: string;
   userRole: string;
   userId: number;
+  token: string;
   operatorId?: number;
   cellPhoneNo?: string | null;
 }
+
+export interface GoogleNewUserResponse {
+  isNewUser: true;
+  email: string;
+  firstName: string;
+  lastName: string;
+  pictureUrl?: string | null;
+}
+
+export type GoogleLoginResponse = UserLoginResponse | GoogleNewUserResponse;
 
 export interface GoogleRegistrationDetails {
   operatorId: number;
@@ -106,12 +117,19 @@ export class AuthService {
     });
   }
 
-  loginWithGoogle(
+  loginWithGoogle(credential: string): Observable<GoogleLoginResponse> {
+    return this.http.post<GoogleLoginResponse>(
+      `${environment.apiBaseUrl}/api/User/GoogleLogin`,
+      { credential }
+    );
+  }
+
+  completeGoogleRegistration(
     credential: string,
-    registration?: GoogleRegistrationDetails
+    registration: GoogleRegistrationDetails
   ): Observable<UserLoginResponse> {
     return this.http.post<UserLoginResponse>(
-      `${environment.apiBaseUrl}/api/User/GoogleLogin`,
+      `${environment.apiBaseUrl}/api/User/CompleteGoogleRegistration`,
       { credential, ...registration }
     );
   }

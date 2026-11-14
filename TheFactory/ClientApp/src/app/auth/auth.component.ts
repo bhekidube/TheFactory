@@ -3,7 +3,7 @@ import { AfterViewInit, Component, ElementRef, Inject, OnInit, PLATFORM_ID, View
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
-import { AuthService, UserLoginResponse } from '../services/auth.service';
+import { AuthService, GoogleNewUserResponse, UserLoginResponse } from '../services/auth.service';
 
 @Component({
   selector: 'app-auth',
@@ -27,6 +27,10 @@ export class AuthComponent implements OnInit, AfterViewInit {
   googleRegistrationOperatorId: number | null = null;
   googleRegistrationCellPhoneNo = '+27';
   googleRegistrationAlternateCellPhoneNo = '+27';
+  googleRegistrationFirstName = '';
+  googleRegistrationLastName = '';
+  googleRegistrationEmail = '';
+  googleRegistrationPictureUrl: string | null = null;
   googleRegistrationSubmitted = false;
   googleRegistrationSaving = false;
   googleRegistrationError: string | null = null;
@@ -228,13 +232,19 @@ export class AuthComponent implements OnInit, AfterViewInit {
 
     this.authService.loginWithGoogle(credential).subscribe({
       next: (response) => {
-        if (this.isPhoneNumberValid(response.cellPhoneNo)) {
-          this.completeLogin(response, true);
+        if ('isNewUser' in response && response.isNewUser) {
+          this.beginGoogleRegistration(credential, response);
+          return;
+        }
+
+        const loginResponse = response as UserLoginResponse;
+        if (this.isPhoneNumberValid(loginResponse.cellPhoneNo)) {
+          this.completeLogin(loginResponse, true);
           return;
         }
 
         this.pendingGoogleCredential = credential;
-        this.pendingGoogleLoginResponse = response;
+        this.pendingGoogleLoginResponse = loginResponse;
         this.googleProfilePhone = '+27';
         this.googleProfileSubmitted = false;
         this.googleProfileError = null;
@@ -260,6 +270,21 @@ export class AuthComponent implements OnInit, AfterViewInit {
     });
   }
 
+  private beginGoogleRegistration(credential: string, response: GoogleNewUserResponse): void {
+    this.pendingGoogleCredential = credential;
+    this.googleRegistrationFirstName = response.firstName;
+    this.googleRegistrationLastName = response.lastName;
+    this.googleRegistrationEmail = response.email;
+    this.googleRegistrationPictureUrl = response.pictureUrl ?? null;
+    this.googleRegistrationOperatorId = null;
+    this.googleRegistrationCellPhoneNo = '+27';
+    this.googleRegistrationAlternateCellPhoneNo = '+27';
+    this.googleRegistrationSubmitted = false;
+    this.googleRegistrationError = null;
+    this.showGoogleProfileCompletion = false;
+    this.showGoogleRegistrationCompletion = true;
+  }
+
   completeGoogleRegistration(): void {
     this.googleRegistrationSubmitted = true;
     this.googleRegistrationError = null;
@@ -279,7 +304,7 @@ export class AuthComponent implements OnInit, AfterViewInit {
     }
 
     this.googleRegistrationSaving = true;
-    this.authService.loginWithGoogle(credential, {
+    this.authService.completeGoogleRegistration(credential, {
       operatorId,
       cellPhoneNo: this.googleRegistrationCellPhoneNo,
       alternateCellPhoneNo: this.googleRegistrationAlternateCellPhoneNo
@@ -307,6 +332,9 @@ export class AuthComponent implements OnInit, AfterViewInit {
     localStorage.setItem('userName', response.userName);
     localStorage.setItem('userRole', response.userRole);
     localStorage.setItem('userId', response.userId?.toString() || '');
+    if (response.token) {
+      localStorage.setItem('authToken', response.token);
+    }
     if (returnHome) {
       localStorage.setItem('cellPhoneNo', response.cellPhoneNo!);
     }

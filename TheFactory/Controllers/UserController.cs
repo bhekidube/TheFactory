@@ -30,14 +30,23 @@ public sealed record GoogleLoginModel
 {
     [Required]
     public required string Credential { get; init; }
+}
 
-    public int? OperatorId { get; init; }
+public sealed class GoogleRegistrationCompletionModel
+{
+    [Required]
+    public required string Credential { get; set; }
 
+    [Range(1, int.MaxValue)]
+    public int OperatorId { get; set; }
+
+    [Required]
     [RegularExpression(@"^\+[1-9]\d{1,14}$")]
-    public string? CellPhoneNo { get; init; }
+    public required string CellPhoneNo { get; set; }
 
+    [Required]
     [RegularExpression(@"^\+[1-9]\d{1,14}$")]
-    public string? AlternateCellPhoneNo { get; init; }
+    public required string AlternateCellPhoneNo { get; set; }
 }
 
 public sealed class GoogleProfileCompletionModel
@@ -63,15 +72,18 @@ public class UserController : ControllerBase
     private readonly SqlConnectionService _sqlService;
     private readonly IConfiguration _configuration;
     private readonly ILogger<UserController> _logger;
+    private readonly IAuthTokenService _authTokenService;
 
     public UserController(
         SqlConnectionService sqlService,
         IConfiguration configuration,
-        ILogger<UserController> logger)
+        ILogger<UserController> logger,
+        IAuthTokenService authTokenService)
     {
         _sqlService = sqlService;
         _configuration = configuration;
         _logger = logger;
+        _authTokenService = authTokenService;
     }
 
     [HttpPost("Register")]
@@ -219,7 +231,8 @@ public class UserController : ControllerBase
                         await updateCmd.ExecuteNonQueryAsync();
                     }
 
-                    return Ok(new { message = "Login successful.", userName, userRole, userId, operatorId, address });
+                    var token = _authTokenService.CreateToken(userId, model.Email, userName, userRole, operatorId);
+                    return Ok(new { message = "Login successful.", token, userName, userRole, userId, operatorId, address });
                 }
                 else
                 {
@@ -263,80 +276,143 @@ public class UserController : ControllerBase
             return Unauthorized(new { error = "The Google credential is invalid or expired." });
         }
 
-        if (googleUser.EmailVerified != true || string.IsNullOrWhiteSpace(googleUser.Email))
+        if (googleUser.EmailVerified != true ||
+            string.IsNullOrWhiteSpace(googleUser.Email) ||
+            string.IsNullOrWhiteSpace(googleUser.Subject))
         {
-            return Unauthorized(new { error = "A verified Google email address is required." });
+            return Unauthorized(new { error = "A verified Google email and subject are required." });
         }
 
         try
         {
-            using (var conn = await _sqlService.GetSqlConnectionAsync())
-            using (var command = new SqlCommand(@"
-                SELECT u.UserId, u.Name, ur.Name AS UserRole, OU.OperatorId, u.CellPhoneNo,
-                       u.AddressId, a.AddressLine1, a.AddressLine2, a.City, a.ProvinceState, a.PostalCode, a.Country
-                FROM [User] u
-                    INNER JOIN OperatorUser OU ON OU.UserId = u.UserId
-                    INNER JOIN OperatorUserRole OUR ON OU.OperatorUserId = OUR.OperatorUserId
-                    INNER JOIN [UserRole] ur ON ur.UserRoleId = OUR.UserRoleId
-                    LEFT JOIN institution.Addresses a ON a.AddressId = u.AddressId
-                WHERE u.Email = @Email
-                UNION
-                SELECT u.UserId, u.Name, ur.Name AS UserRole, 0, u.CellPhoneNo,
-                       u.AddressId, a.AddressLine1, a.AddressLine2, a.City, a.ProvinceState, a.PostalCode, a.Country
-                FROM [User] u
-                    INNER JOIN SystemUserRole SUR ON SUR.UserId = u.UserId
-                    INNER JOIN [UserRole] ur ON ur.UserRoleId = SUR.UserRoleId
-                    LEFT JOIN institution.Addresses a ON a.AddressId = u.AddressId
-                WHERE u.Email = @Email
-            ", conn))
+            using var connection = await _sqlService.GetSqlConnectionAsync();
+            var userId = 0;
+            var userName = string.Empty;
+            string? storedEmail = null;
+            string? cellPhoneNo = null;
+            string? googleSubject = null;
+
+            using (var subjectCommand = new SqlCommand(
+                @"SELECT TOP 1 UserId, Name, Email, CellPhoneNo, GoogleSubject
+                  FROM dbo.[User]
+                  WHERE GoogleSubject = @GoogleSubject;",
+                connection))
             {
-                command.Parameters.Add("@Email", SqlDbType.NVarChar, 100).Value = googleUser.Email;
-
-                var userId = 0;
-                var userName = string.Empty;
-                var userRole = string.Empty;
-                var operatorId = 0;
-                string? cellPhoneNo = null;
-                AddressDto address = new();
-                using (var reader = await command.ExecuteReaderAsync(HttpContext.RequestAborted))
+                subjectCommand.Parameters.Add("@GoogleSubject", SqlDbType.NVarChar, 255).Value = googleUser.Subject;
+                using var reader = await subjectCommand.ExecuteReaderAsync(HttpContext.RequestAborted);
+                if (await reader.ReadAsync(HttpContext.RequestAborted))
                 {
-                    if (await reader.ReadAsync(HttpContext.RequestAborted))
-                    {
-                        userId = reader.GetInt32(0);
-                        userName = reader.GetString(1);
-                        userRole = reader.GetString(2);
-                        operatorId = reader.GetInt32(3);
-                        cellPhoneNo = reader.IsDBNull(4) ? null : reader.GetString(4);
-                        address = AddressPersistence.ReadAddress(reader, 5);
-                    }
+                    userId = reader.GetInt32(0);
+                    userName = reader.GetString(1);
+                    storedEmail = reader.IsDBNull(2) ? null : reader.GetString(2);
+                    cellPhoneNo = reader.IsDBNull(3) ? null : reader.GetString(3);
+                    googleSubject = reader.IsDBNull(4) ? null : reader.GetString(4);
                 }
-
-                if (userId == 0)
-                {
-                    if (!model.OperatorId.HasValue &&
-                        string.IsNullOrWhiteSpace(model.CellPhoneNo) &&
-                        string.IsNullOrWhiteSpace(model.AlternateCellPhoneNo))
-                    {
-                        return Conflict(new
-                        {
-                            code = "GoogleRegistrationRequired",
-                            error = "No HambaOnline account is linked to this Google email. Continue with Google sign-up to create a Customer account."
-                        });
-                    }
-
-                    return await RegisterGoogleCustomerAsync(conn, model, googleUser);
-                }
-
-                using (var updateCmd = new SqlCommand(
-                    "UPDATE [User] SET LastLogin = SYSUTCDATETIME() WHERE Email = @Email",
-                    conn))
-                {
-                    updateCmd.Parameters.Add("@Email", SqlDbType.NVarChar, 100).Value = googleUser.Email;
-                    await updateCmd.ExecuteNonQueryAsync(HttpContext.RequestAborted);
-                }
-
-                return Ok(new { message = "Login successful.", userName, userRole, userId, operatorId, cellPhoneNo, address });
             }
+
+            if (userId == 0)
+            {
+                using var emailCommand = new SqlCommand(
+                    @"SELECT TOP 1 UserId, Name, Email, CellPhoneNo, GoogleSubject
+                      FROM dbo.[User]
+                      WHERE Email = @Email;",
+                    connection);
+                emailCommand.Parameters.Add("@Email", SqlDbType.NVarChar, 100).Value = googleUser.Email;
+                using var reader = await emailCommand.ExecuteReaderAsync(HttpContext.RequestAborted);
+                if (await reader.ReadAsync(HttpContext.RequestAborted))
+                {
+                    userId = reader.GetInt32(0);
+                    userName = reader.GetString(1);
+                    storedEmail = reader.IsDBNull(2) ? null : reader.GetString(2);
+                    cellPhoneNo = reader.IsDBNull(3) ? null : reader.GetString(3);
+                    googleSubject = reader.IsDBNull(4) ? null : reader.GetString(4);
+                }
+            }
+
+            if (userId == 0)
+            {
+                if (googleUser.Email.Length > 100)
+                {
+                    return BadRequest(new { error = "The Google email address exceeds the account limit." });
+                }
+
+                var (firstName, lastName) = GetGoogleNames(googleUser);
+                return Ok(new
+                {
+                    isNewUser = true,
+                    email = googleUser.Email,
+                    firstName,
+                    lastName,
+                    pictureUrl = googleUser.Picture
+                });
+            }
+
+            if (googleSubject is not null && !string.Equals(googleSubject, googleUser.Subject, StringComparison.Ordinal))
+            {
+                return Conflict(new { error = "This email is already linked to a different Google account." });
+            }
+
+            if (googleSubject is null)
+            {
+                using var linkCommand = new SqlCommand(
+                    @"UPDATE dbo.[User]
+                      SET GoogleSubject = @GoogleSubject
+                      WHERE UserId = @UserId AND GoogleSubject IS NULL;",
+                    connection);
+                linkCommand.Parameters.Add("@GoogleSubject", SqlDbType.NVarChar, 255).Value = googleUser.Subject;
+                linkCommand.Parameters.Add("@UserId", SqlDbType.Int).Value = userId;
+                if (await linkCommand.ExecuteNonQueryAsync(HttpContext.RequestAborted) == 0)
+                {
+                    return Conflict(new { error = "This Google account could not be linked to the existing account." });
+                }
+            }
+
+            string? userRole = null;
+            var operatorId = 0;
+            AddressDto address = new();
+            using (var accountCommand = new SqlCommand(
+                @"SELECT TOP 1 ur.Name, COALESCE(OU.OperatorId, 0),
+                         a.AddressId, a.AddressLine1, a.AddressLine2, a.City, a.ProvinceState, a.PostalCode, a.Country
+                  FROM dbo.[User] u
+                  OUTER APPLY (
+                      SELECT TOP 1 ou.OperatorId, our.UserRoleId
+                      FROM dbo.OperatorUser ou
+                      INNER JOIN dbo.OperatorUserRole our ON our.OperatorUserId = ou.OperatorUserId
+                      WHERE ou.UserId = u.UserId
+                      ORDER BY ou.OperatorId
+                  ) OU
+                  OUTER APPLY (
+                      SELECT TOP 1 sur.UserRoleId
+                      FROM dbo.SystemUserRole sur
+                      WHERE sur.UserId = u.UserId
+                  ) SUR
+                  INNER JOIN dbo.[UserRole] ur ON ur.UserRoleId = COALESCE(OU.UserRoleId, SUR.UserRoleId)
+                  LEFT JOIN institution.Addresses a ON a.AddressId = u.AddressId
+                  WHERE u.UserId = @UserId;",
+                connection))
+            {
+                accountCommand.Parameters.Add("@UserId", SqlDbType.Int).Value = userId;
+                using var reader = await accountCommand.ExecuteReaderAsync(HttpContext.RequestAborted);
+                if (!await reader.ReadAsync(HttpContext.RequestAborted))
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, new { error = "The HambaOnline account has no assigned role." });
+                }
+
+                userRole = reader.GetString(0);
+                operatorId = reader.GetInt32(1);
+                address = AddressPersistence.ReadAddress(reader, 2);
+            }
+
+            using (var updateCmd = new SqlCommand(
+                "UPDATE dbo.[User] SET LastLogin = SYSUTCDATETIME() WHERE UserId = @UserId",
+                connection))
+            {
+                updateCmd.Parameters.Add("@UserId", SqlDbType.Int).Value = userId;
+                await updateCmd.ExecuteNonQueryAsync(HttpContext.RequestAborted);
+            }
+
+            var token = _authTokenService.CreateToken(userId, storedEmail ?? googleUser.Email, userName, userRole!, operatorId);
+            return Ok(new { message = "Login successful.", isNewUser = false, token, userName, userRole, userId, operatorId, cellPhoneNo, address });
         }
         catch (SqlException)
         {
@@ -344,42 +420,46 @@ public class UserController : ControllerBase
         }
     }
 
-    private async Task<IActionResult> RegisterGoogleCustomerAsync(
-        SqlConnection connection,
-        GoogleLoginModel model,
-        GoogleJsonWebSignature.Payload googleUser)
+    [HttpPost("CompleteGoogleRegistration")]
+    public async Task<IActionResult> CompleteGoogleRegistration([FromBody] GoogleRegistrationCompletionModel model)
     {
-        if (model.OperatorId is not > 0 ||
+        var clientId = _configuration["Google:ClientId"];
+        if (string.IsNullOrWhiteSpace(clientId))
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { error = "Google sign-in is not configured on the server." });
+        }
+
+        GoogleJsonWebSignature.Payload googleUser;
+        try
+        {
+            googleUser = await GoogleJsonWebSignature.ValidateAsync(
+                model.Credential,
+                new GoogleJsonWebSignature.ValidationSettings { Audience = new[] { clientId } });
+        }
+        catch (InvalidJwtException)
+        {
+            return Unauthorized(new { error = "The Google credential is invalid or expired." });
+        }
+
+        if (googleUser.EmailVerified != true || string.IsNullOrWhiteSpace(googleUser.Email) || string.IsNullOrWhiteSpace(googleUser.Subject))
+        {
+            return Unauthorized(new { error = "A verified Google email and subject are required." });
+        }
+
+        if (googleUser.Email.Length > 100 ||
             !IsValidInternationalPhone(model.CellPhoneNo) ||
             !IsValidInternationalPhone(model.AlternateCellPhoneNo))
         {
             return BadRequest(new
             {
-                error = "Select an operator and provide valid primary and alternate international phone numbers."
+                error = "The Google email is too long or the primary and alternate phone numbers are invalid."
             });
         }
 
-        if (googleUser.Email.Length > 100)
-        {
-            return BadRequest(new { error = "The Google email address exceeds the account limit." });
-        }
-
-        using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
         try
         {
-            using (var existingUserCommand = new SqlCommand(
-                "SELECT COUNT(1) FROM dbo.[User] WITH (UPDLOCK, HOLDLOCK) WHERE Email = @Email;",
-                connection,
-                transaction))
-            {
-                existingUserCommand.Parameters.Add("@Email", SqlDbType.NVarChar, 100).Value = googleUser.Email;
-                if (Convert.ToInt32(await existingUserCommand.ExecuteScalarAsync(HttpContext.RequestAborted)) > 0)
-                {
-                    await transaction.RollbackAsync(HttpContext.RequestAborted);
-                    return Conflict(new { error = "An account with this Google email already exists. Sign in instead." });
-                }
-            }
-
+            using var connection = await _sqlService.GetSqlConnectionAsync();
+            using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
             int customerRoleId;
             using (var roleCommand = new SqlCommand(
                 "SELECT UserRoleId FROM dbo.UserRole WHERE Name = N'Customer';",
@@ -401,7 +481,7 @@ public class UserController : ControllerBase
                 connection,
                 transaction))
             {
-                operatorCommand.Parameters.Add("@OperatorId", SqlDbType.Int).Value = model.OperatorId.Value;
+                operatorCommand.Parameters.Add("@OperatorId", SqlDbType.Int).Value = model.OperatorId;
                 if (Convert.ToInt32(await operatorCommand.ExecuteScalarAsync(HttpContext.RequestAborted)) == 0)
                 {
                     await transaction.RollbackAsync(HttpContext.RequestAborted);
@@ -409,9 +489,34 @@ public class UserController : ControllerBase
                 }
             }
 
-            var userName = string.IsNullOrWhiteSpace(googleUser.Name)
-                ? googleUser.Email.Split('@')[0]
-                : googleUser.Name.Trim();
+            using (var existingUserCommand = new SqlCommand(
+                @"SELECT TOP 1 GoogleSubject
+                  FROM dbo.[User] WITH (UPDLOCK, HOLDLOCK)
+                  WHERE Email = @Email OR GoogleSubject = @GoogleSubject;",
+                connection,
+                transaction))
+            {
+                existingUserCommand.Parameters.Add("@Email", SqlDbType.NVarChar, 100).Value = googleUser.Email;
+                existingUserCommand.Parameters.Add("@GoogleSubject", SqlDbType.NVarChar, 255).Value = googleUser.Subject;
+                var existingSubject = await existingUserCommand.ExecuteScalarAsync(HttpContext.RequestAborted);
+                if (existingSubject is not null)
+                {
+                    await transaction.RollbackAsync(HttpContext.RequestAborted);
+                    if (existingSubject is DBNull || string.Equals(Convert.ToString(existingSubject), googleUser.Subject, StringComparison.Ordinal))
+                    {
+                        return await GoogleLogin(new GoogleLoginModel { Credential = model.Credential });
+                    }
+
+                    return Conflict(new { error = "This email is already linked to a different Google account." });
+                }
+            }
+
+            var (firstName, lastName) = GetGoogleNames(googleUser);
+            var userName = string.Join(' ', new[] { firstName, lastName }.Where(part => !string.IsNullOrWhiteSpace(part)));
+            if (string.IsNullOrWhiteSpace(userName))
+            {
+                userName = googleUser.Email.Split('@')[0];
+            }
             if (userName.Length > 100)
             {
                 userName = userName[..100];
@@ -423,9 +528,9 @@ public class UserController : ControllerBase
             int userId;
             using (var insertUserCommand = new SqlCommand(
                 @"INSERT INTO dbo.[User]
-                    (UserRoleId, Name, Email, CellPhoneNo, AlternateCellPhoneNo, PasswordHash, Salt, CreatedAt, LastLogin)
+                                        (UserRoleId, Name, Email, CellPhoneNo, AlternateCellPhoneNo, PasswordHash, Salt, CreatedAt, LastLogin, GoogleSubject)
                   VALUES
-                    (@UserRoleId, @Name, @Email, @CellPhoneNo, @AlternateCellPhoneNo, @PasswordHash, @Salt, SYSUTCDATETIME(), SYSUTCDATETIME());
+                                        (@UserRoleId, @Name, @Email, @CellPhoneNo, @AlternateCellPhoneNo, @PasswordHash, @Salt, SYSUTCDATETIME(), SYSUTCDATETIME(), @GoogleSubject);
                   SELECT CONVERT(INT, SCOPE_IDENTITY());",
                 connection,
                 transaction))
@@ -437,6 +542,7 @@ public class UserController : ControllerBase
                 insertUserCommand.Parameters.Add("@AlternateCellPhoneNo", SqlDbType.NVarChar, 30).Value = model.AlternateCellPhoneNo!;
                 insertUserCommand.Parameters.Add("@PasswordHash", SqlDbType.NVarChar, 256).Value = passwordHash;
                 insertUserCommand.Parameters.Add("@Salt", SqlDbType.NVarChar, 50).Value = salt;
+                insertUserCommand.Parameters.Add("@GoogleSubject", SqlDbType.NVarChar, 255).Value = googleUser.Subject;
                 userId = Convert.ToInt32(await insertUserCommand.ExecuteScalarAsync(HttpContext.RequestAborted));
             }
 
@@ -449,7 +555,7 @@ public class UserController : ControllerBase
                 transaction))
             {
                 insertOperatorUserCommand.Parameters.Add("@UserId", SqlDbType.Int).Value = userId;
-                insertOperatorUserCommand.Parameters.Add("@OperatorId", SqlDbType.Int).Value = model.OperatorId.Value;
+                insertOperatorUserCommand.Parameters.Add("@OperatorId", SqlDbType.Int).Value = model.OperatorId;
                 operatorUserId = Convert.ToInt32(await insertOperatorUserCommand.ExecuteScalarAsync(HttpContext.RequestAborted));
             }
 
@@ -465,26 +571,40 @@ public class UserController : ControllerBase
             }
 
             await transaction.CommitAsync(HttpContext.RequestAborted);
+            var token = _authTokenService.CreateToken(userId, googleUser.Email, userName, "Customer", model.OperatorId);
             return Ok(new
             {
                 message = "Google account registered successfully.",
+                token,
                 userName,
                 userRole = "Customer",
                 userId,
-                operatorId = model.OperatorId.Value,
+                operatorId = model.OperatorId,
                 cellPhoneNo = model.CellPhoneNo
             });
         }
         catch (SqlException exception) when (exception.Number is 2601 or 2627)
         {
-            await transaction.RollbackAsync(HttpContext.RequestAborted);
-            return Conflict(new { error = "An account with this Google email already exists. Sign in instead." });
+            _logger.LogInformation(exception, "Google registration raced with another account creation for {Email}.", googleUser.Email);
+            return Conflict(new { error = "An account with this Google email already exists. Sign in to continue." });
         }
-        catch
+    }
+
+    private static (string FirstName, string LastName) GetGoogleNames(GoogleJsonWebSignature.Payload googleUser)
+    {
+        var firstName = googleUser.GivenName?.Trim() ?? string.Empty;
+        var lastName = googleUser.FamilyName?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(firstName) && !string.IsNullOrWhiteSpace(googleUser.Name))
         {
-            await transaction.RollbackAsync(HttpContext.RequestAborted);
-            throw;
+            var nameParts = googleUser.Name.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+            firstName = nameParts.FirstOrDefault() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(lastName) && nameParts.Length > 1)
+            {
+                lastName = nameParts[1];
+            }
         }
+
+        return (firstName, lastName);
     }
 
     private static bool IsValidInternationalPhone(string? phoneNumber)

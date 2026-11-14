@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthService } from '../services/auth.service';
 
@@ -14,12 +14,14 @@ describe('AuthComponent', () => {
   let fixture: ComponentFixture<AuthComponent>;
   let initializeGoogleSignInSpy: jasmine.Spy;
   let loginWithGoogleSpy: jasmine.Spy;
+  let completeGoogleRegistrationSpy: jasmine.Spy;
   let completeGoogleProfileSpy: jasmine.Spy;
   let httpTestingController: HttpTestingController;
 
   beforeEach(async () => {
     initializeGoogleSignInSpy = jasmine.createSpy('initializeGoogleSignIn').and.returnValue(Promise.resolve());
     loginWithGoogleSpy = jasmine.createSpy('loginWithGoogle');
+    completeGoogleRegistrationSpy = jasmine.createSpy('completeGoogleRegistration');
     completeGoogleProfileSpy = jasmine.createSpy('completeGoogleProfile').and.returnValue(of({
       cellPhoneNo: '+263771234567'
     }));
@@ -32,6 +34,7 @@ describe('AuthComponent', () => {
         useValue: {
           initializeGoogleSignIn: initializeGoogleSignInSpy,
           loginWithGoogle: loginWithGoogleSpy,
+          completeGoogleRegistration: completeGoogleRegistrationSpy,
           completeGoogleProfile: completeGoogleProfileSpy,
           logout: () => undefined
         }
@@ -78,24 +81,34 @@ describe('AuthComponent', () => {
     expect(initializeGoogleSignInSpy).toHaveBeenCalledWith(buttonContainer, jasmine.any(Function), 'signin_with');
   });
 
+  it('renders the Google sign-up button when Join Hamba is selected', () => {
+    const buttonContainer = fixture.nativeElement.querySelector('#google-signin-button');
+
+    component.toggleRegister();
+
+    expect(initializeGoogleSignInSpy).toHaveBeenCalledWith(buttonContainer, jasmine.any(Function), 'signup_with');
+  });
+
   it('places Google sign-up above the registration form and provisions a Customer account', () => {
     const router = TestBed.inject(Router);
     const navigateSpy = spyOn(router, 'navigate').and.resolveTo(true);
     component.toggleRegister();
     component.operators = [{ operatorId: 9, name: 'Regional' }];
-    loginWithGoogleSpy.and.returnValues(
-      throwError(() => ({
-        status: 409,
-        error: { code: 'GoogleRegistrationRequired', error: 'Create a Customer account.' }
-      })),
-      of({
+    loginWithGoogleSpy.and.returnValue(of({
+      isNewUser: true as const,
+      email: 'new.customer@example.com',
+      firstName: 'New',
+      lastName: 'Customer',
+      pictureUrl: 'https://example.com/avatar.png'
+    }));
+    completeGoogleRegistrationSpy.and.returnValue(of({
         userName: 'New Customer',
         userRole: 'Customer',
         userId: 27,
         operatorId: 9,
-        cellPhoneNo: '+263771234567'
-      })
-    );
+        cellPhoneNo: '+263771234567',
+        token: 'customer-session-token'
+      }));
     fixture.detectChanges();
 
     const googleButton = fixture.nativeElement.querySelector('.social-login') as HTMLElement;
@@ -111,21 +124,24 @@ describe('AuthComponent', () => {
     fixture.detectChanges();
 
     expect(component.showGoogleRegistrationCompletion).toBeTrue();
+    expect((fixture.nativeElement.querySelector('#googleRegistrationFirstName') as HTMLInputElement).value).toBe('New');
+    expect((fixture.nativeElement.querySelector('#googleRegistrationLastName') as HTMLInputElement).value).toBe('Customer');
+    expect((fixture.nativeElement.querySelector('#googleRegistrationEmail') as HTMLInputElement).value).toBe('new.customer@example.com');
     component.googleRegistrationOperatorId = 9;
     component.googleRegistrationCellPhoneNo = '+263771234567';
     component.googleRegistrationAlternateCellPhoneNo = '+263772345678';
     component.completeGoogleRegistration();
 
-    expect(loginWithGoogleSpy).toHaveBeenCalledTimes(2);
-    expect(loginWithGoogleSpy.calls.mostRecent().args).toEqual([
+    expect(loginWithGoogleSpy).toHaveBeenCalledOnceWith('new-google-credential');
+    expect(completeGoogleRegistrationSpy).toHaveBeenCalledWith(
       'new-google-credential',
       {
         operatorId: 9,
         cellPhoneNo: '+263771234567',
         alternateCellPhoneNo: '+263772345678'
-      }
-    ]);
+      });
     expect(localStorage.getItem('userRole')).toBe('Customer');
+    expect(localStorage.getItem('authToken')).toBe('customer-session-token');
     expect(navigateSpy).toHaveBeenCalledWith(['/']);
   });
 

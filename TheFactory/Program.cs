@@ -44,6 +44,7 @@ builder.Services.AddScoped<IScheduleSettingsService, ScheduleSettingsService>();
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IPdfGeneratorService, PdfGeneratorService>();
+builder.Services.AddSingleton<IAuthTokenService, AuthTokenService>();
 builder.Services.AddHostedService<TripHistoryArchiveService>();
 builder.Services.AddCors(options =>
 {
